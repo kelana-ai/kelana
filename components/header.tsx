@@ -53,7 +53,7 @@ export default function Header() {
                     alt="logo"
                     width={500}
                     height={500}
-                    className="h-8 md:h-10 w-fit"
+                    className="h-8 md:h-10 md:w-fit"
                   />
                 </div>
               </DialogTitle>
@@ -98,7 +98,7 @@ export default function Header() {
               alt="logo"
               width={500}
               height={500}
-              className="h-8 md:h-10 w-fit"
+              className="h-8 md:h-10 md:w-fit"
             />
           </Link>
         </div>
