@@ -4,7 +4,6 @@ import { useUser } from "@/contexts/user-context"
 import { createClient } from "@/utils/supabase/client"
 import { Camera, UserIcon } from "lucide-react"
 import Image from "next/image"
-import type React from "react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -23,7 +22,7 @@ export default function Avatar({
   const [uploading, setUploading] = useState(false)
   const { avatarUrl: contextAvatarUrl } = useUser()
 
-  const displayAvatarUrl = contextAvatarUrl || null
+  const displayAvatarUrl = contextAvatarUrl || url || null
 
   const uploadAvatar: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
     try {
@@ -38,13 +37,11 @@ export default function Avatar({
       const filePath = `${uid}-${Math.random()}.${fileExt}`
 
       const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file)
-
-      if (uploadError) {
-        throw uploadError
-      }
+      if (uploadError) throw uploadError
 
       onUpload(filePath)
     } catch (error) {
+      console.error("Avatar upload error:", error)
       toast.error("Error uploading avatar")
     } finally {
       setUploading(false)
@@ -53,14 +50,18 @@ export default function Avatar({
 
   return (
     <div className="relative mx-auto">
-      <div className="relative h-[150px] w-[150px] overflow-hidden rounded-full border-4 border-muted bg-muted/20">
+      <div
+        className="relative h-[150px] w-[150px] overflow-hidden rounded-full border-4 border-muted bg-muted/20"
+        style={{ width: size, height: size }}
+      >
         {displayAvatarUrl ? (
           <Image
-            src={displayAvatarUrl || "/placeholder.svg"}
+            src={displayAvatarUrl}
             alt="Avatar"
+            unoptimized
             className="object-cover"
             fill
-            sizes="150px"
+            sizes={`${size}px`}
             priority
           />
         ) : (
@@ -69,7 +70,6 @@ export default function Avatar({
           </div>
         )}
       </div>
-
       <label
         htmlFor="avatar-upload"
         className="absolute bottom-0 right-0 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/90 focus:ring-offset-2"

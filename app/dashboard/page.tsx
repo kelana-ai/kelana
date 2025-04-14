@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { useUser } from "@/contexts/user-context"
-import { Calendar, Clock, Leaf, MapPin, Plus, Recycle, Wallet } from "lucide-react"
+import { Calendar, Clock, Leaf, Loader2, MapPin, Plus, Recycle, Wallet } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo } from "react"
@@ -41,17 +41,18 @@ export default function DashboardPage() {
     "Say no to daily hotel linen changes to save water and energy during your stay.",
     "Use reef-safe sunscreen when swimming in oceans to protect marine life and coral reefs.",
     "Minimize food waste by ordering only what you can finish and trying local dishes in moderation.",
-  ]  
+  ]
 
   const randomTip = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * sustainabilityTips.length)
     return sustainabilityTips[randomIndex]
-  }, [])
+  }, [sustainabilityTips])
 
   if (isLoading || !user) {
     return (
       <div className="container py-8 flex justify-center items-center min-h-[50vh]">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+        <span className="text-muted-foreground">Loading...</span>
       </div>
     )
   }
@@ -87,7 +88,11 @@ export default function DashboardPage() {
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, {profile?.full_name || profile?.username || user?.email?.split("@")[0] || "Traveler"}
+            Welcome back,{" "}
+            {profile?.full_name ||
+              profile?.username ||
+              user.email?.split("@")[0] ||
+              "Traveler"}
           </h1>
           <p className="text-muted-foreground">Continue planning your eco-conscious adventures</p>
         </div>
@@ -110,6 +115,7 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">Upcoming travel plans</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Carbon Saved</CardTitle>
@@ -120,6 +126,7 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">Compared to conventional travel</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Budget Left</CardTitle>

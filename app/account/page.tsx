@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/client"
 import { ArrowLeft, AtSign, Calendar, Check, Globe, Loader2, MapPin } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import Avatar from "./avatar"
 
@@ -20,12 +20,22 @@ import { useRouter } from "next/navigation"
 export default function Account() {
   const supabase = createClient()
   const { user, profile, isLoading, refreshProfile } = useUser()
-  const [updating, setUpdating] = useState(false)
-  const [fullname, setFullname] = useState<string | null>(null)
-  const [username, setUsername] = useState<string | null>(null)
-  const [website, setWebsite] = useState<string | null>(null)
-  const [avatar_url, setAvatarUrl] = useState<string | null>(null)
   const router = useRouter()
+
+  const [updating, setUpdating] = useState(false)
+  const [fullname, setFullname] = useState<string | null>("")
+  const [username, setUsername] = useState<string | null>("")
+  const [website, setWebsite] = useState<string | null>("")
+  const [avatar_url, setAvatarUrl] = useState<string | null>("")
+
+  const formattedJoinDate = useMemo(() => {
+    const joinDate = user?.created_at ? new Date(user.created_at) : new Date()
+    return joinDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }, [user])
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -42,20 +52,11 @@ export default function Account() {
     }
   }, [profile])
 
-  if (isLoading || !user) {
-    return (
-      <div className="container py-8 flex justify-center items-center min-h-[50vh]">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    )
-  }
-
   async function updateProfile() {
     if (!user) return
 
+    setUpdating(true)
     try {
-      setUpdating(true)
-
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: fullname,
@@ -67,11 +68,10 @@ export default function Account() {
 
       if (error) throw error
 
-      // Refresh the profile data in the context
       await refreshProfile()
-
       toast.success("Profile updated successfully")
     } catch (error) {
+      console.error("Update profile error:", error)
       toast.error("Error updating profile")
     } finally {
       setUpdating(false)
@@ -82,7 +82,6 @@ export default function Account() {
     if (!user) return
 
     try {
-      // Only update the avatar_url and updated_at fields
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -93,28 +92,27 @@ export default function Account() {
 
       if (error) throw error
 
-      // Update local state
       setAvatarUrl(newAvatarUrl)
-
-      // Refresh the profile data in the context
       await refreshProfile()
-
       toast.success("Avatar updated successfully")
     } catch (error) {
-      console.error(error)
+      console.error("Update avatar error:", error)
       toast.error("Error updating avatar in your profile")
     }
   }
 
-  const joinDate = user?.created_at ? new Date(user.created_at) : new Date()
-  const formattedJoinDate = joinDate.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
+  if (isLoading || !user) {
+    return (
+      <div className="container py-8 flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+        <span className="text-muted-foreground">Loading...</span>
+      </div>
+    )
+  }
 
   return (
     <div className="container max-w-5xl py-8">
+      {/* Back Button & Header */}
       <div className="mb-8 flex items-center gap-2">
         <Button variant="ghost" size="icon" asChild className="mr-2">
           <Link href="/dashboard">
@@ -129,43 +127,37 @@ export default function Account() {
 
       <div className="grid gap-8 md:grid-cols-3">
         {/* Profile Summary Card */}
-        <Card className="md:col-span-1 h-fit">
+        <Card className="md:col-span-1">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
               <Avatar
-                uid={user?.id ?? null}
+                uid={user.id}
                 url={avatar_url}
                 size={150}
                 onUpload={(url) => {
                   updateAvatar(url)
                 }}
               />
-
-              <h2 className="mt-4 text-xl font-semibold">{fullname || username || user.email?.split("@")[0]}</h2>
-
+              <h2 className="mt-4 text-xl font-semibold">
+                {fullname || username || user.email?.split("@")[0]}
+              </h2>
               <p className="text-sm text-muted-foreground">{user.email}</p>
-
               <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 <span>Joined {formattedJoinDate}</span>
               </div>
-
               <Separator className="my-4" />
-
               <div className="w-full space-y-2">
                 <div className="flex items-center gap-2">
                   <AtSign className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{username || "No username set"}</span>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{website || "No website set"}</span>
                 </div>
               </div>
-
               <Separator className="my-4" />
-
               <form action="/auth/signout" method="post" className="w-full">
                 <Button variant="outline" className="w-full" type="submit">
                   Sign out
@@ -190,6 +182,7 @@ export default function Account() {
               </TabsTrigger>
             </TabsList>
 
+            {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-4">
               <Card>
                 <CardContent className="pt-6">
@@ -239,7 +232,11 @@ export default function Account() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-2" onClick={updateProfile} disabled={updating}>
+                    <Button
+                      className="w-full mt-2"
+                      onClick={updateProfile}
+                      disabled={updating}
+                    >
                       {updating ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -257,21 +254,26 @@ export default function Account() {
               </Card>
             </TabsContent>
 
+            {/* Account Tab */}
             <TabsContent value="account" className="space-y-4">
               <Card>
                 <CardContent className="pt-6">
                   <h3 className="text-lg font-medium mb-4">Account Information</h3>
-
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
                       <div className="relative">
                         <AtSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" type="text" value={user?.email || ""} disabled className="bg-muted/50 pl-9" />
+                        <Input
+                          id="email"
+                          type="text"
+                          value={user.email || ""}
+                          disabled
+                          className="bg-muted/50 pl-9"
+                        />
                       </div>
                       <p className="text-xs text-muted-foreground">Your email address cannot be changed</p>
                     </div>
-
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Account Status</Label>
@@ -283,7 +285,6 @@ export default function Account() {
                         <p>Your account is in good standing</p>
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <Label>Account ID</Label>
                       <div className="rounded-md bg-muted p-3 text-sm font-mono">{user.id}</div>
@@ -291,7 +292,6 @@ export default function Account() {
                   </div>
                 </CardContent>
               </Card>
-
               <Card className="border-destructive/50">
                 <CardContent className="pt-6">
                   <h3 className="text-lg font-medium text-destructive mb-2">Danger Zone</h3>
@@ -303,6 +303,7 @@ export default function Account() {
               </Card>
             </TabsContent>
 
+            {/* Preferences Tab */}
             <TabsContent value="preferences" className="space-y-4">
               <Card>
                 <CardContent className="pt-6">
@@ -310,7 +311,6 @@ export default function Account() {
                   <p className="text-muted-foreground mb-4">
                     These preferences will be used to personalize your travel recommendations.
                   </p>
-
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="location">Home Location</Label>
@@ -319,7 +319,6 @@ export default function Account() {
                         <Input id="location" type="text" placeholder="Enter your home city" className="pl-9" />
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <Label>Travel Interests</Label>
                       <div className="flex flex-wrap gap-2">
@@ -343,7 +342,6 @@ export default function Account() {
                         </Badge>
                       </div>
                     </div>
-
                     <Button className="w-full mt-2">Save Preferences</Button>
                   </div>
                 </CardContent>
