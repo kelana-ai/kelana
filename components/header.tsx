@@ -3,20 +3,43 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Header() {
   const [open, setOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
   const pathname = usePathname()
 
+  useEffect(() => {
+    const supabase = createClient()
+    
+    async function fetchUser() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session && session.user) {
+        setUser(session.user)
+      } else {
+        setUser(null)
+      }
+    }
+    
+    fetchUser()
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      subscription.subscription?.unsubscribe()
+    }
+  }, [])
+
   const isAuthPage = pathname?.includes("/login") || pathname?.includes("/signup")
-  const isLoggedIn =
-    pathname?.includes("/dashboard") || pathname?.includes("/itinerary") || pathname?.includes("/ai-refine")
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -26,9 +49,10 @@ export default function Header() {
   ]
 
   const userNavigation = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
     { name: "Dashboard", href: "/dashboard" },
-    { name: "My Itineraries", href: "/dashboard" },
-    { name: "Profile", href: "/profile" },
+    { name: "Profile", href: "/account" },
   ]
 
   // Don't show header on auth pages
@@ -58,7 +82,7 @@ export default function Header() {
                 </div>
               </DialogTitle>
               <nav className="flex flex-col gap-4 py-4">
-                {(isLoggedIn ? userNavigation : navigation).map((item) => (
+                {(user ? userNavigation : navigation).map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
@@ -73,9 +97,9 @@ export default function Header() {
                 ))}
               </nav>
               <div className="mt-auto flex flex-col gap-2">
-                {isLoggedIn ? (
+                {user ? (
                   <form action="/auth/signout" method="post">
-                    <Button variant="destructive" asChild type="submit">
+                    <Button variant="destructive" type="submit">
                       Sign out
                     </Button>
                   </form>
@@ -104,7 +128,7 @@ export default function Header() {
         </div>
 
         <nav className="hidden gap-6 lg:flex">
-          {(isLoggedIn ? userNavigation : navigation).map((item) => (
+          {(user ? userNavigation : navigation).map((item) => (
             <Link
               key={item.name}
               href={item.href}
@@ -119,9 +143,9 @@ export default function Header() {
         </nav>
 
         <div className="hidden lg:flex lg:items-center lg:gap-2">
-          {isLoggedIn ? (
+          {user ? (
             <form action="/auth/signout" method="post">
-              <Button variant="outline" asChild type="submit">
+              <Button variant="outline" type="submit">
                 Sign out
               </Button>
             </form>
