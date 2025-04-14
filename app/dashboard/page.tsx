@@ -2,12 +2,19 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { useUser } from "@/contexts/user-context"
 import { Calendar, Clock, Leaf, MapPin, Plus, Recycle, Wallet } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 
 export default function DashboardPage() {
   const { user, profile, isLoading } = useUser()
@@ -18,6 +25,28 @@ export default function DashboardPage() {
       router.push("/")
     }
   }, [user, isLoading, router])
+
+  const sustainabilityTips = [
+    "Reduce plastic usage by opting for reusable water bottles and bags.",
+    "Eat more locally sourced, plant-based foods to lower your carbon footprint.",
+    "Support eco-friendly accommodations and travel providers to decrease your environmental impact.",
+    "Plan your trips ahead and combine travel dates to reduce overall travel emissions.",
+    "Offset your carbon emissions through verified climate projects when booking flights or long trips.",
+    "Travel light—lighter luggage means lower fuel consumption, especially on flights.",
+    "Respect local wildlife and ecosystems by sticking to marked trails and avoiding disturbing animals.",
+    "Use public transportation, walk, or rent bikes instead of hiring a car wherever possible.",
+    "Avoid single-use toiletries—bring your own reusable containers filled with sustainable products.",
+    "Choose digital tickets, maps, and guides to cut down on paper waste.",
+    "Buy souvenirs from local artisans to support the community and reduce the carbon footprint of imported goods.",
+    "Say no to daily hotel linen changes to save water and energy during your stay.",
+    "Use reef-safe sunscreen when swimming in oceans to protect marine life and coral reefs.",
+    "Minimize food waste by ordering only what you can finish and trying local dishes in moderation.",
+  ]  
+
+  const randomTip = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * sustainabilityTips.length)
+    return sustainabilityTips[randomIndex]
+  }, [])
 
   if (isLoading || !user) {
     return (
@@ -54,6 +83,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container py-8">
+      {/* Welcome header and CTA */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -116,7 +146,9 @@ export default function DashboardPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{itinerary.name}</CardTitle>
-                  <Badge variant={itinerary.status === "Active" ? "default" : "secondary"}>{itinerary.status}</Badge>
+                  <Badge variant={itinerary.status === "Active" ? "default" : "secondary"}>
+                    {itinerary.status}
+                  </Badge>
                 </div>
                 <CardDescription className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" /> {itinerary.destination}
@@ -151,14 +183,11 @@ export default function DashboardPage() {
       <Card className="bg-primary/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Leaf className="h-5 w-5 text-primary" /> Eco Tip of the Day
+            <Leaf className="h-5 w-5 text-primary" /> Greener Travel Tip
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>
-            Consider using trains for shorter journeys within Europe. A train from London to Paris generates 90% less
-            emissions than flying the same route.
-          </p>
+          <p>{randomTip}</p>
         </CardContent>
         <CardFooter>
           <Button variant="link" className="px-0 text-primary" asChild>
