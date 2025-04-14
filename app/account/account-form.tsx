@@ -1,4 +1,5 @@
 'use client'
+
 import { createClient } from '@/utils/supabase/client'
 import { type User } from '@supabase/supabase-js'
 import { Loader2 } from 'lucide-react'
@@ -95,7 +96,7 @@ export default function AccountForm({ user }: { user: User | null }) {
   }  
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-md">
+    <Card className="w-full max-w-md mx-auto shadow-md mt-8 mb-24">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Your Profile</CardTitle>
         <CardDescription>Manage your account information</CardDescription>
