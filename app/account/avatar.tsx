@@ -1,9 +1,11 @@
 "use client"
+
+import { useUser } from "@/contexts/user-context"
 import { createClient } from "@/utils/supabase/client"
-import { Upload, UserIcon } from "lucide-react"
+import { Upload, UserIcon } from 'lucide-react'
 import Image from "next/image"
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 export default function Avatar({
@@ -18,35 +20,10 @@ export default function Avatar({
   onUpload: (url: string) => void
 }) {
   const supabase = createClient()
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const { avatarUrl: contextAvatarUrl } = useUser()
 
-  useEffect(() => {
-    if (url) {
-      if (url.startsWith("http")) {
-        // If it's already a full URL, use it directly
-        setAvatarUrl(url)
-      } else {
-        // Otherwise, download from Supabase storage
-        downloadImage(url)
-      }
-    }
-  }, [url])
-
-  async function downloadImage(path: string) {
-    try {
-      const { data, error } = await supabase.storage.from("avatars").download(path)
-      if (error) {
-        throw error
-      }
-
-      const url = URL.createObjectURL(data)
-      setAvatarUrl(url)
-    } catch (error) {
-      console.log("Error downloading image: ", error)
-      toast.error("Error loading avatar image")
-    }
-  }
+  const displayAvatarUrl = contextAvatarUrl || null
 
   const uploadAvatar: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
     try {
@@ -77,9 +54,9 @@ export default function Avatar({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative h-[150px] w-[150px] overflow-hidden rounded-full border-4 border-muted bg-muted/20">
-        {avatarUrl ? (
+        {displayAvatarUrl ? (
           <Image
-            src={avatarUrl || "/placeholder.svg"}
+            src={displayAvatarUrl || "/placeholder.svg"}
             alt="Avatar"
             className="object-cover"
             fill

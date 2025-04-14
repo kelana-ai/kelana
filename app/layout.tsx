@@ -1,5 +1,6 @@
 import Footer from "@/components/footer"
 import Header from "@/components/header"
+import { UserProvider } from "@/contexts/user-context"
 import { cn } from "@/lib/utils"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
@@ -22,12 +23,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.className, "min-h-screen bg-background antialiased")}>
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-        <Toaster position="top-right" />
+        <UserProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+          <Toaster position="top-right" />
+        </UserProvider>
       </body>
     </html>
   )
