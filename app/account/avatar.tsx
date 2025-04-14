@@ -2,7 +2,7 @@
 
 import { useUser } from "@/contexts/user-context"
 import { createClient } from "@/utils/supabase/client"
-import { Upload, UserIcon } from 'lucide-react'
+import { Camera, UserIcon } from "lucide-react"
 import Image from "next/image"
 import type React from "react"
 import { useState } from "react"
@@ -52,7 +52,7 @@ export default function Avatar({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="relative mx-auto">
       <div className="relative h-[150px] w-[150px] overflow-hidden rounded-full border-4 border-muted bg-muted/20">
         {displayAvatarUrl ? (
           <Image
@@ -72,19 +72,10 @@ export default function Avatar({
 
       <label
         htmlFor="avatar-upload"
-        className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/90 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+        className="absolute bottom-0 right-0 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/90 focus:ring-offset-2"
       >
-        {uploading ? (
-          <>
-            <span className="animate-spin">◌</span>
-            <span>Uploading...</span>
-          </>
-        ) : (
-          <>
-            <Upload className="h-4 w-4" />
-            <span>Change Avatar</span>
-          </>
-        )}
+        {uploading ? <span className="animate-spin">◌</span> : <Camera className="h-5 w-5" />}
+        <span className="sr-only">Change Avatar</span>
         <input
           type="file"
           id="avatar-upload"
