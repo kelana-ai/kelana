@@ -86,7 +86,7 @@ export default function DashboardPage() {
     "Travel light—lighter luggage means lower fuel consumption, especially on flights.",
     "Respect local wildlife and ecosystems by sticking to marked trails and avoiding disturbing animals.",
     "Use public transportation, walk, or rent bikes instead of hiring a car wherever possible.",
-    "Avoid single-use toiletries—bring your own reusable containers filled with sustainable products.",
+    "Avoid single-use toiletries—bring your own reusable containers filled with greener products.",
     "Choose digital tickets, maps, and guides to cut down on paper waste.",
     "Buy souvenirs from local artisans to support the community and reduce the carbon footprint of imported goods.",
     "Say no to daily hotel linen changes to save water and energy during your stay.",

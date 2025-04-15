@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Leaf } from "lucide-react"
+import Image from "next/image"
 import type { ReactNode } from "react"
 
 interface AuthLayoutProps {
@@ -20,8 +20,8 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
           transition={{ duration: 0.5, ease: "easeInOut" }}
           className="mb-6 flex flex-col items-center"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
-            <Leaf className="h-6 w-6 text-primary" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full mb-4">
+            <Image src="/logo-round.png" alt="Logo" width={48} height={48} />
           </div>
           <h1 className="text-center text-2xl font-bold tracking-tight">{title}</h1>
           <p className="mt-2 text-center text-sm text-muted-foreground">{description}</p>

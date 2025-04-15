@@ -26,7 +26,7 @@ export default function Footer() {
               className="w-20 md:w-24"
             />
             <p className="text-sm text-muted-foreground">
-              Plan meaningful, low-impact travel experiences with AI assistance and sustainable recommendations.
+              Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.
             </p>
             <div className="mt-4 flex gap-2">
               <Button variant="ghost" size="icon" asChild>
@@ -111,7 +111,7 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-medium">Subscribe to our newsletter</h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Get the latest updates on sustainable travel and exclusive offers.
+              Get the latest updates on greener travel and exclusive offers.
             </p>
             <form className="flex gap-2">
               <Input placeholder="Enter your email" type="email" className="max-w-[220px]" />

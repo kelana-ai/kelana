@@ -12,7 +12,31 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Kelana | Eco-Conscious Travel Planning",
-  description: "Plan meaningful, low-impact travel experiences with AI assistance and sustainable recommendations.",
+  description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
+  keywords: "eco travel, greener tourism, green travel, eco-friendly travel, responsible tourism",
+  authors: [{ name: "Kelana Team" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://kelana.fly.dev",
+    title: "Kelana | Eco-Conscious Travel Planning",
+    description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
+    siteName: "Kelana",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Kelana - Eco-Conscious Travel Planning",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kelana | Eco-Conscious Travel Planning",
+    description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
+    images: ["/og-image.jpg"],
+  },
 }
 
 export default function RootLayout({
