@@ -44,6 +44,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [currentAvatarPath, setCurrentAvatarPath] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const downloadImage = useCallback(
@@ -84,11 +85,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const updateUserState = useCallback(
     async (sessionUser: User) => {
       setUser(sessionUser)
-
       const profileData = await fetchProfile(sessionUser.id)
       if (!profileData) {
         setProfile(null)
         setAvatarUrl(null)
+        setCurrentAvatarPath(null)
         return
       }
 
@@ -97,23 +98,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (!avatar_url) {
         setAvatarUrl(null)
+        setCurrentAvatarPath(null)
         return
       }
 
       if (avatar_url.startsWith("http")) {
         setAvatarUrl(avatar_url)
+        setCurrentAvatarPath(avatar_url)
       } else {
-        setAvatarUrl((prev) => {
-          if (prev && prev.startsWith("blob:")) {
-            URL.revokeObjectURL(prev)
+        if (avatar_url !== currentAvatarPath) {
+          if (avatarUrl && avatarUrl.startsWith("blob:")) {
+            URL.revokeObjectURL(avatarUrl)
           }
-          return null
-        })
-        const newUrl = await downloadImage(avatar_url)
-        setAvatarUrl(newUrl)
+          const newUrl = await downloadImage(avatar_url)
+          setAvatarUrl(newUrl)
+          setCurrentAvatarPath(avatar_url)
+        }
       }
     },
-    [fetchProfile, downloadImage]
+    [avatarUrl, currentAvatarPath, fetchProfile, downloadImage]
   )
 
   const refreshProfile = useCallback(async () => {
@@ -129,7 +132,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const {
           data: { session },
         } = await supabase.auth.getSession()
-
         if (session?.user) {
           await updateUserState(session.user)
         }
@@ -146,38 +148,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
           await updateUserState(session.user)
-        } else if (event === "TOKEN_REFRESHED") {
-        } else {
+        }
+        else if (event === "TOKEN_REFRESHED") {
+          return
+        }
+        else {
           setUser(null)
           setProfile(null)
-          setAvatarUrl((prev) => {
-            if (prev && prev.startsWith("blob:")) {
-              URL.revokeObjectURL(prev)
-            }
-            return null
-          })
+          if (avatarUrl && avatarUrl.startsWith("blob:")) {
+            URL.revokeObjectURL(avatarUrl)
+          }
+          setAvatarUrl(null)
+          setCurrentAvatarPath(null)
         }
       }
     )
 
     return () => {
       authListener.subscription.unsubscribe()
-      setAvatarUrl((prev) => {
-        if (prev && prev.startsWith("blob:")) {
-          URL.revokeObjectURL(prev)
-        }
-        return null
-      })
+      if (avatarUrl && avatarUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarUrl)
+      }
     }
   }, [supabase, updateUserState])
 
-  const value = {
-    user,
-    profile,
-    avatarUrl,
-    isLoading,
-    refreshProfile,
-  }
-
+  const value = { user, profile, avatarUrl, isLoading, refreshProfile }
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 }

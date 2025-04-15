@@ -40,7 +40,6 @@ export default function SignupPage() {
     const password = formData.get("password") as string
     const confirmPassword = formData.get("confirmPassword") as string
 
-    // Check if passwords match
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       setPasswordsMatch(false)
