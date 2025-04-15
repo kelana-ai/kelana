@@ -11,7 +11,7 @@ export default function Footer() {
   const pathname = usePathname()
 
   // Don't show footer on auth pages
-  if (pathname?.includes("/auth")) return null
+  if (pathname?.includes("/login") || pathname?.includes("/signup")) return null
 
   return (
     <footer className="w-full border-t bg-background">
