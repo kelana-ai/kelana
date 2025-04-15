@@ -18,15 +18,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://kelana.fly.dev",
+    url: "https://kelana.fly.dev/",
     title: "Kelana | Eco-Conscious Travel Planning",
     description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
     siteName: "Kelana",
     images: [
       {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
+        url: "https://kelana.fly.dev/kelana-og.png",
+        width: 800,
+        height: 600,
         alt: "Kelana - Eco-Conscious Travel Planning",
       },
     ],
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kelana | Eco-Conscious Travel Planning",
     description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
-    images: ["/og-image.jpg"],
+    images: ["https://kelana.fly.dev/kelana-og.png"],
   },
 }
 
