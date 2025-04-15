@@ -30,6 +30,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser } from "@/contexts/user-context"
 import { cn } from "@/lib/utils"
 
+import Image from "next/image"
 import {
   Bar,
   BarChart,
@@ -501,9 +502,11 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className="h-10 w-10 overflow-hidden rounded-md">
-                                <img
+                                <Image
                                   src={itinerary.image || "/placeholder.svg"}
                                   alt={itinerary.destination}
+                                  width={40}
+                                  height={40}
                                   className="h-full w-full object-cover transition-transform group-hover:scale-110"
                                 />
                               </div>
