@@ -8,33 +8,27 @@ export async function GET(request: NextRequest) {
     const tokenHash = searchParams.get('token_hash')
     const otpType = searchParams.get('type') as EmailOtpType | null
 
-    const defaultSuccessPath = '/dashboard'
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const redirectUrl = new URL(defaultSuccessPath, siteUrl)
-
-    redirectUrl.searchParams.delete('token_hash')
-    redirectUrl.searchParams.delete('type')
+    const successUrl = new URL('/auth/verified', siteUrl)
+    const errorUrl = new URL('/error', siteUrl)
 
     if (!tokenHash || !otpType) {
-      redirectUrl.pathname = '/error'
-      return NextResponse.redirect(redirectUrl)
+      return NextResponse.redirect(errorUrl)
     }
 
     const supabase = await createClient()
-    const { error } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash })
+    const { error } = await supabase.auth.verifyOtp({ 
+      type: otpType, 
+      token_hash: tokenHash 
+    })
 
-    if (error) {
-      console.error('OTP verification failed:', error.message)
-      redirectUrl.pathname = '/error'
-    } else {
-      redirectUrl.searchParams.delete('next')
-    }
+    return error 
+      ? NextResponse.redirect(errorUrl)
+      : NextResponse.redirect(successUrl)
 
-    return NextResponse.redirect(redirectUrl)
   } catch (err) {
-    console.error('Unexpected error during OTP confirmation:', err)
+    console.error('Confirmation error:', err)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const errorUrl = new URL('/error', siteUrl)
-    return NextResponse.redirect(errorUrl)
+    return NextResponse.redirect(new URL('/error', siteUrl))
   }
 }
