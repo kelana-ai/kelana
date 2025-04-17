@@ -43,127 +43,106 @@ export const useUser = () => useContext(UserContext)
 export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), [])
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    const json = typeof window !== "undefined" && localStorage.getItem("profile")
+    return json ? (JSON.parse(json) as Profile) : null
+  })
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const currentAvatarPathRef = useRef<string | null>(null)
   const initialized = useRef(false)
 
-  const downloadImage = useCallback(
-    async (path: string): Promise<string | null> => {
-      try {
-        const { data, error } = await supabase.storage.from("avatars").download(path)
-        if (error) throw error
-        return URL.createObjectURL(data)
-      } catch (err) {
-        console.error("Image download error:", err)
-        return null
-      }
-    },
-    [supabase]
-  )
+  const downloadImage = useCallback(async (path: string) => {
+    try {
+      const { data, error } = await supabase.storage.from("avatars").download(path)
+      if (error) throw error
+      return URL.createObjectURL(data)
+    } catch (err) {
+      console.error("Image download error:", err)
+      return null
+    }
+  }, [supabase])
 
-  const fetchProfile = useCallback(
-    async (userId: string): Promise<Profile | null> => {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .single()
-          
-        return error ? null : data as Profile
-      } catch (err) {
-        console.error("Profile fetch error:", err)
-        return null
-      }
-    },
-    [supabase]
-  )
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single()
+      if (error) throw error
+      return data as Profile
+    } catch (err) {
+      console.error("Profile fetch error:", err)
+      return null
+    }
+  }, [supabase])
 
-  const updateUserState = useCallback(
-    async (sessionUser: User) => {
-      try {
-        setIsLoading(true)
-        setUser(sessionUser)
+  const updateUserState = useCallback(async (sessionUser: User) => {
+    setIsLoading(true)
+    setUser(sessionUser)
 
-        const profileData = await fetchProfile(sessionUser.id)
-        setProfile(profileData)
+    if (profile) {
+      setProfile(profile)
+    }
 
-        const avatarPath = profileData?.avatar_url
-        if (!avatarPath) {
-          currentAvatarPathRef.current = null
-          setAvatarUrl(null)
-          return
-        }
+    const fresh = await fetchProfile(sessionUser.id)
+    if (fresh) {
+      setProfile(fresh)
+      localStorage.setItem("profile", JSON.stringify(fresh))
+    }
 
-        if (avatarPath === currentAvatarPathRef.current) return
-
-        if (avatarPath.startsWith("http")) {
-          setAvatarUrl(avatarPath)
-          currentAvatarPathRef.current = avatarPath
-        } else {
-          const newUrl = await downloadImage(avatarPath)
-          setAvatarUrl(newUrl)
-          currentAvatarPathRef.current = avatarPath
-        }
-      } catch (err) {
-        console.error("User state update error:", err)
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [downloadImage, fetchProfile]
-  )
+    const avatarPath = fresh?.avatar_url
+    if (!avatarPath) {
+      currentAvatarPathRef.current = null
+      setAvatarUrl(null)
+    } else if (avatarPath !== currentAvatarPathRef.current) {
+      const url = avatarPath.startsWith("http")
+        ? avatarPath
+        : await downloadImage(avatarPath)
+      setAvatarUrl(url)
+      currentAvatarPathRef.current = avatarPath
+    }
+    setIsLoading(false)
+  }, [downloadImage, fetchProfile, profile])
 
   const refreshProfile = useCallback(async () => {
-    user && await updateUserState(user)
+    if (user) await updateUserState(user)
   }, [user, updateUserState])
 
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
 
-    const initialize = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        await updateUserState(session.user)
-      } else {
-        setIsLoading(false)
-      }
-    }
-
-    initialize()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) updateUserState(session.user)
+      else setIsLoading(false)
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+      async (_event, session) => {
+        if (session?.user) {
           await updateUserState(session.user)
-        } else if (event === "SIGNED_OUT") {
+        } else {
           setUser(null)
           setProfile(null)
           setAvatarUrl(null)
-          currentAvatarPathRef.current = null
+          localStorage.removeItem("profile")
           setIsLoading(false)
         }
       }
     )
 
     return () => {
-      subscription?.unsubscribe()
-      if (avatarUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(avatarUrl)
-      }
+      subscription.unsubscribe()
+      if (avatarUrl?.startsWith("blob:")) URL.revokeObjectURL(avatarUrl)
     }
   }, [supabase, updateUserState, avatarUrl])
 
-  const value = useMemo(() => ({
-    user,
-    profile,
-    avatarUrl,
-    isLoading,
-    refreshProfile,
-  }), [user, profile, avatarUrl, isLoading, refreshProfile])
+  const value = useMemo(
+    () => ({ user, profile, avatarUrl, isLoading, refreshProfile }),
+    [user, profile, avatarUrl, isLoading, refreshProfile]
+  )
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 }
