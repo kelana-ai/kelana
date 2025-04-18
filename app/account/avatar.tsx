@@ -2,7 +2,7 @@
 
 import { useUser } from "@/contexts/user-context"
 import { createClient } from "@/utils/supabase/client"
-import { Camera, UserIcon } from "lucide-react"
+import { Camera, Loader2, UserIcon } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -74,7 +74,7 @@ export default function Avatar({
         htmlFor="avatar-upload"
         className="absolute bottom-0 right-0 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/90 focus:ring-offset-2"
       >
-        {uploading ? <span className="animate-spin">◌</span> : <Camera className="h-5 w-5" />}
+        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-5 w-5" />}
         <span className="sr-only">Change Avatar</span>
         <input
           type="file"

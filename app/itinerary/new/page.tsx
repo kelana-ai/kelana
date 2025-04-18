@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Calendar,
   Check,
+  Loader2,
   MapPin,
   Sparkles,
   Users,
@@ -47,6 +48,7 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useUser } from "@/contexts/user-context"
 import { cn } from "@/lib/utils"
 
 const MapComponent = dynamic(() => import("@/components/map-component"), {
@@ -128,6 +130,7 @@ const budgetRanges = [
 ]
 
 export default function NewItineraryPage() {
+  const { user, isLoading } = useUser()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -135,6 +138,12 @@ export default function NewItineraryPage() {
     { name: string; lat: number; lng: number } | null
   >(null)
   const formContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/")
+    }
+  }, [user, isLoading, router])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -727,7 +736,7 @@ export default function NewItineraryPage() {
                     <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                       {isSubmitting ? (
                         <>
-                          <span className="mr-2 h-4 w-4 animate-spin">⏳</span> Generating...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
                         </>
                       ) : (
                         <>
