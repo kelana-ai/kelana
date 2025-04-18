@@ -23,7 +23,7 @@ export default function Footer() {
               alt="logo"
               width={500}
               height={500}
-              className="w-20 md:w-24"
+              className="w-20 md:w-24 h:6 md:h-8"
             />
             <p className="text-sm text-muted-foreground">
               Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.

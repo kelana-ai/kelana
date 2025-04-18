@@ -66,13 +66,13 @@ export default function Header() {
             <SheetContent side="left" className="flex flex-col p-6">
               {/* Mobile Logo */}
               <DialogTitle className="text-xl font-bold mb-4">
-                <div className="flex items-center justify-between border-b pb-4">
+                <div className="border-b pb-4">
                   <Image
                     src="/logo.png"
                     alt="logo"
                     width={500}
                     height={500}
-                    className="w-20 md:w-24"
+                    className="w-20 md:w-24 h:6 md:h-8"
                   />
                 </div>
               </DialogTitle>
@@ -145,13 +145,13 @@ export default function Header() {
           </Sheet>
 
           {/* Always-visible Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/">
             <Image
               src="/logo.png"
               alt="logo"
               width={500}
               height={500}
-              className="w-20 md:w-24"
+              className="w-20 md:w-24 h:6 md:h-8"
             />
           </Link>
         </div>
