@@ -14,7 +14,6 @@ import {
   TrendingUp,
   Wallet
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -47,9 +46,8 @@ import {
 } from "recharts"
 
 export default function DashboardPage() {
-  const { user, profile, avatarUrl, isLoading } = useUser()
+  const { user, profile, isLoading } = useUser()
   const router = useRouter()
-  const { theme, setTheme } = useTheme()
   const [activeTab, setActiveTab] = useState("overview")
   const [showWelcome, setShowWelcome] = useState(true)
   const [carbonProgress, setCarbonProgress] = useState(0)
