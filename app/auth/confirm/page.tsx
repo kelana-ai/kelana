@@ -36,7 +36,7 @@ export default function ConfirmPage() {
   const [status, setStatus] = useState<"verifying" | "success" | "error">(errorMessage ? "error" : "verifying")
   const [verifyProgress, setVerifyProgress] = useState(0)
   const [progress, setProgress] = useState(0)
-  const [secondsLeft, setSecondsLeft] = useState(5)
+  const [secondsLeft, setSecondsLeft] = useState(6)
   const [error, setError] = useState(errorMessage || "")
   const [isResending, setIsResending] = useState(false)
   const [redirectAllowed, setRedirectAllowed] = useState(false)
@@ -91,14 +91,14 @@ export default function ConfirmPage() {
     setProgress(0)
     countdownInitialized.current = true
 
-    const endTime = Date.now() + 5000
+    const endTime = Date.now() + 6000
 
     countdownTimerRef.current = setInterval(() => {
       const now = Date.now()
       const remaining = Math.max(0, Math.ceil((endTime - now) / 1000))
 
       setSecondsLeft(remaining)
-      const elapsedPercent = 100 - (remaining / 5) * 100
+      const elapsedPercent = 100 - (remaining / 6) * 100
       setProgress(Math.min(elapsedPercent, 100))
 
       if (remaining <= 0) {
@@ -123,7 +123,7 @@ export default function ConfirmPage() {
     if (status === "success" && redirectAllowed && animationComplete) {
       const timeOnSuccessPage = successTimestampRef.current ? Date.now() - successTimestampRef.current : 0
 
-      if (timeOnSuccessPage >= 5000) {
+      if (timeOnSuccessPage >= 6000) {
         if (user) {
           router.push("/dashboard")
         } else if (!isLoading) {
