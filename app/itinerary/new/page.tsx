@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Calendar,
   Check,
+  Home,
   Loader2,
   MapPin,
   Sparkles,
@@ -26,30 +27,16 @@ import { z } from "zod"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser } from "@/contexts/user-context"
 import { cn } from "@/lib/utils"
+import { submitItinerary } from "./actions"
 
 const MapComponent = dynamic(() => import("@/components/map-component"), {
   ssr: false,
@@ -62,11 +49,12 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
 
 const steps = [
   { id: "step-1", name: "Trip Details", icon: MapPin },
-  { id: "step-2", name: "Travel Type", icon: Users },
-  { id: "step-3", name: "Preferences", icon: Sparkles },
-  { id: "step-4", name: "Dietary Needs", icon: Utensils },
-  { id: "step-5", name: "Budget", icon: Wallet },
-  { id: "step-6", name: "Review", icon: Check },
+  { id: "step-2", name: "Home Location", icon: Home },
+  { id: "step-3", name: "Travel Type", icon: Users },
+  { id: "step-4", name: "Preferences", icon: Sparkles },
+  { id: "step-5", name: "Dietary Needs", icon: Utensils },
+  { id: "step-6", name: "Budget", icon: Wallet },
+  { id: "step-7", name: "Review", icon: Check },
 ]
 
 const formSchema = z.object({
@@ -78,6 +66,13 @@ const formSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }),
+  homeLocation: z
+    .object({
+      name: z.string().optional(),
+      lat: z.number().optional(),
+      lng: z.number().optional(),
+    })
+    .optional(),
   dateRange: z.object({
     from: z.date(),
     to: z.date(),
@@ -130,13 +125,16 @@ const budgetRanges = [
 ]
 
 export default function NewItineraryPage() {
-  const { user, isLoading } = useUser()
+  const { user, profile, isLoading } = useUser()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedLocation, setSelectedLocation] = useState<
-    { name: string; lat: number; lng: number } | null
-  >(null)
+  const [selectedDestination, setSelectedDestination] = useState<{ name: string; lat: number; lng: number } | null>(
+    null,
+  )
+  const [selectedHomeLocation, setSelectedHomeLocation] = useState<{ name: string; lat: number; lng: number } | null>(
+    null,
+  )
   const formContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -150,13 +148,15 @@ export default function NewItineraryPage() {
     defaultValues: {
       tripName: "",
       destination: { name: "", lat: 0, lng: 0 },
+      homeLocation:
+        profile?.home_lat && profile?.home_lng ? { name: "", lat: profile.home_lat, lng: profile.home_lng } : undefined,
       dateRange: {
         from: new Date(),
         to: new Date(new Date().setDate(new Date().getDate() + 7)),
       },
       travelType: "solo",
-      travelStyles: [],
-      dietaryNeeds: [],
+      travelStyles: profile?.preferences?.travelStyles || [],
+      dietaryNeeds: profile?.dietary_needs || [],
       budget: 2500,
     },
   })
@@ -168,22 +168,56 @@ export default function NewItineraryPage() {
   }, [currentStep])
 
   useEffect(() => {
-    if (selectedLocation) {
-      form.setValue("destination", selectedLocation)
+    if (selectedDestination) {
+      form.setValue("destination", selectedDestination)
     }
-  }, [selectedLocation, form])
+  }, [selectedDestination, form])
+
+  useEffect(() => {
+    if (selectedHomeLocation) {
+      form.setValue("homeLocation", selectedHomeLocation)
+    }
+  }, [selectedHomeLocation, form])
 
   function onSubmit(data: FormValues) {
+    if (!user) {
+      toast.error("You must be logged in to create an itinerary")
+      return
+    }
+
     setIsSubmitting(true)
 
-    setTimeout(() => {
-      console.log(data)
-      toast.success("Itinerary created successfully!", {
-        description: "Your eco-friendly travel plan is being generated.",
+    const formData = new FormData()
+    formData.append("userId", user.id)
+    formData.append("tripName", data.tripName)
+    formData.append("destination", JSON.stringify(data.destination))
+    formData.append("homeLocation", JSON.stringify(data.homeLocation || {}))
+    formData.append(
+      "dateRange",
+      JSON.stringify({
+        from: data.dateRange.from.toISOString(),
+        to: data.dateRange.to.toISOString(),
+      }),
+    )
+    formData.append("travelType", data.travelType)
+    formData.append("travelStyles", JSON.stringify(data.travelStyles))
+    formData.append("dietaryNeeds", JSON.stringify(data.dietaryNeeds))
+    formData.append("budget", data.budget.toString())
+
+    submitItinerary(formData)
+      .then((response) => {
+        if (response.success && response.itineraryId) {
+          toast.success("Itinerary generated successfully!")
+          router.push(`/itinerary/${response.itineraryId}`)
+        } else {
+          toast.error("Failed to generate itinerary. Please try again.")
+          setIsSubmitting(false)
+        }
       })
-      router.push("/itinerary/generated")
-      setIsSubmitting(false)
-    }, 1500)
+      .catch((error) => {
+        toast.error(error.message || "An error occurred while generating the itinerary.")
+        setIsSubmitting(false)
+      })
   }
 
   async function nextStep() {
@@ -192,25 +226,30 @@ export default function NewItineraryPage() {
       const destinationValid = await form.trigger("destination")
       const dateRangeValid = await form.trigger("dateRange")
       if (!tripNameValid || !destinationValid || !dateRangeValid) return
-    } else if (currentStep === 1) {
-      if (!(await form.trigger("travelType"))) return
     } else if (currentStep === 2) {
+      if (!(await form.trigger("travelType"))) return
+    } else if (currentStep === 3) {
       if (!(await form.trigger("travelStyles"))) return
     }
     if (currentStep < steps.length - 1) {
-      setTimeout(() => setCurrentStep(s => s + 1), 0)
+      setTimeout(() => setCurrentStep((s) => s + 1), 0)
     }
   }
 
   function prevStep() {
     if (currentStep > 0) {
-      setTimeout(() => setCurrentStep(s => s - 1), 0)
+      setTimeout(() => setCurrentStep((s) => s - 1), 0)
     }
   }
 
-  const handleLocationSelect = (location: { name: string; lat: number; lng: number }) => {
-    setSelectedLocation(location)
+  const handleDestinationSelect = (location: { name: string; lat: number; lng: number }) => {
+    setSelectedDestination(location)
     form.setValue("destination", location)
+  }
+
+  const handleHomeLocationSelect = (location: { name: string; lat: number; lng: number }) => {
+    setSelectedHomeLocation(location)
+    form.setValue("homeLocation", location)
   }
 
   return (
@@ -234,8 +273,8 @@ export default function NewItineraryPage() {
                     currentStep === index
                       ? "bg-primary text-primary-foreground shadow-lg"
                       : currentStep > index
-                      ? "bg-primary/80 text-primary-foreground"
-                      : "bg-muted text-muted-foreground",
+                        ? "bg-primary/80 text-primary-foreground"
+                        : "bg-muted text-muted-foreground",
                   )}
                 >
                   {currentStep > index ? <Check className="h-6 w-6" /> : <step.icon className="h-5 w-5" />}
@@ -293,11 +332,12 @@ export default function NewItineraryPage() {
                     <CardTitle className="text-2xl">{steps[currentStep].name}</CardTitle>
                     <CardDescription>
                       {currentStep === 0 && "Tell us about your trip destination and dates"}
-                      {currentStep === 1 && "Who will be joining you on this adventure?"}
-                      {currentStep === 2 && "What kind of experiences are you looking for?"}
-                      {currentStep === 3 && "Any special dietary requirements we should know about?"}
-                      {currentStep === 4 && "Let's set a budget for your eco-friendly journey"}
-                      {currentStep === 5 && "Review your itinerary details before we generate your plan"}
+                      {currentStep === 1 && "Where are you starting your journey from?"}
+                      {currentStep === 2 && "Who will be joining you on this adventure?"}
+                      {currentStep === 3 && "What kind of experiences are you looking for?"}
+                      {currentStep === 4 && "Any special dietary requirements we should know about?"}
+                      {currentStep === 5 && "Let's set a budget for your eco-friendly journey"}
+                      {currentStep === 6 && "Review your itinerary details before we generate your plan"}
                     </CardDescription>
                   </div>
                 </div>
@@ -355,7 +395,7 @@ export default function NewItineraryPage() {
                                     />
                                   </div>
                                   <div className="h-[300px] overflow-hidden rounded-md border">
-                                    <MapComponent onLocationSelect={handleLocationSelect} />
+                                    <MapComponent onLocationSelect={handleDestinationSelect} />
                                   </div>
                                   {field.value.name && field.value.lat !== 0 && (
                                     <div className="flex items-center gap-2 rounded-md bg-primary/10 p-2 text-sm">
@@ -389,7 +429,7 @@ export default function NewItineraryPage() {
                                       variant="outline"
                                       className={cn(
                                         "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
+                                        !field.value && "text-muted-foreground",
                                       )}
                                     >
                                       <Calendar className="mr-2 h-4 w-4" />
@@ -418,8 +458,54 @@ export default function NewItineraryPage() {
                                   />
                                 </PopoverContent>
                               </Popover>
+                              <FormDescription>Select the start and end dates for your trip</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    {/* Step 2: Home Location */}
+                    {currentStep === 1 && (
+                      <div className="space-y-6">
+                        <FormField
+                          control={form.control}
+                          name="homeLocation"
+                          render={({ field }) => (
+                            <FormItem className="space-y-4">
+                              <FormLabel>Your Home Location</FormLabel>
+                              <FormControl>
+                                <div className="space-y-3">
+                                  <div className="relative">
+                                    <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                      className="pl-9"
+                                      placeholder="Search for your home location"
+                                      value={field.value?.name || ""}
+                                      onChange={(e) =>
+                                        field.onChange({
+                                          ...field.value,
+                                          name: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div className="h-[300px] overflow-hidden rounded-md border">
+                                    <MapComponent onLocationSelect={handleHomeLocationSelect} />
+                                  </div>
+                                  {field.value?.name && field.value?.lat !== 0 && (
+                                    <div className="flex items-center gap-2 rounded-md bg-primary/10 p-2 text-sm">
+                                      <Home className="h-4 w-4 text-primary" />
+                                      <span>
+                                        Selected: <strong>{field.value.name}</strong>
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </FormControl>
                               <FormDescription>
-                                Select the start and end dates for your trip
+                                This helps us calculate carbon emissions and suggest eco-friendly transportation options
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -428,8 +514,8 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 2: Travel Type */}
-                    {currentStep === 1 && (
+                    {/* Step 3: Travel Type */}
+                    {currentStep === 2 && (
                       <div className="space-y-6">
                         <FormField
                           control={form.control}
@@ -444,17 +530,13 @@ export default function NewItineraryPage() {
                                       key={option.id}
                                       className={cn(
                                         "flex cursor-pointer flex-col items-center rounded-lg border-2 p-4 transition-all hover:bg-accent",
-                                        field.value === option.id
-                                          ? "border-primary bg-primary/5"
-                                          : "border-muted"
+                                        field.value === option.id ? "border-primary bg-primary/5" : "border-muted",
                                       )}
                                       onClick={() => field.onChange(option.id)}
                                     >
                                       <div className="mb-3 text-4xl">{option.icon}</div>
                                       <h3 className="mb-1 font-medium">{option.label}</h3>
-                                      <p className="text-center text-xs text-muted-foreground">
-                                        {option.description}
-                                      </p>
+                                      <p className="text-center text-xs text-muted-foreground">{option.description}</p>
                                       {field.value === option.id && (
                                         <div className="mt-2 rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
                                           Selected
@@ -471,8 +553,8 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 3: Travel Styles */}
-                    {currentStep === 2 && (
+                    {/* Step 4: Travel Styles */}
+                    {currentStep === 3 && (
                       <div className="space-y-6">
                         <FormField
                           control={form.control}
@@ -492,7 +574,7 @@ export default function NewItineraryPage() {
                                         "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all hover:bg-accent",
                                         field.value?.includes(style.id)
                                           ? "border-primary bg-primary/5"
-                                          : "border-muted"
+                                          : "border-muted",
                                       )}
                                     >
                                       <Checkbox
@@ -500,9 +582,7 @@ export default function NewItineraryPage() {
                                         onCheckedChange={(checked) =>
                                           checked
                                             ? field.onChange([...field.value, style.id])
-                                            : field.onChange(
-                                                field.value?.filter((v) => v !== style.id) || []
-                                              )
+                                            : field.onChange(field.value?.filter((v) => v !== style.id) || [])
                                         }
                                         className="h-5 w-5"
                                       />
@@ -521,8 +601,8 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 4: Dietary Needs */}
-                    {currentStep === 3 && (
+                    {/* Step 5: Dietary Needs */}
+                    {currentStep === 4 && (
                       <div className="space-y-6">
                         <FormField
                           control={form.control}
@@ -540,9 +620,7 @@ export default function NewItineraryPage() {
                                       key={diet.id}
                                       className={cn(
                                         "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all hover:bg-accent",
-                                        field.value?.includes(diet.id)
-                                          ? "border-primary bg-primary/5"
-                                          : "border-muted"
+                                        field.value?.includes(diet.id) ? "border-primary bg-primary/5" : "border-muted",
                                       )}
                                     >
                                       <Checkbox
@@ -550,9 +628,7 @@ export default function NewItineraryPage() {
                                         onCheckedChange={(checked) =>
                                           checked
                                             ? field.onChange([...field.value, diet.id])
-                                            : field.onChange(
-                                                field.value?.filter((v) => v !== diet.id) || []
-                                              )
+                                            : field.onChange(field.value?.filter((v) => v !== diet.id) || [])
                                         }
                                         className="h-5 w-5"
                                       />
@@ -571,8 +647,8 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 5: Budget */}
-                    {currentStep === 4 && (
+                    {/* Step 6: Budget */}
+                    {currentStep === 5 && (
                       <div className="space-y-8">
                         <FormField
                           control={form.control}
@@ -613,19 +689,37 @@ export default function NewItineraryPage() {
 
                                   <div className="flex items-center justify-between">
                                     <span className="text-sm text-muted-foreground">$100</span>
-                                    <span className="text-2xl font-semibold text-primary">
-                                      ${field.value}
-                                    </span>
+                                    <span className="text-2xl font-semibold text-primary">${field.value}</span>
                                     <span className="text-sm text-muted-foreground">$10,000</span>
                                   </div>
 
                                   <div className="rounded-lg border bg-card p-4 shadow-sm">
                                     <h3 className="mb-3 font-medium">Estimated Budget Breakdown</h3>
-                                    <BudgetItem label="Accommodation" amount={Math.round(field.value * 0.4)} percentage={40} />
-                                    <BudgetItem label="Transportation" amount={Math.round(field.value * 0.2)} percentage={20} />
-                                    <BudgetItem label="Food & Dining" amount={Math.round(field.value * 0.2)} percentage={20} />
-                                    <BudgetItem label="Activities" amount={Math.round(field.value * 0.15)} percentage={15} />
-                                    <BudgetItem label="Miscellaneous" amount={Math.round(field.value * 0.05)} percentage={5} />
+                                    <BudgetItem
+                                      label="Accommodation"
+                                      amount={Math.round(field.value * 0.4)}
+                                      percentage={40}
+                                    />
+                                    <BudgetItem
+                                      label="Transportation"
+                                      amount={Math.round(field.value * 0.2)}
+                                      percentage={20}
+                                    />
+                                    <BudgetItem
+                                      label="Food & Dining"
+                                      amount={Math.round(field.value * 0.2)}
+                                      percentage={20}
+                                    />
+                                    <BudgetItem
+                                      label="Activities"
+                                      amount={Math.round(field.value * 0.15)}
+                                      percentage={15}
+                                    />
+                                    <BudgetItem
+                                      label="Miscellaneous"
+                                      amount={Math.round(field.value * 0.05)}
+                                      percentage={5}
+                                    />
                                   </div>
                                 </div>
                               </FormControl>
@@ -636,8 +730,8 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 6: Review */}
-                    {currentStep === 5 && (
+                    {/* Step 7: Review */}
+                    {currentStep === 6 && (
                       <div className="space-y-6">
                         <div className="rounded-lg border bg-card p-6 shadow-sm">
                           <h3 className="mb-4 text-lg font-semibold">Trip Summary</h3>
@@ -648,20 +742,22 @@ export default function NewItineraryPage() {
                               value={form.getValues().destination.name}
                             />
                             <SummaryItem
+                              icon={<Home className="h-4 w-4" />}
+                              label="Home Location"
+                              value={form.getValues().homeLocation?.name || "Not specified"}
+                            />
+                            <SummaryItem
                               icon={<Calendar className="h-4 w-4" />}
                               label="Dates"
                               value={`${format(form.getValues().dateRange.from, "MMM d")} - ${format(
                                 form.getValues().dateRange.to,
-                                "MMM d, yyyy"
+                                "MMM d, yyyy",
                               )}`}
                             />
                             <SummaryItem
                               icon={<Users className="h-4 w-4" />}
                               label="Travel Type"
-                              value={
-                                travelTypeOptions.find((t) => t.id === form.getValues().travelType)
-                                  ?.label || ""
-                              }
+                              value={travelTypeOptions.find((t) => t.id === form.getValues().travelType)?.label || ""}
                             />
                             <SummaryItem
                               icon={<Wallet className="h-4 w-4" />}

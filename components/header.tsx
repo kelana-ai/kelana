@@ -40,7 +40,7 @@ export default function Header() {
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { name: "Dashboard", href: "/dashboard" },
-    { name: "My Itineraries", href: "/my-itineraries" },
+    { name: "My Itineraries", href: "/itinerary" },
     { name: "Account Settings", href: "/account" },
   ]
 
@@ -48,7 +48,7 @@ export default function Header() {
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { name: "Dashboard", href: "/dashboard" },
-    { name: "My Itineraries", href: "/my-itineraries" },
+    { name: "My Itineraries", href: "/itinerary" },
   ]
 
   return (
