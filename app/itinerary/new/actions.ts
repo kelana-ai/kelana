@@ -32,7 +32,8 @@ const DaySchema = z.object({
   activities: z.array(
     z.object({
       id: z.string(),
-      time: z.string(),
+      start_time: z.string(),
+      end_time: z.string(),
       title: z.string(),
       description: z.string(),
       type: z.enum([
@@ -55,6 +56,7 @@ const DaySchema = z.object({
             name: z.string(),
             lat: z.number(),
             lng: z.number(),
+            address: z.string(),
           })
           .nullable(),
     }),
@@ -77,6 +79,7 @@ const ItinerarySchema = z.object({
     total: z.number(),
     percentage: z.number(),
   }),
+  icon: z.string(),
 })
 
 export async function submitItinerary(formData: FormData) {
@@ -157,6 +160,10 @@ export async function submitItinerary(formData: FormData) {
         - Only use **real, existing businesses/locations** with a web or map presence.
         - All details must be **verifiable by a human user** via online search.
 
+        🖼️ AFTER YOU GENERATE THE ITINERARY JSON, choose **one** icon name from the following list that best represents this trip:
+        ["adventure","africa","alaska","backpacking","bali","business","canada","city","costa-rica","countryside","culture","family","festival","global","greece","island","morocco","mystery","new-zealand","paris","peru","roadtrip","summer","switzerland","tokyo","wellness","winter"]
+        Include it in the output as the top-level property.
+
         Output should be in the expected JSON structure, as defined in the provided schema. Only return the **eco-friendly version** of the itinerary. Prioritize **clarity, detail, and responsibility** in all entries.
         `,
     })
@@ -191,6 +198,7 @@ export async function submitItinerary(formData: FormData) {
           total: object.carbon.total,
           percentage: object.carbon.percentage,
         },
+        icon: object.icon,
       })
       .select("id")
       .single()
@@ -214,15 +222,12 @@ export async function submitItinerary(formData: FormData) {
 
       for (let j = 0; j < day.activities.length; j++) {
         const act = day.activities[j]
-        const timeComponents = act.time.split(" - ")
-        const startTime = timeComponents[0]
-        const endTime = timeComponents.length > 1 ? timeComponents[1] : null
 
         const { error: aErr } = await supabaseAdmin.from("itinerary_activities").insert({
           day_id: dayId,
           activity_index: j,
-          start_time: startTime,
-          end_time: endTime,
+          start_time: act.start_time,
+          end_time: act.end_time,
           title: act.title,
           description: act.description,
           type: act.type,
@@ -230,6 +235,7 @@ export async function submitItinerary(formData: FormData) {
           location_name: act.location?.name,
           location_lat: act.location?.lat,
           location_lng: act.location?.lng,
+          address: act.location?.address,
           cost: act.cost || 0,
           currency: act.currency || "USD",
           eco_tags: [act.ecoTag],

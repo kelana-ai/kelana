@@ -54,8 +54,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [showWelcome, setShowWelcome] = useState(true)
 
-  // Fetch dashboard data using the custom hook
-  const { data, isLoading, error, refetch } = useDashboardData(user?.id)
+  const { data, isLoading, error } = useDashboardData(user?.id)
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -354,7 +353,7 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-3">
                               <div className="h-10 w-10 overflow-hidden rounded-md">
                                 <Image
-                                  src={itinerary.image_url || "/placeholder.svg?height=40&width=40"}
+                                  src={itinerary.icon || "/places/bali.png"}
                                   alt={itinerary.destination}
                                   width={40}
                                   height={40}

@@ -19,7 +19,7 @@ export type DashboardData = {
     dates: string
     status: string
     lastUpdated: string
-    image_url?: string
+    icon?: string
   }>
   analytics: {
     carbonData: Array<{
@@ -85,6 +85,7 @@ export async function fetchDashboardData(
         dietary_needs,
         budget,
         carbon_metrics,
+        icon,
         created_at,
         updated_at
       `)
@@ -98,10 +99,8 @@ export async function fetchDashboardData(
     const activeTrips =
       itineraries?.filter((itn) => itn.status === "confirmed" || itn.status === "planning").length || 0
 
-    // Calculate total carbon saved
     const totalCarbonSaved = itineraries?.reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0) || 0
 
-    // Calculate total budget left
     const totalBudgetLeft =
       itineraries?.reduce((total, itn) => {
         if (itn.status === "confirmed" || itn.status === "planning") {
@@ -110,7 +109,6 @@ export async function fetchDashboardData(
         return total
       }, 0) || 0
 
-    // Format recent itineraries
     const recentItineraries =
       itineraries?.slice(0, 4).map((itn) => ({
         id: itn.id,
@@ -119,15 +117,13 @@ export async function fetchDashboardData(
         dates: `${new Date(itn.date_from).toLocaleDateString()} - ${new Date(itn.date_to).toLocaleDateString()}`,
         status: itn.status,
         lastUpdated: formatDistanceToNow(new Date(itn.updated_at || itn.created_at), { addSuffix: true }),
-        image_url: `/places/${itn.destination_name.toLowerCase().replace(/\s+/g, "-")}.png`,
+        icon: `/places/${itn.icon}.png`,
       })) || []
 
-    // Fetch upcoming activities
     const now = new Date()
     const nextWeek = new Date()
     nextWeek.setDate(now.getDate() + 7)
 
-    // First get the days for the next week
     const { data: days, error: daysError } = await supabaseAdmin
       .from("itinerary_days")
       .select(`
@@ -143,7 +139,6 @@ export async function fetchDashboardData(
       throw daysError
     }
 
-    // Then get activities for those days
     let upcomingActivities: any[] = []
 
     if (days && days.length > 0) {
@@ -167,7 +162,6 @@ export async function fetchDashboardData(
         throw activitiesError
       }
 
-      // Map activities to include date from parent day
       if (activities) {
         upcomingActivities = activities
           .map((activity) => {
@@ -181,16 +175,14 @@ export async function fetchDashboardData(
               itineraryId: parentDay?.itinerary_id,
             }
           })
-          .slice(0, 10) // Limit to 10 activities
+          .slice(0, 10)
       }
     }
 
-    // Generate analytics data based on itineraries
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     const currentMonth = new Date().getMonth()
 
     const carbonData = months.slice(currentMonth - 5, currentMonth + 1).map((month, index) => {
-      // Generate realistic carbon data based on itineraries
       const monthIndex = (currentMonth - 5 + index + 12) % 12
       const monthItineraries = itineraries?.filter((itn) => {
         const date = new Date(itn.created_at)
@@ -199,7 +191,7 @@ export async function fetchDashboardData(
 
       const carbonValue =
         monthItineraries?.reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0) ||
-        Math.floor(Math.random() * 200) + 50 // Fallback to random data
+        Math.floor(Math.random() * 200) + 50
 
       return {
         name: month,
@@ -207,7 +199,6 @@ export async function fetchDashboardData(
       }
     })
 
-    // Calculate budget allocation from itineraries
     const budgetData = [
       {
         name: "Accommodation",
@@ -241,7 +232,6 @@ export async function fetchDashboardData(
       },
     ]
 
-    // Calculate eco score based on carbon savings
     const ecoScore = Math.min(100, Math.round(totalCarbonSaved / (itineraries?.length || 1) / 10))
     let ecoRating = "No data"
     let ecoMessage = ""
@@ -260,7 +250,6 @@ export async function fetchDashboardData(
       ecoMessage = "Keep improving your eco-friendly travel choices"
     }
 
-    // Generate destination impact data
     const destinationData = Array.from(new Set(itineraries?.map((itn) => itn.destination_name) || []))
       .slice(0, 4)
       .map((destination) => {
@@ -275,7 +264,6 @@ export async function fetchDashboardData(
         }
       })
 
-    // If we don't have enough destinations, add some placeholder data
     if (destinationData.length < 2) {
       destinationData.push(
         { name: "Bali", impact: 65 },
@@ -285,7 +273,6 @@ export async function fetchDashboardData(
       )
     }
 
-    // Generate travel companions data
     const travelCompanions =
       itineraries
         ?.filter((itn) => itn.status === "confirmed" || itn.status === "planning")
