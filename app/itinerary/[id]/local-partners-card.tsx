@@ -11,7 +11,7 @@ interface LocalPartnersCardProps {
 
 export function LocalPartnersCard({ destination }: LocalPartnersCardProps) {
   const partners = [
-    { name: "Bambu Indah Eco Resort", desc: "Sustainable Accommodation" },
+    { name: "Bambu Indah Eco Resort", desc: "Greener Accommodation" },
     { name: "Alchemy Bali", desc: "Organic Restaurant" },
     { name: "Bali Eco Tours", desc: "Local Tour Operator" },
   ]

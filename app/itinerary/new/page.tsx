@@ -11,6 +11,7 @@ import {
   Home,
   Loader2,
   MapPin,
+  Search,
   Sparkles,
   Users,
   Utensils,
@@ -37,7 +38,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser } from "@/contexts/user-context"
 import { cn } from "@/lib/utils"
 import { submitItinerary } from "./actions"
+import { ErrorRecovery } from "./error-recovery"
+import { LoadingExperience } from "./loading-experience"
 
+// Import MapComponent dynamically to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
   ssr: false,
   loading: () => (
@@ -135,7 +139,34 @@ export default function NewItineraryPage() {
   const [selectedHomeLocation, setSelectedHomeLocation] = useState<{ name: string; lat: number; lng: number } | null>(
     null,
   )
+  const [showLoadingExperience, setShowLoadingExperience] = useState(false)
+  const [showError, setShowError] = useState<Error | null>(null)
   const formContainerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<any>(null)
+
+  // Search state
+  const [destinationSearchQuery, setDestinationSearchQuery] = useState("")
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchResults, setSearchResults] = useState<
+    Array<{
+      display_name: string
+      lat: string
+      lon: string
+    }>
+  >([])
+  const [showSearchResults, setShowSearchResults] = useState(false)
+
+  const [homeLocationSearchQuery, setHomeLocationSearchQuery] = useState("")
+  const [isHomeSearching, setIsHomeSearching] = useState(false)
+  const [homeSearchResults, setHomeSearchResults] = useState<
+    Array<{
+      display_name: string
+      lat: string
+      lon: string
+    }>
+  >([])
+  const [showHomeSearchResults, setShowHomeSearchResults] = useState(false)
+  const homeMapRef = useRef<any>(null)
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -143,6 +174,7 @@ export default function NewItineraryPage() {
     }
   }, [user, isLoading, router])
 
+  // Initialize form with user profile data if available
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -179,6 +211,113 @@ export default function NewItineraryPage() {
     }
   }, [selectedHomeLocation, form])
 
+  // Search for locations
+  const searchLocation = async (query: string) => {
+    if (!query.trim()) return
+
+    try {
+      setIsSearching(true)
+
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+        {
+          headers: {
+            "Accept-Language": "en",
+          },
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error("Failed to search location")
+      }
+
+      const data = await response.json()
+
+      if (data && data.length > 0) {
+        setSearchResults(data)
+        setShowSearchResults(true)
+      } else {
+        toast.error("Location not found. Try a different search term.")
+        setSearchResults([])
+      }
+    } catch (error) {
+      console.error("Error searching location:", error)
+      toast.error("Failed to search location. Please try again.")
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const searchHomeLocation = async (query: string) => {
+    if (!query.trim()) return
+
+    try {
+      setIsHomeSearching(true)
+
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+        {
+          headers: {
+            "Accept-Language": "en",
+          },
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error("Failed to search location")
+      }
+
+      const data = await response.json()
+
+      if (data && data.length > 0) {
+        setHomeSearchResults(data)
+        setShowHomeSearchResults(true)
+      } else {
+        toast.error("Location not found. Try a different search term.")
+        setHomeSearchResults([])
+      }
+    } catch (error) {
+      console.error("Error searching location:", error)
+      toast.error("Failed to search location. Please try again.")
+    } finally {
+      setIsHomeSearching(false)
+    }
+  }
+
+  // Select a search result
+  const selectSearchResult = (result: { display_name: string; lat: string; lon: string }) => {
+    const location = {
+      name: result.display_name,
+      lat: Number.parseFloat(result.lat),
+      lng: Number.parseFloat(result.lon),
+    }
+
+    setSelectedDestination(location)
+    setDestinationSearchQuery(result.display_name)
+    setShowSearchResults(false)
+
+    // Update the map if the map component is available
+    if (mapRef.current?.setLocation) {
+      mapRef.current.setLocation(location)
+    }
+  }
+
+  const selectHomeSearchResult = (result: { display_name: string; lat: string; lon: string }) => {
+    const location = {
+      name: result.display_name,
+      lat: Number.parseFloat(result.lat),
+      lng: Number.parseFloat(result.lon),
+    }
+
+    setSelectedHomeLocation(location)
+    setHomeLocationSearchQuery(result.display_name)
+    setShowHomeSearchResults(false)
+
+    if (homeMapRef.current?.setLocation) {
+      homeMapRef.current.setLocation(location)
+    }
+  }
+
   function onSubmit(data: FormValues) {
     if (!user) {
       toast.error("You must be logged in to create an itinerary")
@@ -186,6 +325,7 @@ export default function NewItineraryPage() {
     }
 
     setIsSubmitting(true)
+    setShowLoadingExperience(true)
 
     const formData = new FormData()
     formData.append("userId", user.id)
@@ -210,13 +350,15 @@ export default function NewItineraryPage() {
           toast.success("Itinerary generated successfully!")
           router.push(`/itinerary/${response.itineraryId}`)
         } else {
-          toast.error("Failed to generate itinerary. Please try again.")
+          setShowError(new Error(response.error || "Failed to generate itinerary"))
           setIsSubmitting(false)
+          setShowLoadingExperience(false)
         }
       })
       .catch((error) => {
-        toast.error(error.message || "An error occurred while generating the itinerary.")
+        setShowError(error)
         setIsSubmitting(false)
+        setShowLoadingExperience(false)
       })
   }
 
@@ -242,14 +384,39 @@ export default function NewItineraryPage() {
     }
   }
 
-  const handleDestinationSelect = (location: { name: string; lat: number; lng: number }) => {
+  const handleMapLocationSelect = (location: { name: string; lat: number; lng: number }) => {
     setSelectedDestination(location)
-    form.setValue("destination", location)
+    setDestinationSearchQuery(location.name)
   }
 
   const handleHomeLocationSelect = (location: { name: string; lat: number; lng: number }) => {
     setSelectedHomeLocation(location)
-    form.setValue("homeLocation", location)
+  }
+
+  const handleRetry = () => {
+    setShowError(null)
+    setIsSubmitting(true)
+    setShowLoadingExperience(true)
+
+    // Resubmit the form
+    const data = form.getValues()
+    onSubmit(data)
+  }
+
+  const handleCancel = () => {
+    setShowError(null)
+  }
+
+  if (showLoadingExperience) {
+    return showError ? (
+      <ErrorRecovery error={showError} onRetry={handleRetry} onCancel={handleCancel} />
+    ) : (
+      <LoadingExperience
+        destination={form.getValues().destination.name}
+        tripName={form.getValues().tripName}
+        onError={(error) => setShowError(error)}
+      />
+    )
   }
 
   return (
@@ -380,23 +547,59 @@ export default function NewItineraryPage() {
                               <FormLabel>Destination</FormLabel>
                               <FormControl>
                                 <div className="space-y-3">
-                                  <div className="relative">
-                                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                      className="pl-9"
-                                      placeholder="Search for a destination"
-                                      value={field.value.name}
-                                      onChange={(e) =>
-                                        field.onChange({
-                                          ...field.value,
-                                          name: e.target.value,
-                                        })
-                                      }
-                                    />
+                                  {/* Separate search input outside the map */}
+                                  <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                      <Input
+                                        type="text"
+                                        placeholder="Search for a destination..."
+                                        className="pl-9 pr-10"
+                                        value={destinationSearchQuery}
+                                        onChange={(e) => setDestinationSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault()
+                                            searchLocation(destinationSearchQuery)
+                                          }
+                                        }}
+                                      />
+                                      {isSearching && (
+                                        <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+                                      )}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      onClick={() => searchLocation(destinationSearchQuery)}
+                                      disabled={isSearching || !destinationSearchQuery.trim()}
+                                    >
+                                      Search
+                                    </Button>
                                   </div>
+
+                                  {/* Search results dropdown */}
+                                  {showSearchResults && searchResults.length > 0 && (
+                                    <div className="relative">
+                                      <div className="absolute left-0 right-0 top-0 z-50 max-h-60 overflow-auto rounded-md border bg-background shadow-md">
+                                        <ul className="py-1">
+                                          {searchResults.map((result, index) => (
+                                            <li
+                                              key={index}
+                                              className="cursor-pointer px-4 py-2 text-sm hover:bg-accent"
+                                              onClick={() => selectSearchResult(result)}
+                                            >
+                                              {result.display_name}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  )}
+
                                   <div className="h-[300px] overflow-hidden rounded-md border">
-                                    <MapComponent onLocationSelect={handleDestinationSelect} />
+                                    <MapComponent onLocationSelect={handleMapLocationSelect} ref={mapRef} />
                                   </div>
+
                                   {field.value.name && field.value.lat !== 0 && (
                                     <div className="flex items-center gap-2 rounded-md bg-primary/10 p-2 text-sm">
                                       <MapPin className="h-4 w-4 text-primary" />
@@ -408,7 +611,7 @@ export default function NewItineraryPage() {
                                 </div>
                               </FormControl>
                               <FormDescription>
-                                Search for a destination or click on the map to select a location
+                                Search for a location or click directly on the map to select your destination
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -477,31 +680,69 @@ export default function NewItineraryPage() {
                               <FormLabel>Your Home Location</FormLabel>
                               <FormControl>
                                 <div className="space-y-3">
-                                  <div className="relative">
-                                    <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                      className="pl-9"
-                                      placeholder="Search for your home location"
-                                      value={field.value?.name || ""}
-                                      onChange={(e) =>
-                                        field.onChange({
-                                          ...field.value,
-                                          name: e.target.value,
-                                        })
-                                      }
-                                    />
+                                  {/* Separate search input outside the map */}
+                                  <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                      <Input
+                                        type="text"
+                                        placeholder="Search for your home location..."
+                                        className="pl-9 pr-10"
+                                        value={homeLocationSearchQuery}
+                                        onChange={(e) => setHomeLocationSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault()
+                                            searchHomeLocation(homeLocationSearchQuery)
+                                          }
+                                        }}
+                                      />
+                                      {isHomeSearching && (
+                                        <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+                                      )}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      onClick={() => searchHomeLocation(homeLocationSearchQuery)}
+                                      disabled={isHomeSearching || !homeLocationSearchQuery.trim()}
+                                    >
+                                      Search
+                                    </Button>
                                   </div>
-                                  <div className="h-[300px] overflow-hidden rounded-md border">
-                                    <MapComponent onLocationSelect={handleHomeLocationSelect} />
-                                  </div>
-                                  {field.value?.name && field.value?.lat !== 0 && (
-                                    <div className="flex items-center gap-2 rounded-md bg-primary/10 p-2 text-sm">
-                                      <Home className="h-4 w-4 text-primary" />
-                                      <span>
-                                        Selected: <strong>{field.value.name}</strong>
-                                      </span>
+
+                                  {/* Search results dropdown */}
+                                  {showHomeSearchResults && homeSearchResults.length > 0 && (
+                                    <div className="relative">
+                                      <div className="absolute left-0 right-0 top-0 z-50 max-h-60 overflow-auto rounded-md border bg-background shadow-md">
+                                        <ul className="py-1">
+                                          {homeSearchResults.map((result, index) => (
+                                            <li
+                                              key={index}
+                                              className="cursor-pointer px-4 py-2 text-sm hover:bg-accent"
+                                              onClick={() => selectHomeSearchResult(result)}
+                                            >
+                                              {result.display_name}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
                                     </div>
                                   )}
+
+                                  <div className="h-[300px] overflow-hidden rounded-md border">
+                                    <MapComponent onLocationSelect={handleHomeLocationSelect} ref={homeMapRef} />
+                                  </div>
+
+                                  {field.value?.name &&
+                                    field.value?.lat !== undefined &&
+                                    field.value?.lng !== undefined && (
+                                      <div className="flex items-center gap-2 rounded-md bg-primary/10 p-2 text-sm">
+                                        <Home className="h-4 w-4 text-primary" />
+                                        <span>
+                                          Selected: <strong>{field.value.name}</strong>
+                                        </span>
+                                      </div>
+                                    )}
                                 </div>
                               </FormControl>
                               <FormDescription>

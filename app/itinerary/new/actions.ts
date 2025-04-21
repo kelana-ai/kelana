@@ -91,7 +91,7 @@ export async function submitItinerary(formData: FormData) {
       },
       schema: ItinerarySchema,
       prompt: `
-        Create a **thorough, detailed, and eco-conscious travel itinerary** for a real-world trip. All content must be **accountable, verified, and deeply researched**. Your output must align with modern sustainable tourism principles.
+        Create a **thorough, detailed, and eco-conscious travel itinerary** for a real-world trip. All content must be **accountable, verified, and deeply researched**. Your output must align with modern greener tourism principles.
 
         🎯 OVERVIEW:
 
@@ -106,7 +106,7 @@ export async function submitItinerary(formData: FormData) {
 
         🛠️ STRUCTURE & EXPECTATIONS:
 
-        1. Create a sustainable itinerary that covers the **entire trip duration**, broken down **day by day**.
+        1. Create a greener itinerary that covers the **entire trip duration**, broken down **day by day**.
         2. Each **day** must include multiple **diverse activities** (minimum: transportation, dining, sightseeing, wellness, and one cultural or local engagement).
         3. Ensure that every activity is:
           - Based on a **real, verifiable location** (business, site, or attraction searchable on Google Maps).
@@ -133,7 +133,7 @@ export async function submitItinerary(formData: FormData) {
           Coordinates: -8.5193, 115.2633  
 
         ❌ AVOID GENERIC ENTRIES like:  
-        "Local market", "Eco-friendly hotel", "Sustainable cafe", or placeholders.
+        "Local market", "Eco-friendly hotel", "Greener cafe", or placeholders.
 
         🌱 SUSTAINABILITY EMPHASIS:
 
