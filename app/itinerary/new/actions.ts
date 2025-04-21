@@ -3,6 +3,7 @@
 import { openai } from "@ai-sdk/openai"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { generateObject } from "ai"
+import { differenceInCalendarDays, format, parseISO } from "date-fns"
 import { z } from "zod"
 
 const ItineraryInput = z.object({
@@ -80,12 +81,22 @@ const ItinerarySchema = z.object({
     percentage: z.number(),
   }),
   icon: z.string(),
+  sourceUrl: z.string(),
 })
 
 export async function submitItinerary(formData: FormData) {
   try {
     const { userId, tripName, destination, homeLocation, dateRange, travelType, travelStyles, dietaryNeeds, budget } =
       ItineraryInput.parse(Object.fromEntries(formData.entries()))
+
+    const from = parseISO(dateRange.from)
+    const to   = parseISO(dateRange.to)
+
+    const formattedFrom = format(from, "MMM d, yyyy")
+    const formattedTo   = format(to,   "MMM d, yyyy")
+    const daysCount     = differenceInCalendarDays(to, from) + 1
+
+    const dateLine = `Dates: ${formattedFrom} → ${formattedTo} (${daysCount} days)`
 
     const { object } = await generateObject({
       model: openai.responses("gpt-4o"),
@@ -94,78 +105,79 @@ export async function submitItinerary(formData: FormData) {
       },
       schema: ItinerarySchema,
       prompt: `
-        Create a **thorough, detailed, and eco-conscious travel itinerary** for a real-world trip. All content must be **accountable, verified, and deeply researched**. Your output must align with modern greener tourism principles.
-
-        🎯 OVERVIEW:
-
+        You are an expert travel planner. Create a **thorough, detailed, and eco-conscious travel itinerary** for a real-world trip. All content must be **accountable, verified, and deeply researched**. Your output must align with modern greener tourism principles and **strictly follow** the provided JSON schema, including these fields:
+        
+        - **Itinerary**: name, destination, date_from, date_to, icon, budget, carbon  
+        - **Day**: id, date, activities[]  
+        - **Activity**: id, start_time, end_time, title, description, type, ecoTag, cost (USD), currency, location { name, lat, lng, address }, **sourceUrl**  
+        
+        🎯 **OVERVIEW**  
         Trip Name: ${tripName}  
         Destination: ${destination.name} (Lat: ${destination.lat}, Lng: ${destination.lng})  
-        ${homeLocation?.lat && homeLocation?.lng ? `Home Location: ${homeLocation.name || "Not specified"} (Lat: ${homeLocation.lat}, Lng: ${homeLocation.lng})` : "Home Location: Not specified"}  
-        Dates: ${dateRange.from} → ${dateRange.to}  
+        Home Location: ${homeLocation?.lat && homeLocation?.lng  
+          ? `${homeLocation.name || "Not specified"} (Lat: ${homeLocation.lat}, Lng: ${homeLocation.lng})`  
+          : "Not specified"}  
+        Dates: ${dateLine}  
         Travel Type: ${travelType}  
         Travel Styles: ${travelStyles.join(", ")}  
-        Dietary Preferences: ${dietaryNeeds.length > 0 ? dietaryNeeds.join(", ") : "None specified"}  
+        Dietary Preferences: ${dietaryNeeds.length > 0 ? dietaryNeeds.join(", ") : "None"}  
         Budget: $${budget}
-
-        🛠️ STRUCTURE & EXPECTATIONS:
-
-        1. Create a greener itinerary that covers the **entire trip duration**, broken down **day by day**.
-        2. Each **day** must include multiple **diverse activities** (minimum: transportation, dining, sightseeing, wellness, and one cultural or local engagement).
-        3. Ensure that every activity is:
-          - Based on a **real, verifiable location** (business, site, or attraction searchable on Google Maps).
-          - Includes **precise lat/lng coordinates**.
-          - Has a **fully fleshed-out, accurate description**, including:
-            - What the activity involves
-            - Why it's a good fit for eco-conscious travel
-            - Any **specific sustainability certifications or practices** (e.g., solar power, zero-waste, carbon neutrality, organic sourcing)
-        4. Every activity must have:
-          - A **realistic cost** in USD
-          - Properly labeled **activity type** and **ecoTag**
-          - A **rational time estimate**
-
-        ✅ ACTIVITY EXAMPLES (GOOD):
-
-        - **"Alila Ubud (Bali, Indonesia)"**  
-          EcoTag: accommodation  
-          Description: Luxury resort that uses solar heating, composts food waste, sources ingredients locally, and has EarthCheck certification.  
-          Coordinates: -8.4923, 115.2608  
-
-        - **"Locavore Restaurant, Ubud"**  
-          EcoTag: food  
-          Description: Farm-to-table fine dining with a daily-changing menu focused on local organic produce. Minimal food waste via fermentation.  
-          Coordinates: -8.5193, 115.2633  
-
-        ❌ AVOID GENERIC ENTRIES like:  
-        "Local market", "Eco-friendly hotel", "Greener cafe", or placeholders.
-
-        🌱 SUSTAINABILITY EMPHASIS:
-
-        - Choose **low-emission transport** (rail > bus > EV > flights)
-        - Highlight **green-certified stays**, public transport tips, and walkable options
-        - Recommend **locally owned, ethical businesses**
-        - Favor **plant-based**, farm-to-table, or organic restaurants
-        - Prioritize activities run by **local cooperatives or nonprofits**
-
-        📊 METRICS & BREAKDOWN:
-
-        - Provide a **realistic total trip cost** (USD), split by:
-          - Accommodation, food, transport, experiences
-        - Estimate **carbon footprint savings**:
-          - Compare conventional vs eco choices
-          - Show total saved CO2 (kg), total emitted, and % reduced
-
-        ⚠️ MANDATORY QUALITY RULES:
-
-        - Do **not hallucinate** data.
-        - Only use **real, existing businesses/locations** with a web or map presence.
-        - All details must be **verifiable by a human user** via online search.
-
-        🖼️ AFTER YOU GENERATE THE ITINERARY JSON, choose **one** icon name from the following list that best represents this trip:
-        ["adventure","africa","alaska","backpacking","bali","business","canada","city","costa-rica","countryside","culture","family","festival","global","greece","island","morocco","mystery","new-zealand","paris","peru","roadtrip","summer","switzerland","tokyo","wellness","winter"]
-        Include it in the output as the top-level property.
-
-        Output should be in the expected JSON structure, as defined in the provided schema. Only return the **eco-friendly version** of the itinerary. Prioritize **clarity, detail, and responsibility** in all entries.
-        `,
+        
+        🛠️ **STRUCTURE & EXPECTATIONS**  
+        1. Cover the **entire trip duration**, broken down **day by day**.  
+        2. **Each day** must include at least:  
+          - One **transportation** activity  
+          - One **dining** activity (food or drink)  
+          - One **sightseeing** activity  
+          - One **wellness** or **cultural/local engagement**  
+        3. **Every activity** must:  
+          - Reference a **real, verifiable location** (searchable on Google Maps or official site).  
+          - Include exact 'lat'/'lng', full street 'address', and a valid **sourceUrl** (Google Maps link or official webpage).  
+          - Have a **3-5 sentence description** covering:  
+            1. What the activity involves.  
+            2. Why it's eco-friendly (e.g. solar panels, zero-waste, carbon-neutral certification).  
+            3. Concrete facts (opening hours, year founded, awards or certifications).  
+          - Specify a **realistic cost** (USD per person).  
+          - Label 'type', 'ecoTag', 'start_time', and 'end_time' sensibly.  
+        4. **Skip any activity** you cannot verify with a real sourceUrl.  
+        
+        ✅ **ACTIVITY EXAMPLES (GOOD)**  
+        - **Alila Ubud (Bali, Indonesia)**  
+          • type: accommodation | ecoTag: green-certified  
+          • Coordinates: -8.4923, 115.2608  
+          • sourceUrl: https://goo.gl/maps/…  
+          • Description (3-5 sentences): "Alila Ubud is a luxury resort established in 2009 that uses solar-heated water, composts all food waste on-site, and holds EarthCheck Platinum certification. Guests can join guided organic farm tours and participate in daily yoga sessions overlooking the Ayung River. The property sources 80% of its produce from local farms, minimizing food miles. Its architecture preserves traditional Balinese wood-carving techniques, and it has won the Green hotel award from the Bali Tourism Board."  
+        
+        - **Locavore Restaurant, Ubud**  
+          • type: food | ecoTag: farm-to-table  
+          • Coordinates: -8.5193, 115.2633  
+          • sourceUrl: https://goo.gl/maps/…  
+        
+        ❌ **AVOID** generic placeholders like "Local market" or "Greener cafe."
+        
+        🌱 **SUSTAINABILITY EMPHASIS**  
+        - Prefer rail > bus > EV > flights  
+        - Highlight green-certified stays, public transport, and walkable routes  
+        - Recommend locally owned, ethical businesses  
+        - Favor plant-based, farm-to-table, or organic menus  
+        - Prioritize cooperatives or nonprofit-run activities  
+        
+        📊 **METRICS & BREAKDOWN**  
+        - Provide a **realistic total trip cost** (USD), split by:  
+          • Accommodation | Food | Transport | Experiences  
+        - Estimate **carbon footprint savings** vs. conventional choices:  
+          • Total emitted (kg), total saved (kg), % reduced  
+        
+        ⚠️ **MANDATORY QUALITY RULES**  
+        - Do **not** hallucinate—every detail must be verifiable.  
+        - Only use **real, existing** locations with a web or map presence.  
+        - If you cannot find a valid sourceUrl, **omit** that activity.  
+        
+        🖼️ **FINAL ICON**  
+        After generating the itinerary JSON, choose **one** icon name from:  
+        ["adventure","africa","alaska","backpacking","bali","business","canada","city","costa-rica","countryside","culture","family","festival","global","greece","island","morocco","mystery","new-zealand","paris","peru","roadtrip","summer","switzerland","tokyo","wellness","winter"]  
+        and include it as the top-level 'icon' property.
+      `,
     })
 
     const supabaseAdmin = createAdminClient(

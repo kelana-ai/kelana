@@ -29,6 +29,7 @@ export interface ActivityRow {
   location_name: string | null
   location_lat: number | null
   location_lng: number | null
+  address: string | null
   cost: number
   currency: string
   eco_tags: string[]
@@ -107,6 +108,17 @@ export default function ItineraryClient({
         lng: act.location_lng || undefined,
       },
     })),
+  )
+
+  const partners = Array.from(
+    new Map<string, { name: string; address: string }>(
+      itn.itinerary_days.flatMap((d) => d.itinerary_activities)
+        .filter((act) => act.location_name && act.address)
+        .map((act) => [
+          act.location_name!,
+          { name: act.location_name!, address: act.address! },
+        ]),
+    ).values(),
   )
 
   return (
@@ -208,7 +220,7 @@ export default function ItineraryClient({
 
             <CarbonImpactCard carbonSaved={itn.carbon_metrics.saved} carbonPercentage={itn.carbon_metrics.percentage} />
 
-            <LocalPartnersCard destination={itn.destination_name} />
+            <LocalPartnersCard partners={partners} />
 
             <Card className="shadow-md transition-all duration-300 hover:shadow-lg pt-0">
               <CardHeader className="bg-primary/5 border-b pt-6">

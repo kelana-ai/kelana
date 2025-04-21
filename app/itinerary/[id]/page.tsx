@@ -26,7 +26,7 @@ export default async function ItineraryPage({
         id, day_index, date,
         itinerary_activities (
           id, activity_index, start_time, end_time, title, description, 
-          type, status, location_name, location_lat, location_lng,
+          type, status, location_name, location_lat, location_lng, address,
           cost, currency, eco_tags
         )
       )
