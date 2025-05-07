@@ -41,7 +41,6 @@ import { submitItinerary } from "./actions"
 import { ErrorRecovery } from "./error-recovery"
 import { LoadingExperience } from "./loading-experience"
 
-// Import MapComponent dynamically to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
   ssr: false,
   loading: () => (
@@ -81,7 +80,7 @@ const formSchema = z.object({
     from: z.date(),
     to: z.date(),
   }),
-  travelType: z.enum(["solo", "couple", "friends", "family"]),
+  travelType: z.enum(["solo", "partners", "groups", "family", "business", "digital-nomad", "pet-friendly"]),
   travelStyles: z.array(z.string()).min(1, {
     message: "Select at least one travel style.",
   }),
@@ -92,40 +91,51 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 const travelTypeOptions = [
-  { id: "solo", label: "Solo", icon: "👤", description: "Traveling on your own" },
-  { id: "couple", label: "Couple", icon: "👫", description: "Traveling with a partner" },
-  { id: "friends", label: "Friends", icon: "👥", description: "Traveling with friends" },
-  { id: "family", label: "Family", icon: "👨‍👩‍👧", description: "Traveling with family" },
+  { id: "solo",          label: "Solo Explorer",     icon: "👤", description: "Just me, myself, and I" },
+  { id: "partners",      label: "Partners",          icon: "🧑‍🤝‍🧑", description: "Traveling with a partner" },
+  { id: "groups",        label: "Groups",            icon: "👥", description: "With friends or a small crew" },
+  { id: "family",        label: "Family",            icon: "👨‍👩‍👧‍👦", description: "Kids, parents, or multigenerational" },
+  { id: "business",      label: "Business Traveler", icon: "💼", description: "On a work trip" },
+  { id: "digital-nomad", label: "Digital Nomad",     icon: "💻", description: "Work-from-anywhere lifestyle" },
+  { id: "pet-friendly",  label: "Pet Parent",        icon: "🐾", description: "Bringing my furry friend" },
 ]
 
 const travelStyles = [
-  { id: "healing", label: "Healing", icon: "🧘" },
-  { id: "culinary", label: "Culinary", icon: "🍽️" },
-  { id: "adventurous", label: "Adventurous", icon: "🧗" },
-  { id: "cultural", label: "Cultural & Historical", icon: "🏛️" },
-  { id: "urban", label: "Urban & Modern", icon: "🏙️" },
-  { id: "backpacker", label: "Backpacker", icon: "🎒" },
-  { id: "romantic", label: "Romantic & Honeymoon", icon: "💑" },
-  { id: "family-friendly", label: "Family-Friendly", icon: "👨‍👩‍👧‍👦" },
-  { id: "spiritual", label: "Spiritual & Religious", icon: "🕌" },
-  { id: "photography", label: "Photography & Scenic", icon: "📸" },
+  { id: "wellness",        label: "Wellness & Spa",       icon: "🧘" },
+  { id: "romantic",        label: "Romantic",             icon: "💑" },
+  { id: "family-friendly", label: "Family-Friendly",      icon: "👨‍👩‍👧‍👦" },
+  { id: "cultural",        label: "Culture & History",    icon: "🏛️" },
+  { id: "culinary",        label: "Foodie Adventures",    icon: "🍽️" },
+  { id: "festivals",       label: "Festivals & Events",   icon: "🎉" },
+  { id: "shopping",        label: "Shopping & Style",     icon: "🛍️" },
+  { id: "adventure",       label: "Adventure & Outdoors", icon: "🧗" },
+  { id: "nature",          label: "Nature & Wildlife",    icon: "🦜" },
+  { id: "urban",           label: "Urban Life",           icon: "🏙️" },
+  { id: "roadtrip",        label: "Road Trip",            icon: "🛣️" },
+  { id: "cruise",          label: "Cruise Voyages",       icon: "🚢" },
+  { id: "backpacker",      label: "Budget Backpacker",    icon: "🎒" },
+  { id: "photography",     label: "Photography & Scenic", icon: "📸" },
+  { id: "spiritual",       label: "Spiritual Journeys",   icon: "🕌" },
 ]
 
 const dietaryNeeds = [
-  { id: "gluten-free", label: "Gluten-Free", icon: "🌾" },
-  { id: "vegetarian", label: "Vegetarian", icon: "🥗" },
-  { id: "dairy-free", label: "Dairy-Free", icon: "🥛" },
-  { id: "kosher", label: "Kosher", icon: "✡️" },
-  { id: "halal", label: "Halal", icon: "☪️" },
-  { id: "hindu", label: "Hindu Non-Veg", icon: "🕉️" },
+  { id: "vegetarian",       label: "Vegetarian",       icon: "🥗" },
+  { id: "vegan",            label: "Vegan",            icon: "🌿" },
+  { id: "pescatarian",      label: "Pescatarian",      icon: "🐟" },
+  { id: "gluten-free",      label: "Gluten-Free",      icon: "🌾" },
+  { id: "dairy-free",       label: "Dairy-Free",       icon: "🥛" },
+  { id: "nut-free",         label: "Nut-Free",         icon: "🥜" },
+  { id: "shellfish-free",   label: "Shellfish-Free",   icon: "🦐" },
+  { id: "halal",            label: "Halal",            icon: "☪️" },
+  { id: "allergy-friendly", label: "Allergy-Friendly", icon: "⚠️" },
 ]
 
 const budgetRanges = [
-  { value: 500, label: "Budget", description: "Basic accommodations and local food" },
-  { value: 2500, label: "Moderate", description: "Mid-range hotels and some dining out" },
-  { value: 5000, label: "Comfort", description: "4-star hotels and regular dining out" },
-  { value: 7500, label: "Luxury", description: "5-star hotels and premium experiences" },
-  { value: 10000, label: "Ultra Luxury", description: "Exclusive accommodations and experiences" },
+  { value: 200,   label: "Economy" },
+  { value: 1200,  label: "Standard" },
+  { value: 4500,  label: "Premium" },
+  { value: 7500,  label: "Luxury" },
+  { value: 10000, label: "Ultra Luxury" },
 ]
 
 export default function NewItineraryPage() {
@@ -144,7 +154,6 @@ export default function NewItineraryPage() {
   const formContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
 
-  // Search state
   const [destinationSearchQuery, setDestinationSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<
@@ -174,7 +183,6 @@ export default function NewItineraryPage() {
     }
   }, [user, isLoading, router])
 
-  // Initialize form with user profile data if available
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -195,6 +203,7 @@ export default function NewItineraryPage() {
 
   useEffect(() => {
     if (formContainerRef.current) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
       formContainerRef.current.scrollTo({ top: 0, behavior: "smooth" })
     }
   }, [currentStep])
@@ -211,7 +220,6 @@ export default function NewItineraryPage() {
     }
   }, [selectedHomeLocation, form])
 
-  // Search for locations
   const searchLocation = async (query: string) => {
     if (!query.trim()) return
 
@@ -284,7 +292,6 @@ export default function NewItineraryPage() {
     }
   }
 
-  // Select a search result
   const selectSearchResult = (result: { display_name: string; lat: string; lon: string }) => {
     const location = {
       name: result.display_name,
@@ -296,7 +303,6 @@ export default function NewItineraryPage() {
     setDestinationSearchQuery(result.display_name)
     setShowSearchResults(false)
 
-    // Update the map if the map component is available
     if (mapRef.current?.setLocation) {
       mapRef.current.setLocation(location)
     }
@@ -323,6 +329,8 @@ export default function NewItineraryPage() {
       toast.error("You must be logged in to create an itinerary")
       return
     }
+
+    window.scrollTo({ top: 0, behavior: "smooth" })
 
     setIsSubmitting(true)
     setShowLoadingExperience(true)
@@ -374,13 +382,19 @@ export default function NewItineraryPage() {
       if (!(await form.trigger("travelStyles"))) return
     }
     if (currentStep < steps.length - 1) {
-      setTimeout(() => setCurrentStep((s) => s + 1), 0)
+      setTimeout(() => {
+        setCurrentStep((s) => s + 1)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      }, 0)
     }
   }
 
   function prevStep() {
     if (currentStep > 0) {
-      setTimeout(() => setCurrentStep((s) => s - 1), 0)
+      setTimeout(() => {
+        setCurrentStep((s) => s - 1)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      }, 0)
     }
   }
 
@@ -398,7 +412,6 @@ export default function NewItineraryPage() {
     setIsSubmitting(true)
     setShowLoadingExperience(true)
 
-    // Resubmit the form
     const data = form.getValues()
     onSubmit(data)
   }
@@ -431,9 +444,9 @@ export default function NewItineraryPage() {
 
         {/* Progress Indicator */}
         <div className="mb-10 hidden md:block">
-          <div className="relative mb-6 flex items-center justify-between">
+          <div className="relative mb-6 flex items-center">
             {steps.map((step, index) => (
-              <div key={step.id} className="flex flex-col items-center">
+              <div key={step.id} className="flex flex-col items-center flex-1">
                 <div
                   className={cn(
                     "relative z-10 flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200",
@@ -466,13 +479,15 @@ export default function NewItineraryPage() {
                 </p>
               </div>
             ))}
-            <div className="absolute left-0 top-6 h-0.5 w-full -translate-y-1/2 bg-muted" />
-            <motion.div
-              className="absolute left-0 top-6 h-0.5 -translate-y-1/2 bg-primary"
-              initial={{ width: 0 }}
-              animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-              transition={{ duration: 0.3 }}
-            />
+            <div className="absolute left-1/2 -translate-x-1/2 top-6 h-0.5 w-[85%] -translate-y-1/2">
+              <div className="h-full w-full bg-muted" />
+              <motion.div
+                className="h-full bg-primary"
+                initial={{ width: 0 }}
+                animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
           </div>
         </div>
 

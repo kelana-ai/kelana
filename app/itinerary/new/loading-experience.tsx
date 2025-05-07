@@ -4,22 +4,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { AnimatePresence, motion } from "framer-motion"
 import {
-    ArrowRight,
-    Brain,
-    Calendar,
-    Check,
-    Clock,
-    Compass,
-    Globe,
-    Leaf,
-    MapPin,
-    Palmtree,
-    Plane,
-    Route,
-    Sparkles,
-    Sun,
-    Train,
-    Utensils,
+  ArrowRight,
+  Brain,
+  Calendar,
+  Check,
+  Clock,
+  Compass,
+  Globe,
+  Leaf,
+  MapPin,
+  Palmtree,
+  Plane,
+  Route,
+  Sparkles,
+  Sun,
+  Train,
+  Utensils,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -92,22 +92,22 @@ export function LoadingExperience({ destination, tripName, onError }: LoadingExp
   const [animatingIcons, setAnimatingIcons] = useState(true)
 
   useEffect(() => {
-    // Progress animation
+    window.scrollTo({ top: 0, behavior: "auto" })
+  }, [])
+
+  useEffect(() => {
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        // Slow down progress as it gets closer to 100%
         const increment = prev < 70 ? 1.5 : prev < 90 ? 0.7 : 0.3
         const newProgress = Math.min(99, prev + increment)
         return newProgress
       })
     }, 300)
 
-    // Message cycling
     const messageInterval = setInterval(() => {
       setCurrentMessageIndex((prev) => (prev + 1) % loadingMessages.length)
     }, 3500)
 
-    // Fact cycling
     const factInterval = setInterval(() => {
       setFactIndex((prev) => (prev + 1) % ecoFacts.length)
     }, 8000)
@@ -118,14 +118,6 @@ export function LoadingExperience({ destination, tripName, onError }: LoadingExp
       clearInterval(factInterval)
     }
   }, [])
-
-  // Simulate potential error (uncomment for testing)
-  // useEffect(() => {
-  //   const errorTimer = setTimeout(() => {
-  //     if (onError) onError(new Error("Failed to generate itinerary"));
-  //   }, 15000);
-  //   return () => clearTimeout(errorTimer);
-  // }, [onError]);
 
   const iconVariants = {
     hidden: { opacity: 0, y: 10 },

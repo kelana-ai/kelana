@@ -73,27 +73,23 @@ export default function DashboardPage() {
     return () => clearTimeout(timer)
   }, [])
 
-  const sustainabilityTips = [
-    "Reduce plastic usage by opting for reusable water bottles and bags.",
-    "Eat more locally sourced, plant-based foods to lower your carbon footprint.",
-    "Support eco-friendly accommodations and travel providers to decrease your environmental impact.",
-    "Plan your trips ahead and combine travel dates to reduce overall travel emissions.",
-    "Offset your carbon emissions through verified climate projects when booking flights or long trips.",
-    "Travel light—lighter luggage means lower fuel consumption, especially on flights.",
-    "Respect local wildlife and ecosystems by sticking to marked trails and avoiding disturbing animals.",
-    "Use public transportation, walk, or rent bikes instead of hiring a car wherever possible.",
-    "Avoid single-use toiletries—bring your own reusable containers filled with greener products.",
-    "Choose digital tickets, maps, and guides to cut down on paper waste.",
-    "Buy souvenirs from local artisans to support the community and reduce the carbon footprint of imported goods.",
-    "Say no to daily hotel linen changes to save water and energy during your stay.",
-    "Use reef-safe sunscreen when swimming in oceans to protect marine life and coral reefs.",
-    "Minimize food waste by ordering only what you can finish and trying local dishes in moderation.",
+  const ecoFacts = [
+    "Choosing trains over flights can reduce your carbon footprint by up to 90%.",
+    "Staying in eco-certified accommodations can save up to 20% in water consumption.",
+    "Supporting local businesses keeps approximately 68% of your money in the local economy.",
+    "Reusable water bottles can prevent hundreds of single-use plastic bottles from entering landfills during your trip.",
+    "Walking tours generate zero carbon emissions and provide the best way to experience a destination like a local.",
+    "Plant-based meals typically have a carbon footprint 50% smaller than meat-based alternatives.",
+    "Sustainable tourism helps preserve over 30% of the world's natural and cultural heritage sites.",
+    "Eco-friendly travel can reduce your vacation's carbon footprint by up to 40%.",
+    "Slow travel (staying longer in fewer places) can reduce your trip's environmental impact by up to 30%.",
+    "Choosing digital tickets and guides saves approximately 1 tree for every 100 travelers.",
   ]
 
-  const randomTip = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * sustainabilityTips.length)
-    return sustainabilityTips[randomIndex]
-  }, [sustainabilityTips])
+  const randomFact = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * ecoFacts.length)
+    return ecoFacts[randomIndex]
+  }, [ecoFacts])
 
   const COLORS = ["#10b981", "#3b82f6", "#f97316", "#8b5cf6"]
 
@@ -423,7 +419,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Sustainability Tips */}
+          {/* Eco Travel Tip Card */}
           <motion.div variants={itemVariants}>
             <Card
               className={cn(
@@ -450,15 +446,15 @@ export default function DashboardPage() {
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
                         <Leaf className="h-4 w-4 text-primary" />
                       </div>
-                      <span>Greener Travel Tip</span>
+                        <span>Eco Travel Tip</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="italic text-muted-foreground">"{randomTip}"</p>
+                    <p className="italic text-muted-foreground">"{randomFact}"</p>
                   </CardContent>
                   <CardFooter>
                     <Button variant="link" className="px-0 text-primary" asChild>
-                      <Link href="/sustainability-tips">More eco-travel tips</Link>
+                      <Link href="/about">Learn more about greener travel</Link>
                     </Button>
                   </CardFooter>
                 </>
