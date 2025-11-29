@@ -80,7 +80,7 @@ const formSchema = z.object({
     from: z.date(),
     to: z.date(),
   }),
-  travelType: z.enum(["solo", "partners", "groups", "family", "business", "digital-nomad", "pet-friendly"]),
+  travelType: z.enum(["solo", "couple", "friends", "family"]),
   travelStyles: z.array(z.string()).min(1, {
     message: "Select at least one travel style.",
   }),
@@ -91,13 +91,10 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 const travelTypeOptions = [
-  { id: "solo",          label: "Solo Explorer",     icon: "👤", description: "Just me, myself, and I" },
-  { id: "partners",      label: "Partners",          icon: "🧑‍🤝‍🧑", description: "Traveling with a partner" },
-  { id: "groups",        label: "Groups",            icon: "👥", description: "With friends or a small crew" },
-  { id: "family",        label: "Family",            icon: "👨‍👩‍👧‍👦", description: "Kids, parents, or multigenerational" },
-  { id: "business",      label: "Business Traveler", icon: "💼", description: "On a work trip" },
-  { id: "digital-nomad", label: "Digital Nomad",     icon: "💻", description: "Work-from-anywhere lifestyle" },
-  { id: "pet-friendly",  label: "Pet Parent",        icon: "🐾", description: "Bringing my furry friend" },
+  { id: "solo",    label: "Solo Explorer", icon: "👤", description: "Just me, myself, and I" },
+  { id: "couple",  label: "Couple",        icon: "🧑‍🤝‍🧑", description: "Traveling with a partner" },
+  { id: "friends", label: "Friends",       icon: "👥", description: "With friends or a small crew" },
+  { id: "family",  label: "Family",        icon: "👨‍👩‍👧‍👦", description: "Kids, parents, or multigenerational" },
 ]
 
 const travelStyles = [

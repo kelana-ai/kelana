@@ -20,9 +20,11 @@ export default function Avatar({
 }) {
   const supabase = createClient()
   const [uploading, setUploading] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const { avatarUrl: contextAvatarUrl } = useUser()
 
-  const displayAvatarUrl = contextAvatarUrl || url || null
+  // Prefer context avatar URL, but don't cause re-render if both are null
+  const displayAvatarUrl = !imageError ? (contextAvatarUrl || url) : null
 
   const uploadAvatar: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
     try {
@@ -63,6 +65,7 @@ export default function Avatar({
             fill
             sizes={`${size}px`}
             priority
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted/30">

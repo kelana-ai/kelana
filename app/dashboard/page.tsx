@@ -199,9 +199,17 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Overview Tab Content */}
-      {(isPageLoading || activeTab === "overview") && (
-        <motion.div variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
+      <AnimatePresence mode="wait">
+        {/* Overview Tab Content */}
+        {activeTab === "overview" && (
+        <motion.div
+          key={`overview-${isPageLoading ? 'loading' : 'loaded'}`}
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          exit="hidden"
+          className="space-y-6"
+        >
           {/* Stats Overview */}
           <div className="grid gap-4 md:grid-cols-3">
             {isPageLoading ? (
@@ -466,7 +474,7 @@ export default function DashboardPage() {
 
       {/* Analytics Tab Content */}
       {!isPageLoading && activeTab === "analytics" && (
-        <motion.div variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
+        <motion.div key="analytics" variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Carbon Savings Chart */}
             <motion.div variants={itemVariants}>
@@ -637,7 +645,7 @@ export default function DashboardPage() {
 
       {/* Upcoming Tab Content */}
       {!isPageLoading && activeTab === "upcoming" && (
-        <motion.div variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
+        <motion.div key="upcoming" variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
           <motion.div variants={itemVariants}>
             <Card>
               <CardHeader>
@@ -736,7 +744,8 @@ export default function DashboardPage() {
             </Card>
           </motion.div>
         </motion.div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   )
 }

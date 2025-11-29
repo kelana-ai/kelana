@@ -21,7 +21,7 @@ const ItineraryInput = z.object({
     (v) => (typeof v === "string" ? JSON.parse(v) : v),
     z.object({ from: z.string(), to: z.string() }),
   ),
-  travelType: z.enum(["solo", "partners", "groups", "family", "business", "digital-nomad", "pet-friendly"]),
+  travelType: z.enum(["solo", "couple", "friends", "family"]),
   travelStyles: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.string())),
   dietaryNeeds: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.string())),
   budget: z.preprocess((v) => (typeof v === "string" ? Number.parseFloat(v) : v), z.number()),

@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/client"
 import { ArrowLeft, AtSign, Calendar, Check, Globe, Loader2, MapPin } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import Avatar from "./avatar"
 
@@ -29,6 +29,14 @@ export default function Account() {
   const [website, setWebsite] = useState<string | null>("")
   const [avatar_url, setAvatarUrl] = useState<string | null>("")
 
+  const initializedRef = useRef(false)
+  const refreshProfileRef = useRef(refreshProfile)
+
+  // Keep refreshProfile ref updated
+  useEffect(() => {
+    refreshProfileRef.current = refreshProfile
+  }, [refreshProfile])
+
   const formattedJoinDate = useMemo(() => {
     const joinDate = user?.created_at ? new Date(user.created_at) : new Date()
     return joinDate.toLocaleDateString("en-US", {
@@ -40,18 +48,31 @@ export default function Account() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/")
+      router.push("/login")
     }
   }, [user, isLoading, router])
 
   useEffect(() => {
-    if (profile) {
-      setFullname(profile.full_name)
-      setUsername(profile.username)
-      setWebsite(profile.website)
-      setAvatarUrl(profile.avatar_url)
+    // Only initialize once when data is ready
+    if (initializedRef.current) return
+
+    if (!isLoading) {
+      if (profile) {
+        setFullname(profile.full_name || "")
+        setUsername(profile.username || "")
+        setWebsite(profile.website || "")
+        setAvatarUrl(profile.avatar_url || "")
+        initializedRef.current = true
+      } else if (user) {
+        // Profile doesn't exist yet, initialize with user data
+        setFullname(user.user_metadata?.full_name || "")
+        setUsername("")
+        setWebsite("")
+        setAvatarUrl(user.user_metadata?.avatar_url || "")
+        initializedRef.current = true
+      }
     }
-  }, [profile])
+  }, [profile, isLoading, user])
 
   async function updateProfile() {
     if (!user) return
@@ -69,7 +90,9 @@ export default function Account() {
 
       if (error) throw error
 
-      await refreshProfile()
+      // Reset initialized flag to allow state update after refresh
+      initializedRef.current = false
+      await refreshProfileRef.current()
       toast.success("Profile updated successfully")
     } catch (error) {
       console.error("Update profile error:", error)
@@ -94,12 +117,19 @@ export default function Account() {
       if (error) throw error
 
       setAvatarUrl(newAvatarUrl)
-      await refreshProfile()
+      // Reset initialized flag to allow state update after refresh
+      initializedRef.current = false
+      await refreshProfileRef.current()
       toast.success("Avatar updated successfully")
     } catch (error) {
       console.error("Update avatar error:", error)
       toast.error("Error updating avatar in your profile")
     }
+  }
+
+  // Show nothing while redirecting
+  if (!user && !isLoading) {
+    return null
   }
 
   return (
