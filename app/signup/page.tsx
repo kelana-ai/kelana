@@ -54,8 +54,8 @@ export default function SignupPage() {
     if (result?.error) {
       setError(result.error.message)
     } else {
-      toast.success("Signup successful! Please check your email for the confirmation link.")
-      router.push("/login")
+      toast.success("Account created! You're now signed in.")
+      router.push("/dashboard")
     }
   }
 
@@ -96,12 +96,8 @@ export default function SignupPage() {
                     placeholder="you@example.com"
                     required
                     className="pl-9"
-                    aria-describedby="email-description"
                   />
                 </div>
-                <p id="email-description" className="text-xs text-muted-foreground">
-                  We'll send a confirmation link to this email
-                </p>
               </div>
 
               <div className="space-y-2">
