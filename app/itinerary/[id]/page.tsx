@@ -6,7 +6,7 @@ import ItineraryClient from "./itinerary-client"
 export default async function ItineraryPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }): Promise<ReactElement> {
   const { id } = await params
   const supabase = await createClient()

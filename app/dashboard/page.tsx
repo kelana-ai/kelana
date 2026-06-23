@@ -1,6 +1,6 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, type Variants } from "framer-motion"
 import {
   BarChart3,
   Calendar,
@@ -93,7 +93,7 @@ export default function DashboardPage() {
 
   const COLORS = ["#10b981", "#3b82f6", "#f97316", "#8b5cf6"]
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -103,7 +103,7 @@ export default function DashboardPage() {
     },
   }
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
   }
