@@ -53,16 +53,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const fetchingRef = useRef(false)
   const lastAuthEventRef = useRef<string | null>(null)
 
-  const downloadImage = useCallback(
-    async (path: string) => {
-      try {
-        const { data, error } = await supabase.storage.from("avatars").download(path)
-        if (error) throw error
-        return URL.createObjectURL(data)
-      } catch (err) {
-        console.error("Image download error:", err)
-        return null
-      }
+  // The avatars bucket is public, so resolve to a public URL directly — no auth
+  // round-trip and no object URL to create/revoke.
+  const getAvatarUrl = useCallback(
+    (path: string) => {
+      if (path.startsWith("http")) return path
+      return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl
     },
     [supabase],
   )
@@ -140,8 +136,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             currentAvatarPathRef.current = null
             setAvatarUrl(null)
           } else if (avatarPath !== currentAvatarPathRef.current) {
-            const url = avatarPath.startsWith("http") ? avatarPath : await downloadImage(avatarPath)
-            setAvatarUrl(url)
+            setAvatarUrl(getAvatarUrl(avatarPath))
             currentAvatarPathRef.current = avatarPath
           }
         } else {
@@ -162,18 +157,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
         fetchingRef.current = false
       }
     },
-    [downloadImage, fetchProfile],
+    [getAvatarUrl, fetchProfile],
   )
 
   // Use refs to avoid recreating refreshProfile on every user change
   const userRef = useRef(user)
   const fetchProfileRef = useRef(fetchProfile)
-  const downloadImageRef = useRef(downloadImage)
+  const getAvatarUrlRef = useRef(getAvatarUrl)
 
   useEffect(() => {
     userRef.current = user
     fetchProfileRef.current = fetchProfile
-    downloadImageRef.current = downloadImage
+    getAvatarUrlRef.current = getAvatarUrl
   })
 
   const refreshProfile = useCallback(async () => {
@@ -193,8 +188,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           currentAvatarPathRef.current = null
           setAvatarUrl(null)
         } else if (avatarPath !== currentAvatarPathRef.current) {
-          const url = avatarPath.startsWith("http") ? avatarPath : await downloadImageRef.current(avatarPath)
-          setAvatarUrl(url)
+          setAvatarUrl(getAvatarUrlRef.current(avatarPath))
           currentAvatarPathRef.current = avatarPath
         }
       }
@@ -219,7 +213,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // Listen to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       // Prevent duplicate processing of same event
       const eventKey = `${event}-${session?.user?.id || 'null'}`
       if (lastAuthEventRef.current === eventKey) {
@@ -228,7 +222,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       lastAuthEventRef.current = eventKey
 
       if (session?.user) {
-        await updateUserState(session.user)
+        // Defer Supabase calls out of the auth callback to avoid the GoTrue client deadlock.
+        const sessionUser = session.user
+        setTimeout(() => {
+          updateUserState(sessionUser)
+        }, 0)
       } else {
         setUser(null)
         setProfile(null)
@@ -241,7 +239,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     return () => {
       subscription.unsubscribe()
-      if (avatarUrl?.startsWith("blob:")) URL.revokeObjectURL(avatarUrl)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
