@@ -22,21 +22,12 @@ export type DashboardData = {
     icon?: string
   }>
   analytics: {
-    carbonData: Array<{
-      name: string
-      carbon: number
-    }>
-    budgetData: Array<{
-      name: string
-      value: number
-    }>
+    carbonData: Array<{ name: string; carbon: number }>
+    budgetData: Array<{ name: string; value: number }>
     ecoScore: number
     ecoRating: string
     ecoMessage: string
-    destinationData: Array<{
-      name: string
-      impact: number
-    }>
+    destinationData: Array<{ name: string; impact: number }>
   }
   upcomingActivities: Array<{
     id: string
@@ -45,13 +36,6 @@ export type DashboardData = {
     time: string
     type: string
     itineraryId: string
-  }>
-  travelCompanions: Array<{
-    id: string
-    name: string
-    initials: string
-    avatar?: string
-    tripName: string
   }>
 }
 
@@ -68,25 +52,9 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
 
     const { data: itineraries, error: itinerariesError } = await supabase
       .from("itineraries")
-      .select(`
-        id,
-        name,
-        description,
-        status,
-        destination_name,
-        destination_lat,
-        destination_lng,
-        date_from,
-        date_to,
-        travel_type,
-        travel_styles,
-        dietary_needs,
-        budget,
-        carbon_metrics,
-        icon,
-        created_at,
-        updated_at
-      `)
+      .select(
+        "id, name, destination_name, status, date_from, date_to, budget, carbon_metrics, icon, created_at, updated_at",
+      )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
@@ -94,29 +62,26 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
       throw itinerariesError
     }
 
-    const activeTrips =
-      itineraries?.filter((itn) => itn.status === "confirmed" || itn.status === "planning").length || 0
+    const list = itineraries ?? []
+    const isActive = (status: string) => status === "confirmed" || status === "planning"
 
-    const totalCarbonSaved = itineraries?.reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0) || 0
+    const activeTrips = list.filter((itn) => isActive(itn.status)).length
+    const totalCarbonSaved = list.reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0)
+    const totalBudgetTotal = list.reduce((total, itn) => total + (itn.budget?.total || 0), 0)
+    const totalBudgetLeft = list.reduce(
+      (total, itn) => (isActive(itn.status) ? total + ((itn.budget?.total || 0) - (itn.budget?.spent || 0)) : total),
+      0,
+    )
 
-    const totalBudgetLeft =
-      itineraries?.reduce((total, itn) => {
-        if (itn.status === "confirmed" || itn.status === "planning") {
-          return total + ((itn.budget?.total || 0) - (itn.budget?.spent || 0))
-        }
-        return total
-      }, 0) || 0
-
-    const recentItineraries =
-      itineraries?.slice(0, 4).map((itn) => ({
-        id: itn.id,
-        name: itn.name,
-        destination: itn.destination_name,
-        dates: `${new Date(itn.date_from).toLocaleDateString()} - ${new Date(itn.date_to).toLocaleDateString()}`,
-        status: itn.status,
-        lastUpdated: formatDistanceToNow(new Date(itn.updated_at || itn.created_at), { addSuffix: true }),
-        icon: `/places/${itn.icon}.png`,
-      })) || []
+    const recentItineraries = list.slice(0, 4).map((itn) => ({
+      id: itn.id,
+      name: itn.name,
+      destination: itn.destination_name,
+      dates: `${new Date(itn.date_from).toLocaleDateString()} - ${new Date(itn.date_to).toLocaleDateString()}`,
+      status: itn.status,
+      lastUpdated: formatDistanceToNow(new Date(itn.updated_at || itn.created_at), { addSuffix: true }),
+      icon: `/places/${itn.icon}.png`,
+    }))
 
     const now = new Date()
     const nextWeek = new Date()
@@ -124,11 +89,7 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
 
     const { data: days, error: daysError } = await supabase
       .from("itinerary_days")
-      .select(`
-        id,
-        itinerary_id,
-        date
-      `)
+      .select("id, itinerary_id, date")
       .gte("date", now.toISOString().split("T")[0])
       .lte("date", nextWeek.toISOString().split("T")[0])
       .order("date", { ascending: true })
@@ -137,21 +98,14 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
       throw daysError
     }
 
-    let upcomingActivities: any[] = []
+    let upcomingActivities: DashboardData["upcomingActivities"] = []
 
     if (days && days.length > 0) {
       const dayIds = days.map((day) => day.id)
 
       const { data: activities, error: activitiesError } = await supabase
         .from("itinerary_activities")
-        .select(`
-          id,
-          day_id,
-          title,
-          start_time,
-          type,
-          status
-        `)
+        .select("id, day_id, title, start_time, type, status")
         .in("day_id", dayIds)
         .eq("status", "planned")
         .order("start_time", { ascending: true })
@@ -160,80 +114,54 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
         throw activitiesError
       }
 
-      if (activities) {
-        upcomingActivities = activities
-          .map((activity) => {
-            const parentDay = days.find((day) => day.id === activity.day_id)
-            return {
-              id: activity.id,
-              title: activity.title,
-              date: new Date(parentDay?.date || "").toLocaleDateString(),
-              time: activity.start_time,
-              type: activity.type,
-              itineraryId: parentDay?.itinerary_id,
-            }
-          })
-          .slice(0, 10)
-      }
+      upcomingActivities = (activities ?? [])
+        .map((activity) => {
+          const parentDay = days.find((day) => day.id === activity.day_id)
+          return {
+            id: activity.id,
+            title: activity.title,
+            date: new Date(parentDay?.date || "").toLocaleDateString(),
+            time: activity.start_time,
+            type: activity.type,
+            itineraryId: parentDay?.itinerary_id ?? "",
+          }
+        })
+        .slice(0, 10)
     }
 
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    const currentMonth = new Date().getMonth()
-
-    const carbonData = months.slice(currentMonth - 5, currentMonth + 1).map((month, index) => {
-      const monthIndex = (currentMonth - 5 + index + 12) % 12
-      const monthItineraries = itineraries?.filter((itn) => {
-        const date = new Date(itn.created_at)
-        return date.getMonth() === monthIndex
-      })
-
-      const carbonValue =
-        monthItineraries?.reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0) ||
-        Math.floor(Math.random() * 200) + 50
-
-      return {
-        name: month,
-        carbon: carbonValue,
-      }
+    const carbonData = Array.from({ length: 6 }, (_, i) => {
+      const month = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+      const carbon = list
+        .filter((itn) => {
+          const created = new Date(itn.created_at)
+          return created.getFullYear() === month.getFullYear() && created.getMonth() === month.getMonth()
+        })
+        .reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0)
+      return { name: month.toLocaleString("en-US", { month: "short" }), carbon }
     })
 
-    const budgetData = [
-      {
-        name: "Accommodation",
-        value:
-          itineraries?.reduce(
-            (total, itn) => total + ((itn.budget?.accommodation || 0) / (itn.budget?.total || 1)) * 100,
-            0,
-          ) / (itineraries?.length || 1) || 40,
-      },
-      {
-        name: "Transportation",
-        value:
-          itineraries?.reduce(
-            (total, itn) => total + ((itn.budget?.transportation || 0) / (itn.budget?.total || 1)) * 100,
-            0,
-          ) / (itineraries?.length || 1) || 25,
-      },
-      {
-        name: "Food",
-        value:
-          itineraries?.reduce((total, itn) => total + ((itn.budget?.food || 0) / (itn.budget?.total || 1)) * 100, 0) /
-            (itineraries?.length || 1) || 20,
-      },
-      {
-        name: "Activities",
-        value:
-          itineraries?.reduce(
-            (total, itn) => total + ((itn.budget?.activities || 0) / (itn.budget?.total || 1)) * 100,
-            0,
-          ) / (itineraries?.length || 1) || 15,
-      },
-    ]
+    const { data: costRows, error: costError } = await supabase.from("itinerary_activities").select("type, cost")
+    if (costError) {
+      throw costError
+    }
 
-    const ecoScore = Math.min(100, Math.round(totalCarbonSaved / (itineraries?.length || 1) / 10))
+    const categoryTotals: Record<string, number> = { Accommodation: 0, Transportation: 0, Food: 0, Activities: 0 }
+    for (const row of costRows ?? []) {
+      const cost = Number(row.cost) || 0
+      if (row.type === "accommodation") categoryTotals.Accommodation += cost
+      else if (row.type === "transportation") categoryTotals.Transportation += cost
+      else if (row.type === "food" || row.type === "drink") categoryTotals.Food += cost
+      else categoryTotals.Activities += cost
+    }
+    const costTotal = Object.values(categoryTotals).reduce((a, b) => a + b, 0)
+    const budgetData = Object.entries(categoryTotals).map(([name, value]) => ({
+      name,
+      value: costTotal > 0 ? Math.round((value / costTotal) * 100) : 0,
+    }))
+
+    const ecoScore = list.length > 0 ? Math.min(100, Math.round(totalCarbonSaved / list.length / 10)) : 0
     let ecoRating = "No data"
     let ecoMessage = ""
-
     if (ecoScore >= 80) {
       ecoRating = "Excellent!"
       ecoMessage = "You're in the top 15% of eco-conscious travelers"
@@ -248,52 +176,24 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
       ecoMessage = "Keep improving your eco-friendly travel choices"
     }
 
-    const destinationData = Array.from(new Set(itineraries?.map((itn) => itn.destination_name) || []))
+    const destinationData = Array.from(new Set(list.map((itn) => itn.destination_name)))
       .slice(0, 4)
-      .map((destination) => {
-        const destinationItineraries = itineraries?.filter((itn) => itn.destination_name === destination)
-        const impact =
-          destinationItineraries?.reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0) ||
-          Math.floor(Math.random() * 30) + 50
-
-        return {
-          name: destination,
-          impact,
-        }
-      })
-
-    if (destinationData.length < 2) {
-      destinationData.push(
-        { name: "Bali", impact: 65 },
-        { name: "Costa Rica", impact: 85 },
-        { name: "Norway", impact: 72 },
-        { name: "Japan", impact: 58 },
-      )
-    }
-
-    const travelCompanions =
-      itineraries
-        ?.filter((itn) => itn.status === "confirmed" || itn.status === "planning")
-        .slice(0, 3)
-        .map((itn, index) => ({
-          id: `companion-${index}`,
-          name: ["John Doe", "Alice Ryder", "Tom Kim"][index],
-          initials: ["JD", "AR", "TK"][index],
-          tripName: itn.name,
-        })) || []
+      .map((destination) => ({
+        name: destination,
+        impact: list
+          .filter((itn) => itn.destination_name === destination)
+          .reduce((total, itn) => total + (itn.carbon_metrics?.saved || 0), 0),
+      }))
 
     return {
       data: {
         stats: {
           activeTrips,
-          totalTrips: itineraries?.length || 0,
+          totalTrips: list.length,
           carbonSaved: totalCarbonSaved,
           carbonProgress: Math.min(100, totalCarbonSaved / 10),
           budgetLeft: totalBudgetLeft,
-          budgetProgress: Math.min(
-            100,
-            (totalBudgetLeft / (itineraries?.reduce((total, itn) => total + (itn.budget?.total || 0), 0) || 1)) * 100,
-          ),
+          budgetProgress: totalBudgetTotal > 0 ? Math.min(100, (totalBudgetLeft / totalBudgetTotal) * 100) : 0,
         },
         recentItineraries,
         analytics: {
@@ -305,7 +205,6 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
           destinationData,
         },
         upcomingActivities,
-        travelCompanions,
       },
       error: null,
     }

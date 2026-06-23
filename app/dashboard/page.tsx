@@ -12,14 +12,11 @@ import {
   Recycle,
   Sparkles,
   TrendingUp,
-  Users,
   Wallet,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -692,45 +689,6 @@ export default function DashboardPage() {
             </Card>
           </motion.div>
 
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Leaf className="h-5 w-5 text-primary" />
-                  Travel Companions
-                </CardTitle>
-                <CardDescription>People joining you on your upcoming trips</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {data?.travelCompanions && data.travelCompanions.length > 0 ? (
-                  <div className="flex flex-wrap gap-4">
-                    {data.travelCompanions.map((companion) => (
-                      <div key={companion.id} className="flex flex-col items-center gap-2">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage src={companion.avatar || `/placeholder.svg?height=64&width=64`} />
-                          <AvatarFallback>{companion.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="text-center">
-                          <p className="font-medium">{companion.name}</p>
-                          <p className="text-xs text-muted-foreground">{companion.tripName}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="mb-4 rounded-full bg-muted p-3">
-                      <Users className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <h3 className="mb-2 text-lg font-medium">No travel companions</h3>
-                    <p className="text-sm text-muted-foreground">
-                      You don't have any companions for your upcoming trips
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
         </motion.div>
         )}
       </AnimatePresence>
