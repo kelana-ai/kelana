@@ -19,7 +19,7 @@ export function useDashboardData(userId: string | undefined) {
         setIsLoading(true)
         setError(null)
 
-        const result = await fetchDashboardData(userId)
+        const result = await fetchDashboardData()
 
         if (result.error) {
           throw result.error
@@ -44,7 +44,7 @@ export function useDashboardData(userId: string | undefined) {
       setIsLoading(true)
       setError(null)
 
-      const result = await fetchDashboardData(userId)
+      const result = await fetchDashboardData()
 
       if (result.error) {
         throw result.error

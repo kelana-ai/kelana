@@ -198,7 +198,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
     try {
       setIsDeleting(true)
 
-      const result = await deleteItinerary(itineraryToDelete, user.id)
+      const result = await deleteItinerary(itineraryToDelete)
 
       if (!result.success) {
         throw new Error(result.error || "Failed to delete itinerary")

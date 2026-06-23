@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient as createAdminClient } from "@supabase/supabase-js"
+import { createClient } from "@/utils/supabase/server"
 import { formatDistanceToNow } from "date-fns"
 
 export type DashboardData = {
@@ -55,20 +55,18 @@ export type DashboardData = {
   }>
 }
 
-export async function fetchDashboardData(
-  userId: string | undefined,
-): Promise<{ data: DashboardData | null; error: Error | null }> {
+export async function fetchDashboardData(): Promise<{ data: DashboardData | null; error: Error | null }> {
   try {
-    if (!userId) {
-      return { data: null, error: new Error("User ID is required") }
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return { data: null, error: new Error("Not authenticated") }
     }
 
-    const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      )
-
-    const { data: itineraries, error: itinerariesError } = await supabaseAdmin
+    const { data: itineraries, error: itinerariesError } = await supabase
       .from("itineraries")
       .select(`
         id,
@@ -89,7 +87,7 @@ export async function fetchDashboardData(
         created_at,
         updated_at
       `)
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
     if (itinerariesError) {
@@ -124,7 +122,7 @@ export async function fetchDashboardData(
     const nextWeek = new Date()
     nextWeek.setDate(now.getDate() + 7)
 
-    const { data: days, error: daysError } = await supabaseAdmin
+    const { data: days, error: daysError } = await supabase
       .from("itinerary_days")
       .select(`
         id,
@@ -144,7 +142,7 @@ export async function fetchDashboardData(
     if (days && days.length > 0) {
       const dayIds = days.map((day) => day.id)
 
-      const { data: activities, error: activitiesError } = await supabaseAdmin
+      const { data: activities, error: activitiesError } = await supabase
         .from("itinerary_activities")
         .select(`
           id,

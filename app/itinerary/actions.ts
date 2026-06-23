@@ -1,15 +1,20 @@
 "use server"
 
-import { createClient as createAdminClient, type User } from "@supabase/supabase-js"
+import { createClient } from "@/utils/supabase/server"
 
-export async function fetchItineraries(user: User) {
+export async function fetchItineraries() {
   try {
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    )
+    const supabase = await createClient()
 
-    const { data: itineraries, error } = await supabaseAdmin
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: "Not authenticated" }
+    }
+
+    // RLS scopes the result to the authenticated user.
+    const { data: itineraries, error } = await supabase
       .from("itineraries")
       .select(`
       id,
@@ -30,7 +35,6 @@ export async function fetchItineraries(user: User) {
       updated_at,
       user_id
     `)
-      .eq("user_id", user?.id)
       .order("created_at", { ascending: false })
 
     if (error || !itineraries) throw error || new Error("Failed to fetch itineraries")
@@ -48,40 +52,20 @@ export async function fetchItineraries(user: User) {
   }
 }
 
-export async function deleteItinerary(itineraryId: string, userId: string) {
+export async function deleteItinerary(itineraryId: string) {
   try {
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    )
+    const supabase = await createClient()
 
-    // First delete all related activities and days
-    const { data: days, error: daysError } = await supabaseAdmin
-      .from("itinerary_days")
-      .select("id")
-      .eq("itinerary_id", itineraryId)
-
-    if (daysError) throw daysError
-
-    if (days && days.length > 0) {
-      const dayIds = days.map((day) => day.id)
-
-      // Delete activities for these days
-      const { error: activitiesError } = await supabaseAdmin.from("itinerary_activities").delete().in("day_id", dayIds)
-
-      if (activitiesError) throw activitiesError
-
-      // Delete the days
-      const { error: deleteDaysError } = await supabaseAdmin
-        .from("itinerary_days")
-        .delete()
-        .eq("itinerary_id", itineraryId)
-
-      if (deleteDaysError) throw deleteDaysError
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: "Not authenticated" }
     }
 
-    // Finally delete the itinerary
-    const { error } = await supabaseAdmin.from("itineraries").delete().eq("id", itineraryId).eq("user_id", userId)
+    // ON DELETE CASCADE removes the related days and activities automatically.
+    // RLS ensures only the owner can delete this itinerary.
+    const { error } = await supabase.from("itineraries").delete().eq("id", itineraryId)
 
     if (error) throw error
 

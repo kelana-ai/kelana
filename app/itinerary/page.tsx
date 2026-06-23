@@ -38,7 +38,7 @@ export default function ItineraryPage() {
 
     if (user) {
       setLoading(true)
-      fetchItineraries(user).then((response) => {
+      fetchItineraries().then((response) => {
         const itineraries = response.itineraries || []
         const formatted = itineraries.map((itinerary) => ({
           id: itinerary.id,
