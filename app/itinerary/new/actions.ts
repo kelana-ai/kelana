@@ -1,13 +1,12 @@
 "use server"
 
 import { openai } from "@ai-sdk/openai"
-import { createClient as createAdminClient } from "@supabase/supabase-js"
+import { createClient } from "@/utils/supabase/server"
 import { generateObject } from "ai"
-import { differenceInCalendarDays, format, parseISO } from "date-fns"
+import { differenceInCalendarDays, eachDayOfInterval, format, parseISO } from "date-fns"
 import { z } from "zod"
 
 const ItineraryInput = z.object({
-  userId: z.string(),
   tripName: z.string(),
   destination: z.preprocess(
     (v) => (typeof v === "string" ? JSON.parse(v) : v),
@@ -86,8 +85,16 @@ const ItinerarySchema = z.object({
 
 export async function submitItinerary(formData: FormData) {
   try {
-    const { userId, tripName, destination, homeLocation, dateRange, travelType, travelStyles, dietaryNeeds, budget } =
+    const { tripName, destination, homeLocation, dateRange, travelType, travelStyles, dietaryNeeds, budget } =
       ItineraryInput.parse(Object.fromEntries(formData.entries()))
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: "Not authenticated" }
+    }
 
     const from = parseISO(dateRange.from)
     const to   = parseISO(dateRange.to)
@@ -97,12 +104,14 @@ export async function submitItinerary(formData: FormData) {
     const daysCount     = differenceInCalendarDays(to, from) + 1
 
     const dateLine = `${formattedFrom} - ${formattedTo} (${daysCount} days)`
+    const tripDates = eachDayOfInterval({ start: from, end: to }).map((d) => format(d, "yyyy-MM-dd"))
 
     const { object } = await generateObject({
       model: openai.responses("gpt-4o"),
       providerOptions: {
         openai: { apiKey: process.env.OPENAI_API_KEY! },
       },
+      maxTokens: 16000,
       schema: ItinerarySchema,
       prompt: `
         You are an expert travel planner. Develop a **comprehensive, eco-conscious travel itinerary** for a real-world trip, ensuring all details are **accurate, verifiable, and well-researched**. Adhere strictly to the following JSON schema:
@@ -117,6 +126,8 @@ export async function submitItinerary(formData: FormData) {
         - **Destination**: ${destination.name} (Lat: ${destination.lat}, Lng: ${destination.lng})
         - **Home Location**: ${homeLocation?.lat && homeLocation?.lng ? `${homeLocation.name || "Not specified"} (Lat: ${homeLocation.lat}, Lng: ${homeLocation.lng})` : "Not specified"}
         - **Dates**: ${dateLine}
+        - **Required dates (${daysCount} days)**: Return EXACTLY ${daysCount} Day objects in 'days', one per date below, in order, using the exact value as each day's 'date' (YYYY-MM-DD). Do not skip, merge, or stop early:
+          ${tripDates.join(", ")}
         - **Travel Type**: ${travelType}
         - **Travel Styles**: ${travelStyles.join(", ")}
         - **Dietary Preferences**: ${dietaryNeeds.length > 0 ? dietaryNeeds.join(", ") : "None"}
@@ -124,7 +135,7 @@ export async function submitItinerary(formData: FormData) {
 
         **Structure & Expectations:**
 
-        1. **Daily Breakdown**: Cover the entire trip duration, detailing each day.
+        1. **Daily Breakdown**: Produce one Day object for every date listed above — exactly ${daysCount} days. Never summarize multiple days into one or stop before the last date.
         2. **Daily Activities**: Include at least one activity from each category: transportation, dining, sightseeing, and wellness or cultural/local engagement.
         3. **Activity Details**:
           - Use real, verifiable locations with accurate 'lat', 'lng', full address, and a valid 'sourceUrl' (Google Maps link or official webpage).
@@ -170,15 +181,10 @@ export async function submitItinerary(formData: FormData) {
       `,
     })
 
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    )
-
-    const { data: itRow, error: itErr } = await supabaseAdmin
+    const { data: itRow, error: itErr } = await supabase
       .from("itineraries")
       .insert({
-        user_id: userId,
+        user_id: user.id,
         name: object.name,
         description: `Eco-friendly itinerary to ${object.destination}`,
         status: "confirmed",
@@ -210,7 +216,7 @@ export async function submitItinerary(formData: FormData) {
 
     for (let i = 0; i < object.days.length; i++) {
       const day = object.days[i]
-      const { data: dRow, error: dErr } = await supabaseAdmin
+      const { data: dRow, error: dErr } = await supabase
         .from("itinerary_days")
         .insert({
           itinerary_id: itineraryId,
@@ -225,7 +231,7 @@ export async function submitItinerary(formData: FormData) {
       for (let j = 0; j < day.activities.length; j++) {
         const act = day.activities[j]
 
-        const { error: aErr } = await supabaseAdmin.from("itinerary_activities").insert({
+        const { error: aErr } = await supabase.from("itinerary_activities").insert({
           day_id: dayId,
           activity_index: j,
           start_time: act.start_time,
@@ -247,7 +253,7 @@ export async function submitItinerary(formData: FormData) {
     }
 
     if (homeLocation?.lat && homeLocation?.lng) {
-      await supabaseAdmin
+      await supabase
         .from("profiles")
         .update({
           home_lat: homeLocation.lat,
@@ -257,7 +263,7 @@ export async function submitItinerary(formData: FormData) {
           },
           dietary_needs: dietaryNeeds,
         })
-        .eq("id", userId)
+        .eq("id", user.id)
     }
 
     return {
