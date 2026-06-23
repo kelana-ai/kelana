@@ -2,6 +2,7 @@
   "name": "kelana",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.28.2",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -57,5 +58,8 @@
     "tailwindcss": "^4",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["sharp"]
   }
 }
