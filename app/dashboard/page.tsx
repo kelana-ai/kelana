@@ -143,7 +143,6 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Header with theme toggle */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         {isPageLoading ? (
           <div>
@@ -181,7 +180,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tabs for different dashboard views */}
       {!isPageLoading && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -200,7 +198,6 @@ export default function DashboardPage() {
       )}
 
       <AnimatePresence mode="wait">
-        {/* Overview Tab Content */}
         {activeTab === "overview" && (
         <motion.div
           key={`overview-${isPageLoading ? 'loading' : 'loaded'}`}
@@ -210,7 +207,6 @@ export default function DashboardPage() {
           exit="hidden"
           className="space-y-6"
         >
-          {/* Stats Overview */}
           <div className="grid gap-4 md:grid-cols-3">
             {isPageLoading ? (
               <>
@@ -297,7 +293,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Recent Itineraries */}
           <div>
             <div className="mb-4 flex items-center justify-between">
               {isPageLoading ? (
@@ -427,7 +422,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Eco Travel Tip Card */}
           <motion.div variants={itemVariants}>
             <Card
               className={cn(
@@ -472,11 +466,9 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Analytics Tab Content */}
       {!isPageLoading && activeTab === "analytics" && (
         <motion.div key="analytics" variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Carbon Savings Chart */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -516,7 +508,6 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Budget Allocation Chart */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -557,7 +548,6 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Eco Impact Score */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -606,7 +596,6 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Destinations Impact */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -643,7 +632,6 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Upcoming Tab Content */}
       {!isPageLoading && activeTab === "upcoming" && (
         <motion.div key="upcoming" variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
           <motion.div variants={itemVariants}>

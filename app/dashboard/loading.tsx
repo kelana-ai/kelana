@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function DashboardLoading() {
   return (
     <div className="container max-w-7xl py-6 lg:py-8">
-      {/* Welcome header and CTA */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <Skeleton className="mb-2 h-10 w-[250px]" />
@@ -16,12 +15,10 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="mb-6">
         <Skeleton className="h-10 w-full max-w-[400px]" />
       </div>
 
-      {/* Stats Overview */}
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
           <Card key={i} className="overflow-hidden">
@@ -40,7 +37,6 @@ export default function DashboardLoading() {
         ))}
       </div>
 
-      {/* Recent Itineraries */}
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">
           <Skeleton className="h-7 w-[150px]" />
@@ -73,7 +69,6 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      {/* Sustainability Tips */}
       <Card>
         <div className="space-y-4 p-6">
           <div className="flex items-center gap-2">

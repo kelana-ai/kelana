@@ -10,7 +10,6 @@ import { usePathname } from "next/navigation"
 export default function Footer() {
   const pathname = usePathname()
 
-  // Don't show footer on auth pages
   if (pathname?.includes("/login") || pathname?.includes("/signup")) return null
 
   return (

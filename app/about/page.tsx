@@ -111,7 +111,6 @@ export default function AboutPage() {
     },
   ]
 
-  // Timeline events
   const timelineEvents = [
     {
       year: "2020",
@@ -145,7 +144,6 @@ export default function AboutPage() {
     },
   ]
 
-  // Impact statistics
   const impactStats = [
     {
       value: "45,000+",
@@ -169,7 +167,6 @@ export default function AboutPage() {
     },
   ]
 
-  // Certifications and partnerships
   const certifications = [
     "Global Greener Tourism Council",
     "B Corporation Certified",
@@ -179,7 +176,6 @@ export default function AboutPage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background py-20 md:py-28">
         <div className="container relative z-10">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
@@ -228,19 +224,16 @@ export default function AboutPage() {
                 </div>
               </div>
 
-              {/* Decorative elements */}
               <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/10" />
               <div className="absolute -bottom-4 -left-4 h-32 w-32 rounded-full bg-primary/5" />
             </motion.div>
           </div>
         </div>
 
-        {/* Background decorative elements */}
         <div className="absolute -left-32 -top-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-32 -right-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
       </section>
 
-      {/* Quick Navigation */}
       <section className="sticky top-16 z-30 border-b bg-background/80 py-4 backdrop-blur-md">
         <div className="container">
           <Tabs defaultValue="mission" className="w-full">
@@ -265,7 +258,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Mission Section */}
       <section id="our-mission" ref={missionRef} className="py-20">
         <div className="container">
           <motion.div
@@ -322,7 +314,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Our Story Section */}
       <section id="our-story" ref={storyRef} className="bg-muted/30 py-20">
         <div className="container">
           <motion.div
@@ -343,10 +334,8 @@ export default function AboutPage() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="relative">
-              {/* Timeline line */}
               <div className="absolute left-16 top-0 h-full w-0.5 bg-primary/20 md:left-1/2" />
 
-              {/* Timeline events */}
               <div className="space-y-12">
                 {timelineEvents.map((event, index) => (
                   <div
@@ -355,12 +344,10 @@ export default function AboutPage() {
                       index % 2 === 1 ? "md:flex-row-reverse" : ""
                     }`}
                   >
-                    {/* Year marker */}
                     <div className="absolute left-0 top-0 flex h-12 w-12 items-center justify-center rounded-full border-4 border-background bg-primary text-sm font-bold text-white md:left-[calc(50%-24px)]">
                       {event.year.substring(0, 2)}
                     </div>
 
-                    {/* Content */}
                     <div
                       className={`ml-16 md:ml-0 md:w-[calc(50%-32px)] ${
                         index % 2 === 1 ? "md:text-right" : "md:text-left"
@@ -379,7 +366,6 @@ export default function AboutPage() {
                       </div>
                     </div>
 
-                    {/* Empty space for alternating layout */}
                     <div className="hidden md:block md:w-[calc(50%-32px)]" />
                   </div>
                 ))}
@@ -389,7 +375,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Values Section */}
       <section id="our-values" ref={valuesRef} className="py-20">
         <div className="container">
           <motion.div variants={containerVariants} initial="hidden" animate={valuesInView ? "visible" : "hidden"}>
@@ -437,7 +422,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Section */}
       <section id="our-team" ref={teamRef} className="bg-muted/30 py-20">
         <div className="container">
           <motion.div variants={containerVariants} initial="hidden" animate={teamInView ? "visible" : "hidden"}>
@@ -533,7 +517,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Impact Section */}
       <section id="our-impact" ref={impactRef} className="py-20">
         <div className="container">
           <motion.div variants={containerVariants} initial="hidden" animate={impactInView ? "visible" : "hidden"}>
@@ -626,7 +609,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Join Us Section */}
       <section id="join-us" ref={joinRef} className="bg-primary/5 py-20">
         <div className="container">
           <motion.div

@@ -204,11 +204,9 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
         throw new Error(result.error || "Failed to delete itinerary")
       }
 
-      // Update local state
       setItineraries(itineraries.filter((item) => item.id !== itineraryToDelete))
       toast.success("Itinerary deleted successfully")
 
-      // Refresh the page to get updated data
       router.refresh()
     } catch (error) {
       console.error("Error deleting itinerary:", error)
@@ -536,7 +534,6 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
         </motion.div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -60,7 +60,6 @@ export function ActivityCard({ activity, index }: ActivityCardProps) {
       >
         <CardContent className="p-0 overflow-visible">
           <div className="p-4 flex gap-4">
-            {/* type-based icon */}
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
               <TypeIcon className="h-5 w-5 text-primary" />
             </div>

@@ -32,7 +32,6 @@ export default function Account() {
   const initializedRef = useRef(false)
   const refreshProfileRef = useRef(refreshProfile)
 
-  // Keep refreshProfile ref updated
   useEffect(() => {
     refreshProfileRef.current = refreshProfile
   }, [refreshProfile])
@@ -53,7 +52,6 @@ export default function Account() {
   }, [user, isLoading, router])
 
   useEffect(() => {
-    // Only initialize once when data is ready
     if (initializedRef.current) return
 
     if (!isLoading) {
@@ -64,7 +62,6 @@ export default function Account() {
         setAvatarUrl(profile.avatar_url || "")
         initializedRef.current = true
       } else if (user) {
-        // Profile doesn't exist yet, initialize with user data
         setFullname(user.user_metadata?.full_name || "")
         setUsername("")
         setWebsite("")
@@ -90,7 +87,6 @@ export default function Account() {
 
       if (error) throw error
 
-      // Reset initialized flag to allow state update after refresh
       initializedRef.current = false
       await refreshProfileRef.current()
       toast.success("Profile updated successfully")
@@ -117,7 +113,6 @@ export default function Account() {
       if (error) throw error
 
       setAvatarUrl(newAvatarUrl)
-      // Reset initialized flag to allow state update after refresh
       initializedRef.current = false
       await refreshProfileRef.current()
       toast.success("Avatar updated successfully")
@@ -127,14 +122,12 @@ export default function Account() {
     }
   }
 
-  // Show nothing while redirecting
   if (!user && !isLoading) {
     return null
   }
 
   return (
     <div className="container max-w-5xl py-8">
-      {/* Back Button & Header */}
       <div className="mb-8 flex items-center gap-2">
         <Button variant="ghost" size="icon" asChild className="mr-2">
           <Link href="/dashboard">
@@ -148,7 +141,6 @@ export default function Account() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-3">
-        {/* Profile Summary Card */}
         <Card className="md:col-span-1">
           <CardContent className="pt-6">
             {isLoading ? (
@@ -215,7 +207,6 @@ export default function Account() {
           </CardContent>
         </Card>
 
-        {/* Settings Tabs */}
         <div className="md:col-span-2">
           {isLoading ? (
             <div className="space-y-4">
@@ -255,7 +246,6 @@ export default function Account() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Profile Tab */}
               <TabsContent value="profile" className="space-y-4">
                 <Card>
                   <CardContent className="pt-6">
@@ -323,7 +313,6 @@ export default function Account() {
                 </Card>
               </TabsContent>
 
-              {/* Account Tab */}
               <TabsContent value="account" className="space-y-4">
                 <Card>
                   <CardContent className="pt-6">
@@ -372,7 +361,6 @@ export default function Account() {
                 </Card>
               </TabsContent>
 
-              {/* Preferences Tab */}
               <TabsContent value="preferences" className="space-y-4">
                 <Card>
                   <CardContent className="pt-6">

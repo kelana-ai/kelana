@@ -13,7 +13,6 @@ export async function fetchItineraries() {
       return { success: false, error: "Not authenticated" }
     }
 
-    // RLS scopes the result to the authenticated user.
     const { data: itineraries, error } = await supabase
       .from("itineraries")
       .select(`
@@ -63,8 +62,7 @@ export async function deleteItinerary(itineraryId: string) {
       return { success: false, error: "Not authenticated" }
     }
 
-    // ON DELETE CASCADE removes the related days and activities automatically.
-    // RLS ensures only the owner can delete this itinerary.
+    // ON DELETE CASCADE removes the day/activity rows; RLS limits the delete to the owner.
     const { error } = await supabase.from("itineraries").delete().eq("id", itineraryId)
 
     if (error) throw error

@@ -1,7 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Route prefixes that require an authenticated user.
 const PROTECTED_PREFIXES = ['/dashboard', '/itinerary', '/account']
 
 export async function updateSession(request: NextRequest) {
@@ -31,7 +30,6 @@ export async function updateSession(request: NextRequest) {
   })
 
   // IMPORTANT: Do not run any logic between createServerClient and getUser().
-  // A stray call here can intermittently log users out. Do not remove getUser().
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -45,7 +43,6 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     const redirectResponse = NextResponse.redirect(url)
-    // Preserve any refreshed auth cookies on the redirect response.
     for (const cookie of supabaseResponse.cookies.getAll()) {
       redirectResponse.cookies.set(cookie)
     }

@@ -142,10 +142,8 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* Hero Section */}
       <HeroSection />
 
-      {/* Features Section */}
       <section id="features" ref={featuresRef} className="container mx-auto px-4 py-24" aria-label="Features section">
         <motion.div
           className="mb-16 text-center"
@@ -174,7 +172,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Destinations Section */}
       <section ref={destinationsRef} className="bg-muted/30 py-24" aria-label="Popular eco-friendly destinations">
         <div className="container mx-auto px-4">
           <motion.div
@@ -232,7 +229,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section
         id="how-it-works"
         ref={howItWorksRef}
@@ -252,7 +248,6 @@ export default function LandingPage() {
         </motion.div>
 
         <div className="relative">
-          {/* Connection line */}
           <div className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 bg-primary/20 md:block" />
 
           <div className="grid gap-12 md:gap-16">
@@ -291,7 +286,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
       <section ref={testimonialsRef} className="bg-primary/5 py-24" aria-label="Testimonials section">
         <div className="container mx-auto px-4">
           <motion.div
@@ -326,7 +320,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sustainability Impact */}
       <section ref={impactRef} className="container mx-auto px-4 py-24" aria-label="Sustainability impact section">
         <motion.div
           className="mb-16 text-center"
@@ -374,7 +367,6 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* Newsletter */}
       <section
         ref={newsletterRef}
         className="relative overflow-hidden bg-muted/30 py-24"
@@ -411,12 +403,10 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        {/* Decorative elements */}
         <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-32 -right-20 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
       </section>
 
-      {/* Video Dialog */}
       <VideoDialog open={videoOpen} onOpenChange={setVideoOpen} />
     </>
   )

@@ -53,8 +53,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const fetchingRef = useRef(false)
   const lastAuthEventRef = useRef<string | null>(null)
 
-  // The avatars bucket is public, so resolve to a public URL directly — no auth
-  // round-trip and no object URL to create/revoke.
   const getAvatarUrl = useCallback(
     (path: string) => {
       if (path.startsWith("http")) return path
@@ -96,7 +94,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
 
         if (error) {
-          // If profile doesn't exist, try to create it
           if (error.code === 'PGRST116') {
             console.warn("Profile not found, creating new profile for user:", userId)
             return await createProfileIfNotExists(userId, userMetadata)
@@ -116,7 +113,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const updateUserState = useCallback(
     async (sessionUser: User) => {
-      // Prevent duplicate fetches
       if (fetchingRef.current) return
       fetchingRef.current = true
 
@@ -130,7 +126,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setProfile(fresh)
           localStorage.setItem("profile", JSON.stringify(fresh))
 
-          // Handle avatar URL
           const avatarPath = fresh.avatar_url
           if (!avatarPath) {
             currentAvatarPathRef.current = null
@@ -140,7 +135,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
             currentAvatarPathRef.current = avatarPath
           }
         } else {
-          // Profile creation failed - use minimal profile object
           const minimalProfile: Profile = {
             id: sessionUser.id,
             full_name: sessionUser.user_metadata?.full_name || null,
@@ -160,7 +154,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     [getAvatarUrl, fetchProfile],
   )
 
-  // Use refs to avoid recreating refreshProfile on every user change
   const userRef = useRef(user)
   const fetchProfileRef = useRef(fetchProfile)
   const getAvatarUrlRef = useRef(getAvatarUrl)
@@ -182,7 +175,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setProfile(fresh)
         localStorage.setItem("profile", JSON.stringify(fresh))
 
-        // Handle avatar URL
         const avatarPath = fresh.avatar_url
         if (!avatarPath) {
           currentAvatarPathRef.current = null
@@ -201,7 +193,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (initialized.current) return
     initialized.current = true
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         updateUserState(session.user)
@@ -210,11 +201,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    // Listen to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Prevent duplicate processing of same event
       const eventKey = `${event}-${session?.user?.id || 'null'}`
       if (lastAuthEventRef.current === eventKey) {
         return

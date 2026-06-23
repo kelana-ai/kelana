@@ -439,7 +439,6 @@ export default function NewItineraryPage() {
           </p>
         </div>
 
-        {/* Progress Indicator */}
         <div className="mb-10 hidden md:block">
           <div className="relative mb-6 flex items-center">
             {steps.map((step, index) => (
@@ -488,7 +487,6 @@ export default function NewItineraryPage() {
           </div>
         </div>
 
-        {/* Mobile Progress */}
         <div className="mb-6 flex items-center justify-between md:hidden">
           <p className="text-sm font-medium">
             Step {currentStep + 1} of {steps.length}
@@ -531,7 +529,6 @@ export default function NewItineraryPage() {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                   >
-                    {/* Step 1: Trip Details */}
                     {currentStep === 0 && (
                       <div className="space-y-6">
                         <FormField
@@ -559,7 +556,6 @@ export default function NewItineraryPage() {
                               <FormLabel>Destination</FormLabel>
                               <FormControl>
                                 <div className="space-y-3">
-                                  {/* Separate search input outside the map */}
                                   <div className="flex gap-2">
                                     <div className="relative flex-1">
                                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -589,7 +585,6 @@ export default function NewItineraryPage() {
                                     </Button>
                                   </div>
 
-                                  {/* Search results dropdown */}
                                   {showSearchResults && searchResults.length > 0 && (
                                     <div className="relative">
                                       <div className="absolute left-0 right-0 top-0 z-50 max-h-60 overflow-auto rounded-md border bg-background shadow-md">
@@ -681,7 +676,6 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 2: Home Location */}
                     {currentStep === 1 && (
                       <div className="space-y-6">
                         <FormField
@@ -692,7 +686,6 @@ export default function NewItineraryPage() {
                               <FormLabel>Your Home Location</FormLabel>
                               <FormControl>
                                 <div className="space-y-3">
-                                  {/* Separate search input outside the map */}
                                   <div className="flex gap-2">
                                     <div className="relative flex-1">
                                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -722,7 +715,6 @@ export default function NewItineraryPage() {
                                     </Button>
                                   </div>
 
-                                  {/* Search results dropdown */}
                                   {showHomeSearchResults && homeSearchResults.length > 0 && (
                                     <div className="relative">
                                       <div className="absolute left-0 right-0 top-0 z-50 max-h-60 overflow-auto rounded-md border bg-background shadow-md">
@@ -767,7 +759,6 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 3: Travel Type */}
                     {currentStep === 2 && (
                       <div className="space-y-6">
                         <FormField
@@ -806,7 +797,6 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 4: Travel Styles */}
                     {currentStep === 3 && (
                       <div className="space-y-6">
                         <FormField
@@ -854,7 +844,6 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 5: Dietary Needs */}
                     {currentStep === 4 && (
                       <div className="space-y-6">
                         <FormField
@@ -900,7 +889,6 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 6: Budget */}
                     {currentStep === 5 && (
                       <div className="space-y-8">
                         <FormField
@@ -983,7 +971,6 @@ export default function NewItineraryPage() {
                       </div>
                     )}
 
-                    {/* Step 7: Review */}
                     {currentStep === 6 && (
                       <div className="space-y-6">
                         <div className="rounded-lg border bg-card p-6 shadow-sm">

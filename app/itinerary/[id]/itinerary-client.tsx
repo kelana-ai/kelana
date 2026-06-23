@@ -133,7 +133,6 @@ export default function ItineraryClient({
 
       <div className="container mx-auto py-12 px-4 space-y-10">
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main itinerary */}
           <main className="lg:col-span-2 space-y-8">
             <Card className="overflow-visible border shadow-md transition-all duration-300 hover:shadow-lg my-4 pt-0">
               <CardHeader className="bg-primary/5 border-b pt-6">
@@ -210,7 +209,6 @@ export default function ItineraryClient({
             </Card>
           </main>
 
-          {/* Sidebar */}
           <aside className="space-y-6">
             <BudgetCard
               budgetTotal={itn.budget.total}

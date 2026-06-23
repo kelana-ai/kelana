@@ -72,7 +72,6 @@ export default function ErrorPage() {
         </div>
       </motion.div>
 
-      {/* Decorative elements */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -left-[10%] top-[20%] h-[40vh] w-[40vh] rounded-full bg-destructive/5 blur-3xl" />
         <div className="absolute -right-[10%] bottom-[20%] h-[30vh] w-[30vh] rounded-full bg-destructive/5 blur-3xl" />

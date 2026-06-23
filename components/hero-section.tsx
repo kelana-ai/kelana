@@ -45,7 +45,6 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden" aria-label="Hero section">
-      {/* Background image and overlay */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
@@ -58,10 +57,8 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-background/90" />
       </div>
 
-      {/* Content container */}
       <div className="container relative z-10 mx-auto px-4">
         <div className="grid min-h-[90vh] items-center py-20 md:grid-cols-2 md:gap-12 lg:min-h-[85vh]">
-          {/* Left column - Text content */}
           <motion.div
             className="flex flex-col items-start text-left"
             initial="hidden"
@@ -116,7 +113,6 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right column - Visual element */}
           <motion.div
             className="relative hidden md:block"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -150,7 +146,6 @@ export function HeroSection() {
                 </div>
               </div>
 
-              {/* Floating elements */}
               <div className="absolute -left-4 top-1/4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
                 <Leaf className="h-8 w-8 text-primary" />
               </div>
@@ -167,7 +162,6 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Wave divider */}
       <div className="absolute bottom-0 left-0 right-0">
         <svg
           className="fill-background"
@@ -179,7 +173,6 @@ export function HeroSection() {
         </svg>
       </div>
 
-      {/* Video Dialog */}
       <VideoDialog open={videoOpen} onOpenChange={setVideoOpen} />
     </section>
   )

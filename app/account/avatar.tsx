@@ -23,7 +23,6 @@ export default function Avatar({
   const [imageError, setImageError] = useState(false)
   const { avatarUrl: contextAvatarUrl } = useUser()
 
-  // Prefer context avatar URL, but don't cause re-render if both are null
   const displayAvatarUrl = !imageError ? (contextAvatarUrl || url) : null
 
   const uploadAvatar: React.ChangeEventHandler<HTMLInputElement> = async (event) => {

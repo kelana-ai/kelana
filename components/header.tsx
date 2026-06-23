@@ -54,7 +54,6 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        {/* Mobile Menu & Logo Section */}
         <div className="flex items-center gap-2">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild className="lg:hidden">
@@ -64,7 +63,6 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-6">
-              {/* Mobile Logo */}
               <DialogTitle className="text-xl font-bold mb-4">
                 <div className="border-b pb-4">
                   <Image
@@ -77,7 +75,6 @@ export default function Header() {
                 </div>
               </DialogTitle>
 
-              {/* Mobile User Info (when available and loaded) */}
               {isUserLoggedIn && profile && !isLoading && (
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b">
                   <Avatar className="h-10 w-10 border border-muted">
@@ -105,7 +102,6 @@ export default function Header() {
                 </div>
               )}
 
-              {/* Mobile Navigation */}
               <nav className="flex flex-col gap-4 py-4">
                 {(isUserLoggedIn ? mobileUserNavigation : publicNavigation).map((item) => (
                   <Link
@@ -122,7 +118,6 @@ export default function Header() {
                 ))}
               </nav>
 
-              {/* Mobile Auth/Signout Buttons */}
               <div className="mt-auto flex flex-col gap-2">
                 {isUserLoggedIn ? (
                   <form action="/auth/signout" method="post" className="w-full">
@@ -144,7 +139,6 @@ export default function Header() {
             </SheetContent>
           </Sheet>
 
-          {/* Always-visible Logo */}
           <Link href="/">
             <Image
               src="/logo.png"
@@ -156,7 +150,6 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
         <nav className="hidden gap-6 lg:flex">
           {(isUserLoggedIn ? desktopUserNavigation : publicNavigation).map((item) => (
             <Link
@@ -172,7 +165,6 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Desktop User Dropdown */}
         <div className="hidden lg:flex lg:items-center lg:gap-2">
           {isUserLoggedIn && !isLoading ? (
             <DropdownMenu>

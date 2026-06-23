@@ -7,7 +7,6 @@ export async function POST() {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
-  // Check if a user's logged in
   const {
     data: { user },
   } = await supabase.auth.getUser()
