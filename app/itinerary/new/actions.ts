@@ -108,10 +108,7 @@ export async function submitItinerary(formData: FormData) {
 
     const { object } = await generateObject({
       model: openai.responses("gpt-4o"),
-      providerOptions: {
-        openai: { apiKey: process.env.OPENAI_API_KEY! },
-      },
-      maxTokens: 16000,
+      maxOutputTokens: 16000,
       schema: ItinerarySchema,
       prompt: `
         You are an expert travel planner. Develop a **comprehensive, eco-conscious travel itinerary** for a real-world trip, ensuring all details are **accurate, verifiable, and well-researched**. Adhere strictly to the following JSON schema:
