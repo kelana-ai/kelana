@@ -9,7 +9,6 @@ import { type FormEvent, useEffect, useState } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -20,7 +19,6 @@ import { login } from "./actions"
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
-  const [rememberMe, setRememberMe] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { user, isLoading } = useUser()
@@ -38,9 +36,6 @@ export default function LoginPage() {
     setIsSubmitting(true)
 
     const formData = new FormData(e.currentTarget)
-    if (rememberMe) {
-      formData.append("rememberMe", "true")
-    }
 
     const result = await login(formData)
 
@@ -92,17 +87,9 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm">
-                    Password
-                  </Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+                <Label htmlFor="password" className="text-sm">
+                  Password
+                </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -114,18 +101,6 @@ export default function LoginPage() {
                     className="pl-9"
                   />
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(!!checked)}
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <Label htmlFor="remember-me" className="text-sm font-normal leading-none">
-                  Remember me
-                </Label>
               </div>
 
               <Button
