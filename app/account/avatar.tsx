@@ -36,7 +36,7 @@ export default function Avatar({
 
       const file = event.target.files[0]
       const fileExt = file.name.split(".").pop()
-      const filePath = `${uid}-${Math.random()}.${fileExt}`
+      const filePath = `${uid}/${Math.random()}.${fileExt}`
 
       const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file)
       if (uploadError) throw uploadError
