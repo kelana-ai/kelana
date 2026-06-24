@@ -4,15 +4,10 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { AlertTriangle, ArrowLeft, MessageSquare } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 export default function ErrorPage() {
-  const [errorCode, setErrorCode] = useState<string>("")
-
-  useEffect(() => {
-    const randomCode = Math.floor(Math.random() * 900000) + 100000
-    setErrorCode(`ERR-${randomCode}`)
-  }, [])
+  const [errorCode] = useState(() => `ERR-${Math.floor(Math.random() * 900000) + 100000}`)
 
   return (
     <div className="container flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center py-12 text-center">

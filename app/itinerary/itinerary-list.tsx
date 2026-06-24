@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, type Variants } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -71,7 +71,6 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
   const router = useRouter()
   const { user } = useUser()
   const [itineraries, setItineraries] = useState<Itinerary[]>(initialItineraries)
-  const [filteredItineraries, setFilteredItineraries] = useState<Itinerary[]>(initialItineraries)
   const [isLoading, setIsLoading] = useState(loading)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -83,11 +82,10 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
 
   useEffect(() => {
     setItineraries(initialItineraries)
-    setFilteredItineraries(initialItineraries)
     setIsLoading(loading)
   }, [initialItineraries, loading])
 
-  useEffect(() => {
+  const filteredItineraries = useMemo(() => {
     let result = [...itineraries]
 
     if (activeTab !== "all") {
@@ -142,7 +140,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
       }
     })
 
-    setFilteredItineraries(result)
+    return result
   }, [itineraries, searchQuery, statusFilter, sortBy, activeTab])
 
   const formatDate = (dateString: string) => {
