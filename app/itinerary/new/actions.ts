@@ -271,7 +271,7 @@ export async function submitItinerary(formData: FormData) {
     console.error("Error creating itinerary:", error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
+      error: "We couldn't generate your itinerary. Please try again.",
     }
   }
 }

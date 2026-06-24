@@ -93,6 +93,7 @@ export default function SignupPage() {
                     id="email"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="you@example.com"
                     required
                     className="pl-9"
@@ -110,6 +111,7 @@ export default function SignupPage() {
                     id="password"
                     name="password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     minLength={8}
                     className="pl-9"
@@ -132,6 +134,7 @@ export default function SignupPage() {
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
+                    autoComplete="new-password"
                     required
                     className={`pl-9 ${!passwordsMatch ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     aria-describedby="confirm-password-error"
