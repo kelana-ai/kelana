@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react"
+import { Facebook, Instagram, Linkedin, Twitter } from "@/components/social-icons"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
