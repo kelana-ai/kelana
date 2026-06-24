@@ -165,7 +165,6 @@ export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
                   mode="range"
                   selected={field.value}
                   onSelect={field.onChange}
-                  initialFocus
                   numberOfMonths={2}
                 />
               </PopoverContent>
