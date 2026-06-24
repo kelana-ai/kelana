@@ -12,6 +12,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+import type { MapComponentHandle } from "@/components/map-component"
 import type { FormValues } from "../schema"
 import { useLocationSearch } from "../use-location-search"
 
@@ -25,7 +26,7 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
 })
 
 export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
-  const mapRef = useRef<any>(null)
+  const mapRef = useRef<MapComponentHandle | null>(null)
   const search = useLocationSearch((location) => {
     form.setValue("destination", location)
     mapRef.current?.setLocation(location)

@@ -9,7 +9,11 @@ interface MapComponentProps {
   initialSearchQuery?: string
 }
 
-const MapComponent = forwardRef<{ setLocation: (location: { lat: number; lng: number }) => void }, MapComponentProps>(
+export type MapComponentHandle = {
+  setLocation: (location: { lat: number; lng: number }) => void
+}
+
+const MapComponent = forwardRef<MapComponentHandle, MapComponentProps>(
   ({ onLocationSelect }, ref) => {
     const mapRef = useRef<L.Map | null>(null)
     const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -64,6 +68,7 @@ const MapComponent = forwardRef<{ setLocation: (location: { lat: number; lng: nu
           mapRef.current = null
         }
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const reverseGeocode = async (lat: number, lng: number) => {

@@ -14,7 +14,7 @@ type Profile = {
   home_lng?: number | null
   preferences?: {
     travelStyles?: string[]
-    [key: string]: any
+    [key: string]: unknown
   } | null
   dietary_needs?: string[] | null
   updated_at: string | null
@@ -62,7 +62,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   )
 
   const createProfileIfNotExists = useCallback(
-    async (userId: string, userMetadata: any) => {
+    async (userId: string, userMetadata?: User["user_metadata"]) => {
       try {
         const { data, error } = await supabase
           .from("profiles")
@@ -89,7 +89,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   )
 
   const fetchProfile = useCallback(
-    async (userId: string, userMetadata?: any) => {
+    async (userId: string, userMetadata?: User["user_metadata"]) => {
       try {
         const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
 

@@ -8,6 +8,7 @@ import type { UseFormReturn } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import type { MapComponentHandle } from "@/components/map-component"
 import type { FormValues } from "../schema"
 import { useLocationSearch } from "../use-location-search"
 
@@ -21,7 +22,7 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
 })
 
 export function HomeLocationStep({ form }: { form: UseFormReturn<FormValues> }) {
-  const mapRef = useRef<any>(null)
+  const mapRef = useRef<MapComponentHandle | null>(null)
   const search = useLocationSearch((location) => {
     form.setValue("homeLocation", location)
     mapRef.current?.setLocation(location)
