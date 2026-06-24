@@ -39,9 +39,9 @@ export default function LoginPage() {
 
     const result = await login(formData)
 
-    setIsSubmitting(false)
     if (result?.error) {
       setError(result.error.message)
+      setIsSubmitting(false)
       return
     }
     router.push("/dashboard")
@@ -49,7 +49,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout title="Welcome back" description="Sign in to your account to continue your eco-conscious journey">
-      {isLoading || user ? (
+      {(isLoading || user) && !isSubmitting ? (
         <AuthFormSkeleton />
       ) : (
         <Card className="border shadow-sm">

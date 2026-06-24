@@ -50,13 +50,13 @@ export default function SignupPage() {
     setPasswordsMatch(true)
     const result = await signup(formData)
 
-    setIsSubmitting(false)
     if (result?.error) {
       setError(result.error.message)
-    } else {
-      toast.success("Account created! You're now signed in.")
-      router.push("/dashboard")
+      setIsSubmitting(false)
+      return
     }
+    toast.success("Account created! You're now signed in.")
+    router.push("/dashboard")
   }
 
   return (
@@ -64,7 +64,7 @@ export default function SignupPage() {
       title="Create an account"
       description="Join Kelana to start planning your eco-conscious travel experiences"
     >
-      {isLoading || user ? (
+      {(isLoading || user) && !isSubmitting ? (
         <AuthFormSkeleton />
       ) : (
         <Card className="border shadow-sm">
