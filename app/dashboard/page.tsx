@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,6 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser } from "@/contexts/user-context"
+import { ecoFacts } from "@/lib/eco-facts"
 import { cn } from "@/lib/utils"
 
 import Image from "next/image"
@@ -63,30 +64,14 @@ export default function DashboardPage() {
     if (error) {
       toast.error("Failed to load dashboard data. Please try again later.")
     }
-  }, [error, toast])
+  }, [error])
 
   useEffect(() => {
     const timer = setTimeout(() => setShowWelcome(false), 5000)
     return () => clearTimeout(timer)
   }, [])
 
-  const ecoFacts = [
-    "Choosing trains over flights can reduce your carbon footprint by up to 90%.",
-    "Staying in eco-certified accommodations can save up to 20% in water consumption.",
-    "Supporting local businesses keeps approximately 68% of your money in the local economy.",
-    "Reusable water bottles can prevent hundreds of single-use plastic bottles from entering landfills during your trip.",
-    "Walking tours generate zero carbon emissions and provide the best way to experience a destination like a local.",
-    "Plant-based meals typically have a carbon footprint 50% smaller than meat-based alternatives.",
-    "Sustainable tourism helps preserve over 30% of the world's natural and cultural heritage sites.",
-    "Eco-friendly travel can reduce your vacation's carbon footprint by up to 40%.",
-    "Slow travel (staying longer in fewer places) can reduce your trip's environmental impact by up to 30%.",
-    "Choosing digital tickets and guides saves approximately 1 tree for every 100 travelers.",
-  ]
-
-  const randomFact = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * ecoFacts.length)
-    return ecoFacts[randomIndex]
-  }, [ecoFacts])
+  const [randomFact] = useState(() => ecoFacts[Math.floor(Math.random() * ecoFacts.length)])
 
   const COLORS = ["#10b981", "#3b82f6", "#f97316", "#8b5cf6"]
 
