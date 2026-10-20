@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Adjust NODE_VERSION as desired
-ARG NODE_VERSION=22.14.0
+ARG NODE_VERSION=24.18.0
 FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="Next.js"
@@ -11,6 +11,15 @@ WORKDIR /app
 
 # Set production environment
 ENV NODE_ENV="production"
+
+# Next.js inlines NEXT_PUBLIC_* values into the browser bundle at build time, so they must be build args
+# (set under [build.args] in fly.toml); Fly secrets only exist at runtime, which is too late for the bundle.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 # Install pnpm (version kept in sync with package.json "packageManager")
 RUN npm install -g pnpm@10.28.2
@@ -29,6 +38,10 @@ RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy application code
 COPY . .
+
+# Fail the build instead of shipping a bundle whose Supabase client cannot be created
+RUN test -n "$NEXT_PUBLIC_SUPABASE_URL" && test -n "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" || \
+    { echo "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY must be provided as build args (see fly.toml)" >&2; exit 1; }
 
 # Build application
 RUN pnpm exec next build --experimental-build-mode compile
