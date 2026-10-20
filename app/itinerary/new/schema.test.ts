@@ -20,7 +20,6 @@ async function errorsFor(values: unknown) {
   return res.errors as Record<string, { message?: string } | undefined>
 }
 
-// What the wizard's "Continue" button does: trigger the field through react-hook-form and read the stored error.
 async function storedError(values: unknown, field: "destination" | "dateRange") {
   const { control, formControl } = createFormControl<FormValues>({
     defaultValues: values as FormValues,

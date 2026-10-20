@@ -1,9 +1,6 @@
 import L from "leaflet"
 
-/**
- * Round green pin used for destinations on every map. Leaflet's default marker is avoided on purpose: its PNG files
- * are resolved by path, and bundlers hand back a different shape for them in dev and in production builds.
- */
+// not Leaflet's default marker: its image paths resolve differently in dev and in production builds
 export const destinationIcon = () =>
   L.divIcon({
     className: "custom-div-icon",

@@ -2,7 +2,6 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { type NextRequest, NextResponse } from 'next/server'
 
-// Behind a reverse proxy request.url can carry the internal host, so prefer the configured site URL, then the forwarded host.
 function siteUrl(request: NextRequest) {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
   const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')

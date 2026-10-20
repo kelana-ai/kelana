@@ -52,7 +52,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl
   }, [profile?.avatar_url, supabase])
 
-  // Loads the profile, creating the row when the signup trigger has not (e.g. for accounts that predate it).
   const loadProfile = useCallback(
     async (sessionUser: User): Promise<Profile> => {
       const { data, error } = await supabase.from("profiles").select("*").eq("id", sessionUser.id).maybeSingle()

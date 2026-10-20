@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  // IMPORTANT: Do not run any logic between createServerClient and getUser().
+  // nothing may run between createServerClient and getUser()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -49,6 +49,6 @@ export async function updateSession(request: NextRequest) {
     return redirectResponse
   }
 
-  // IMPORTANT: return supabaseResponse unchanged so refreshed cookies reach the browser.
+  // return supabaseResponse as is so the refreshed cookies reach the browser
   return supabaseResponse
 }

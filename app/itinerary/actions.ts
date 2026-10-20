@@ -13,7 +13,6 @@ export async function deleteItinerary(itineraryId: string) {
       return { success: false, error: "Not authenticated" }
     }
 
-    // ON DELETE CASCADE removes the day/activity rows; RLS limits the delete to the owner.
     const { data, error } = await supabase.from("itineraries").delete().eq("id", itineraryId).select("id")
 
     if (error) throw error

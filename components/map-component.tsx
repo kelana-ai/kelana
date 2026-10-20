@@ -7,7 +7,6 @@ import { useEffect, useRef } from "react"
 import { destinationIcon } from "@/lib/leaflet-icons"
 
 interface MapComponentProps {
-  /** The selected place; the marker and viewport follow it, so the map always matches the form. */
   value?: { lat?: number; lng?: number } | null
   onLocationSelect: (location: { name: string; lat: number; lng: number }) => void
 }

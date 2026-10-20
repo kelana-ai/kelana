@@ -29,7 +29,7 @@ function line(className: string, text: string) {
   return el
 }
 
-// Popup content is built from DOM nodes (textContent) so AI-generated text can never inject markup.
+// textContent only: popup text comes from the model
 function popupFor(activity: MapActivity) {
   const root = document.createElement("div")
   root.className = "p-1"
@@ -69,7 +69,6 @@ export default function LeafletMap({ center, activities, destination }: LeafletM
       mapRef.current = null
       layerRef.current = null
     }
-    // The map is created once; markers and the viewport are updated by the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

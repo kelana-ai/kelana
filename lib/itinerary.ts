@@ -6,7 +6,6 @@ const DATE_KEY = /^(\d{4})-(\d{2})-(\d{2})$/
 
 export type ActivityType = (typeof ACTIVITY_TYPES)[number]
 
-/** Formats a calendar date the user picked (local midnight) as `yyyy-MM-dd` without any timezone conversion. */
 export function toDateKey(date: Date): string {
   return format(date, "yyyy-MM-dd")
 }
@@ -25,27 +24,23 @@ function keyToUtc(key: string): number {
   return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
 }
 
-/** Number of calendar days in the inclusive range, or 0 when the range is invalid or reversed. */
 export function countTripDays(from: string, to: string): number {
   if (!isDateKey(from) || !isDateKey(to)) return 0
   const diff = Math.round((keyToUtc(to) - keyToUtc(from)) / 86_400_000)
   return diff < 0 ? 0 : diff + 1
 }
 
-/** Every `yyyy-MM-dd` key in the inclusive range, independent of the server timezone. */
 export function listTripDays(from: string, to: string): string[] {
   const count = countTripDays(from, to)
   const start = count ? keyToUtc(from) : 0
   return Array.from({ length: count }, (_, i) => new Date(start + i * 86_400_000).toISOString().slice(0, 10))
 }
 
-/** Parses a date-only string (`yyyy-MM-dd`) at local midnight and formats it, so the day never shifts. */
 export function formatDateKey(key: string, pattern = "MMM d, yyyy"): string {
   if (!isDateKey(key.slice(0, 10))) return key
   return format(parseISO(key.slice(0, 10)), pattern)
 }
 
-/** Accepts "09:00", "9:00", "9:00 AM", "21:30:00" and returns `HH:MM`, or null when unparseable. */
 export function normalizeTime(raw: string | null | undefined): string | null {
   if (!raw) return null
   const m = /^\s*(\d{1,2})(?::(\d{2}))?(?::\d{2})?\s*([AaPp][Mm])?\s*$/.exec(raw)
@@ -59,7 +54,7 @@ export function normalizeTime(raw: string | null | undefined): string | null {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
 }
 
-/** The database requires end_time > start_time; overnight or invalid ends are dropped instead of failing the insert. */
+// the database requires end_time > start_time, so an overnight or invalid end is dropped
 export function normalizeTimes(start: string, end: string | null | undefined): { start: string; end: string | null } {
   const s = normalizeTime(start) ?? "09:00"
   const e = normalizeTime(end)
@@ -113,10 +108,6 @@ export interface CleanItinerary {
 const finite = (n: unknown, fallback = 0) => (typeof n === "number" && Number.isFinite(n) ? n : fallback)
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-/**
- * Turns raw model output into rows that are safe to persist: dates come from the trip request (not the model),
- * the number of days is enforced, times/currency/coordinates are normalised, and budget.spent is the sum of costs.
- */
 export function cleanGeneratedItinerary(
   generated: GeneratedItinerary,
   dayKeys: string[],
@@ -173,7 +164,7 @@ export function cleanGeneratedItinerary(
 
 const CANCELLED_OR_DRAFT = new Set(["draft", "cancelled"])
 
-/** Itineraries are created as "confirmed" and never updated, so a finished trip is shown as completed. */
+// itineraries are saved as "confirmed" and never updated, so a finished trip is derived as completed
 export function effectiveStatus(status: string, dateTo: string, today: string = toDateKey(new Date())): string {
   if (CANCELLED_OR_DRAFT.has(status) || status === "completed") return status
   return dateTo.slice(0, 10) < today ? "completed" : status

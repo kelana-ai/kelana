@@ -1,5 +1,4 @@
--- Supabase pauses free projects after a week without activity. A scheduled workflow calls this no-op function
--- through the API so the project keeps seeing real database traffic. It reads nothing and touches no table.
+-- called by the keep-alive workflow so free projects do not pause
 create or replace function public.ping()
 returns integer
 language sql

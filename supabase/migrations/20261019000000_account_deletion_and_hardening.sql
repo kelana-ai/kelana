@@ -1,4 +1,3 @@
--- Keep updated_at accurate on every table the app edits.
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -28,13 +27,11 @@ drop trigger if exists set_updated_at on public.profiles;
 create trigger set_updated_at before update on public.profiles
   for each row execute function public.set_updated_at();
 
--- Avatars: images only, 2 MB max (the app validates the same limits client-side).
 update storage.buckets
 set file_size_limit = 2097152,
     allowed_mime_types = array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 where id = 'avatars';
 
--- Self-service account deletion. Profiles and itineraries (with days/activities) cascade from auth.users.
 create or replace function public.delete_my_account()
 returns void
 language plpgsql
