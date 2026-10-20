@@ -1,7 +1,7 @@
 import next from "eslint-config-next"
 
 const eslintConfig = [
-  { ignores: [".next/**", "node_modules/**"] },
+  { ignores: [".next/**", ".vercel/**", "node_modules/**"] },
   ...next,
   {
     rules: {
