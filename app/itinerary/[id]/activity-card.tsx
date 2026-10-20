@@ -40,8 +40,8 @@ export function ActivityCard({ activity, index }: ActivityCardProps) {
   const TypeIcon = iconMap[activity.type] || Compass
 
   const timeDisplay = activity.end_time
-    ? `${activity.start_time} - ${activity.end_time}`
-    : activity.start_time
+    ? `${activity.start_time.slice(0, 5)} - ${activity.end_time.slice(0, 5)}`
+    : activity.start_time.slice(0, 5)
 
   const ecoTag =
     activity.eco_tags && activity.eco_tags.length > 0
@@ -60,7 +60,6 @@ export function ActivityCard({ activity, index }: ActivityCardProps) {
       >
         <CardContent className="p-0 overflow-visible">
           <div className="p-4 flex gap-4">
-            {/* type-based icon */}
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
               <TypeIcon className="h-5 w-5 text-primary" />
             </div>
@@ -92,7 +91,7 @@ export function ActivityCard({ activity, index }: ActivityCardProps) {
                 </p>
               </motion.div>
 
-              {activity.description.length > 100 && (
+              {(activity.description?.length ?? 0) > 100 && (
                 <button
                   className="mt-2 text-xs font-medium text-primary hover:underline"
                   onClick={(e) => {

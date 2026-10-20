@@ -7,7 +7,6 @@ import Link from "next/link"
 export default function AccountLoading() {
   return (
     <div className="container max-w-5xl py-8">
-      {/* Back Button & Header */}
       <div className="mb-8 flex items-center gap-2">
         <Button variant="ghost" size="icon" asChild className="mr-2">
           <Link href="/dashboard">
@@ -21,7 +20,6 @@ export default function AccountLoading() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-3">
-        {/* Profile Summary Card */}
         <Card className="md:col-span-1">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center space-y-4">
@@ -52,7 +50,6 @@ export default function AccountLoading() {
           </CardContent>
         </Card>
 
-        {/* Settings Tabs */}
         <div className="md:col-span-2">
           <div className="space-y-4">
             <Skeleton className="h-10 w-full" />

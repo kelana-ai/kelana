@@ -7,6 +7,10 @@ import Image from "next/image"
 import { useState } from "react"
 import { toast } from "sonner"
 
+const MAX_BYTES = 2 * 1024 * 1024
+const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+const EXTENSIONS: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" }
+
 export default function Avatar({
   uid,
   url,
@@ -16,32 +20,43 @@ export default function Avatar({
   uid: string | null
   url: string | null
   size: number
-  onUpload: (url: string) => void
+  onUpload: (path: string) => Promise<boolean>
 }) {
   const supabase = createClient()
   const [uploading, setUploading] = useState(false)
-  const [imageError, setImageError] = useState(false)
-  const { avatarUrl: contextAvatarUrl } = useUser()
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const { avatarUrl } = useUser()
 
-  // Prefer context avatar URL, but don't cause re-render if both are null
-  const displayAvatarUrl = !imageError ? (contextAvatarUrl || url) : null
+  const displayAvatarUrl = avatarUrl && avatarUrl !== failedSrc ? avatarUrl : null
 
   const uploadAvatar: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
+    const input = event.target
+    const file = input.files?.[0]
+    input.value = ""
+    if (!file || !uid) return
+
+    if (!ALLOWED.includes(file.type)) {
+      toast.error("Please choose a PNG, JPEG, WebP or GIF image.")
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      toast.error("The image must be 2 MB or smaller.")
+      return
+    }
+
+    setUploading(true)
+    const previous = url
     try {
-      setUploading(true)
-
-      if (!event.target.files || event.target.files.length === 0) {
-        throw new Error("You must select an image to upload.")
-      }
-
-      const file = event.target.files[0]
-      const fileExt = file.name.split(".").pop()
-      const filePath = `${uid}-${Math.random()}.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file)
+      const filePath = `${uid}/${crypto.randomUUID()}.${EXTENSIONS[file.type]}`
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { contentType: file.type })
       if (uploadError) throw uploadError
 
-      onUpload(filePath)
+      const saved = await onUpload(filePath)
+      if (saved && previous && !previous.startsWith("http") && previous.startsWith(`${uid}/`)) {
+        await supabase.storage.from("avatars").remove([previous])
+      } else if (!saved) {
+        await supabase.storage.from("avatars").remove([filePath])
+      }
     } catch (error) {
       console.error("Avatar upload error:", error)
       toast.error("Error uploading avatar")
@@ -65,7 +80,7 @@ export default function Avatar({
             fill
             sizes={`${size}px`}
             priority
-            onError={() => setImageError(true)}
+            onError={() => setFailedSrc(displayAvatarUrl)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted/30">
@@ -82,7 +97,7 @@ export default function Avatar({
         <input
           type="file"
           id="avatar-upload"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp,image/gif"
           onChange={uploadAvatar}
           disabled={uploading}
           className="sr-only"

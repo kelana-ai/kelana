@@ -1,6 +1,5 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin } from "lucide-react"
@@ -11,24 +10,21 @@ interface DestinationCardProps {
   name: string
   image: string
   description: string
-  ecoScore: number
 }
 
-export function DestinationCard({ name, image, description, ecoScore }: DestinationCardProps) {
+export function DestinationCard({ name, image, description }: DestinationCardProps) {
   return (
     <Card className="group overflow-hidden">
       <div className="relative h-64 w-full overflow-hidden">
         <Image
-          src={image || "/placeholder.svg"}
+          src={image}
           alt={name}
           fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
-          <Badge variant="outline" className="mb-2 border-green-500 bg-green-500/10 text-green-500 backdrop-blur-sm">
-            Eco Score: {ecoScore}
-          </Badge>
           <h3 className="text-xl font-semibold text-white">{name}</h3>
         </div>
       </div>
@@ -38,9 +34,7 @@ export function DestinationCard({ name, image, description, ecoScore }: Destinat
           <span>{description}</span>
         </div>
         <Button variant="outline" className="w-full" asChild>
-          <Link href={`/destinations/${name.toLowerCase().replace(/,\s+/g, "-").replace(/\s+/g, "-")}`}>
-            Explore Destination
-          </Link>
+          <Link href={`/itinerary/new?destination=${encodeURIComponent(name)}`}>Plan a trip here</Link>
         </Button>
       </CardContent>
     </Card>

@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function AboutLoading() {
   return (
     <div className="flex flex-col">
-      {/* Hero Section Loading State */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background py-20 md:py-28">
         <div className="container relative z-10">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
@@ -28,19 +27,16 @@ export default function AboutLoading() {
           </div>
         </div>
 
-        {/* Background decorative elements */}
         <div className="absolute -left-32 -top-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-32 -right-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
       </section>
 
-      {/* Quick Navigation Loading State */}
       <section className="sticky top-16 z-30 border-b bg-background/80 py-4 backdrop-blur-md">
         <div className="container">
           <Skeleton className="mx-auto h-10 w-full max-w-3xl" />
         </div>
       </section>
 
-      {/* Mission Section Loading State */}
       <section className="py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
@@ -62,7 +58,6 @@ export default function AboutLoading() {
         </div>
       </section>
 
-      {/* Team Section Loading State */}
       <section className="bg-muted/30 py-20">
         <div className="container">
           <div className="mb-12 text-center">

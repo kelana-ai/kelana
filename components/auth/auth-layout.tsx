@@ -40,7 +40,6 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
         </div>
       </div>
 
-      {/* Decorative background elements */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-[40%] left-[20%] h-[80vh] w-[80vh] rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-[30%] right-[20%] h-[70vh] w-[70vh] rounded-full bg-primary/5 blur-3xl" />

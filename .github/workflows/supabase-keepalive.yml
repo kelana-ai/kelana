@@ -1,0 +1,30 @@
+name: Supabase Keep-alive
+
+# Supabase pauses free projects after a week without activity, so call the no-op ping() function on both projects
+# twice a week. GitHub stops running scheduled workflows after 60 days without repository activity.
+on:
+  schedule:
+    - cron: "17 3 * * 1,4"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ping production
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_PROD_URL }}
+          SUPABASE_KEY: ${{ vars.SUPABASE_PROD_KEY }}
+        run: >
+          curl --fail --silent --show-error --max-time 30 --retry 3 --retry-delay 10 --retry-all-errors
+          -X POST "$SUPABASE_URL/rest/v1/rpc/ping" -H "apikey: $SUPABASE_KEY" -H "Content-Type: application/json" -d '{}'
+      - name: Ping development
+        if: ${{ !cancelled() }}
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_DEV_URL }}
+          SUPABASE_KEY: ${{ vars.SUPABASE_DEV_KEY }}
+        run: >
+          curl --fail --silent --show-error --max-time 30 --retry 3 --retry-delay 10 --retry-all-errors
+          -X POST "$SUPABASE_URL/rest/v1/rpc/ping" -H "apikey: $SUPABASE_KEY" -H "Content-Type: application/json" -d '{}'

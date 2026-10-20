@@ -15,7 +15,6 @@ export default function NotFoundPage() {
         className="mb-6"
       >
         <div className="relative mx-auto mb-6">
-          {/* Animated compass */}
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
@@ -24,7 +23,6 @@ export default function NotFoundPage() {
             <Compass className="h-16 w-16 text-primary sm:h-20 sm:w-20" />
           </motion.div>
 
-          {/* Animated pin that bounces */}
           <motion.div
             initial={{ y: -20 }}
             animate={{ y: 0 }}
@@ -64,12 +62,11 @@ export default function NotFoundPage() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/my-itineraries">View My Itineraries</Link>
+            <Link href="/itinerary">View My Itineraries</Link>
           </Button>
         </div>
       </motion.div>
 
-      {/* Decorative elements */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -left-[10%] top-[20%] h-[40vh] w-[40vh] rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -right-[10%] bottom-[20%] h-[30vh] w-[30vh] rounded-full bg-primary/5 blur-3xl" />

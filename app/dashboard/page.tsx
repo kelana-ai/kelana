@@ -1,6 +1,6 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, type Variants } from "framer-motion"
 import {
   BarChart3,
   Calendar,
@@ -12,14 +12,11 @@ import {
   Recycle,
   Sparkles,
   TrendingUp,
-  Users,
   Wallet,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,6 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser } from "@/contexts/user-context"
+import { ecoFacts } from "@/lib/eco-facts"
 import { cn } from "@/lib/utils"
 
 import Image from "next/image"
@@ -66,34 +64,18 @@ export default function DashboardPage() {
     if (error) {
       toast.error("Failed to load dashboard data. Please try again later.")
     }
-  }, [error, toast])
+  }, [error])
 
   useEffect(() => {
     const timer = setTimeout(() => setShowWelcome(false), 5000)
     return () => clearTimeout(timer)
   }, [])
 
-  const ecoFacts = [
-    "Choosing trains over flights can reduce your carbon footprint by up to 90%.",
-    "Staying in eco-certified accommodations can save up to 20% in water consumption.",
-    "Supporting local businesses keeps approximately 68% of your money in the local economy.",
-    "Reusable water bottles can prevent hundreds of single-use plastic bottles from entering landfills during your trip.",
-    "Walking tours generate zero carbon emissions and provide the best way to experience a destination like a local.",
-    "Plant-based meals typically have a carbon footprint 50% smaller than meat-based alternatives.",
-    "Sustainable tourism helps preserve over 30% of the world's natural and cultural heritage sites.",
-    "Eco-friendly travel can reduce your vacation's carbon footprint by up to 40%.",
-    "Slow travel (staying longer in fewer places) can reduce your trip's environmental impact by up to 30%.",
-    "Choosing digital tickets and guides saves approximately 1 tree for every 100 travelers.",
-  ]
-
-  const randomFact = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * ecoFacts.length)
-    return ecoFacts[randomIndex]
-  }, [ecoFacts])
+  const [randomFact] = useState(() => ecoFacts[Math.floor(Math.random() * ecoFacts.length)])
 
   const COLORS = ["#10b981", "#3b82f6", "#f97316", "#8b5cf6"]
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -103,7 +85,7 @@ export default function DashboardPage() {
     },
   }
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
   }
@@ -119,7 +101,9 @@ export default function DashboardPage() {
         return <Globe className="h-4 w-4 text-blue-500" />
       case "accommodation":
         return <MapPin className="h-4 w-4 text-green-500" />
-      case "activity":
+      case "sightseeing":
+      case "wellness":
+      case "event":
         return <Sparkles className="h-4 w-4 text-amber-500" />
       default:
         return <Calendar className="h-4 w-4 text-primary" />
@@ -143,7 +127,6 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Header with theme toggle */}
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         {isPageLoading ? (
           <div>
@@ -181,7 +164,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tabs for different dashboard views */}
       {!isPageLoading && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -200,7 +182,6 @@ export default function DashboardPage() {
       )}
 
       <AnimatePresence mode="wait">
-        {/* Overview Tab Content */}
         {activeTab === "overview" && (
         <motion.div
           key={`overview-${isPageLoading ? 'loading' : 'loaded'}`}
@@ -210,7 +191,6 @@ export default function DashboardPage() {
           exit="hidden"
           className="space-y-6"
         >
-          {/* Stats Overview */}
           <div className="grid gap-4 md:grid-cols-3">
             {isPageLoading ? (
               <>
@@ -266,7 +246,7 @@ export default function DashboardPage() {
                       <div className="text-3xl font-bold text-green-500">
                         {data?.stats.carbonSaved ? `${data.stats.carbonSaved}kg` : "0kg"}
                       </div>
-                      <p className="text-xs text-muted-foreground">Compared to conventional travel</p>
+                      <p className="text-xs text-muted-foreground">Estimated vs. conventional travel</p>
                       <div className="mt-3">
                         <Progress value={data?.stats.carbonProgress || 0} className="h-1" />
                       </div>
@@ -297,7 +277,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Recent Itineraries */}
           <div>
             <div className="mb-4 flex items-center justify-between">
               {isPageLoading ? (
@@ -427,7 +406,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Eco Travel Tip Card */}
           <motion.div variants={itemVariants}>
             <Card
               className={cn(
@@ -472,11 +450,9 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Analytics Tab Content */}
       {!isPageLoading && activeTab === "analytics" && (
         <motion.div key="analytics" variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Carbon Savings Chart */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -516,7 +492,6 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Budget Allocation Chart */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -538,7 +513,7 @@ export default function DashboardPage() {
                           outerRadius={100}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                         >
                           {(data?.analytics?.budgetData || []).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -557,7 +532,6 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Eco Impact Score */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -565,7 +539,7 @@ export default function DashboardPage() {
                     <Leaf className="h-5 w-5 text-green-500" />
                     Eco Impact Score
                   </CardTitle>
-                  <CardDescription>Your environmental impact compared to average travelers</CardDescription>
+                  <CardDescription>Based on the estimated CO₂ savings of your itineraries</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col items-center">
@@ -606,7 +580,6 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Destinations Impact */}
             <motion.div variants={itemVariants}>
               <Card>
                 <CardHeader>
@@ -643,7 +616,6 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Upcoming Tab Content */}
       {!isPageLoading && activeTab === "upcoming" && (
         <motion.div key="upcoming" variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-6">
           <motion.div variants={itemVariants}>
@@ -704,45 +676,6 @@ export default function DashboardPage() {
             </Card>
           </motion.div>
 
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Leaf className="h-5 w-5 text-primary" />
-                  Travel Companions
-                </CardTitle>
-                <CardDescription>People joining you on your upcoming trips</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {data?.travelCompanions && data.travelCompanions.length > 0 ? (
-                  <div className="flex flex-wrap gap-4">
-                    {data.travelCompanions.map((companion) => (
-                      <div key={companion.id} className="flex flex-col items-center gap-2">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage src={companion.avatar || `/placeholder.svg?height=64&width=64`} />
-                          <AvatarFallback>{companion.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="text-center">
-                          <p className="font-medium">{companion.name}</p>
-                          <p className="text-xs text-muted-foreground">{companion.tripName}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="mb-4 rounded-full bg-muted p-3">
-                      <Users className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <h3 className="mb-2 text-lg font-medium">No travel companions</h3>
-                    <p className="text-sm text-muted-foreground">
-                      You don't have any companions for your upcoming trips
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
         </motion.div>
         )}
       </AnimatePresence>

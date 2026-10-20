@@ -10,7 +10,12 @@ import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Kelana | Eco-Conscious Travel Planning",
   description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
   keywords: "eco travel, greener tourism, green travel, eco-friendly travel, responsible tourism",
@@ -18,13 +23,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://kelana.fly.dev/",
+    url: "/",
     title: "Kelana | Eco-Conscious Travel Planning",
     description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
     siteName: "Kelana",
     images: [
       {
-        url: "https://kelana.fly.dev/kelana-og.png",
+        url: "/kelana-og.png",
         width: 800,
         height: 600,
         alt: "Kelana - Eco-Conscious Travel Planning",
@@ -35,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kelana | Eco-Conscious Travel Planning",
     description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
-    images: ["https://kelana.fly.dev/kelana-og.png"],
+    images: ["/kelana-og.png"],
   },
 }
 

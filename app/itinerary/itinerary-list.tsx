@@ -1,9 +1,9 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, type Variants } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -27,12 +27,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useUser } from "@/contexts/user-context"
+import { effectiveStatus, formatDateKey, toDateKey } from "@/lib/itinerary"
 import {
   Calendar,
   Clock,
   CreditCard,
-  Edit,
   Filter,
   Leaf,
   MapPin,
@@ -45,7 +44,7 @@ import {
 } from "lucide-react"
 import { deleteItinerary } from "./actions"
 
-type Itinerary = {
+export type Itinerary = {
   id: string
   name: string
   description: string | null
@@ -64,15 +63,16 @@ type Itinerary = {
 
 interface ItineraryListProps {
   initialItineraries: Itinerary[]
-  loading?: boolean
+  loadFailed?: boolean
 }
 
-export function ItineraryList({ initialItineraries, loading = false }: ItineraryListProps) {
+export function ItineraryList({ initialItineraries, loadFailed = false }: ItineraryListProps) {
   const router = useRouter()
-  const { user } = useUser()
-  const [itineraries, setItineraries] = useState<Itinerary[]>(initialItineraries)
-  const [filteredItineraries, setFilteredItineraries] = useState<Itinerary[]>(initialItineraries)
-  const [isLoading, setIsLoading] = useState(loading)
+  const [stored, setItineraries] = useState<Itinerary[]>(initialItineraries)
+  const itineraries = useMemo(() => {
+    const today = toDateKey(new Date())
+    return stored.map((item) => ({ ...item, status: effectiveStatus(item.status, item.end_date, today) as Itinerary["status"] }))
+  }, [stored])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("newest")
@@ -81,13 +81,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
   const [activeTab, setActiveTab] = useState("all")
   const [isDeleting, setIsDeleting] = useState(false)
 
-  useEffect(() => {
-    setItineraries(initialItineraries)
-    setFilteredItineraries(initialItineraries)
-    setIsLoading(loading)
-  }, [initialItineraries, loading])
-
-  useEffect(() => {
+  const filteredItineraries = useMemo(() => {
     let result = [...itineraries]
 
     if (activeTab !== "all") {
@@ -142,16 +136,10 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
       }
     })
 
-    setFilteredItineraries(result)
+    return result
   }, [itineraries, searchQuery, statusFilter, sortBy, activeTab])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
+  const formatDate = (dateString: string) => formatDateKey(dateString)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -193,22 +181,20 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
   }
 
   const handleDeleteItinerary = async () => {
-    if (!itineraryToDelete || !user) return
+    if (!itineraryToDelete) return
 
     try {
       setIsDeleting(true)
 
-      const result = await deleteItinerary(itineraryToDelete, user.id)
+      const result = await deleteItinerary(itineraryToDelete)
 
       if (!result.success) {
         throw new Error(result.error || "Failed to delete itinerary")
       }
 
-      // Update local state
-      setItineraries(itineraries.filter((item) => item.id !== itineraryToDelete))
+      setItineraries((prev) => prev.filter((item) => item.id !== itineraryToDelete))
       toast.success("Itinerary deleted successfully")
 
-      // Refresh the page to get updated data
       router.refresh()
     } catch (error) {
       console.error("Error deleting itinerary:", error)
@@ -227,7 +213,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
     setActiveTab("all")
   }
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -237,7 +223,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
     },
   }
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
   }
@@ -368,41 +354,12 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
         </div>
       </motion.div>
 
-      {isLoading ? (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <motion.div key={i} variants={itemVariants}>
-              <Card className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="p-6">
-                    <div className="h-6 w-3/4 mb-2 bg-muted animate-pulse rounded" />
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-4 w-4 rounded-full bg-muted animate-pulse" />
-                      <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-4 w-4 rounded-full bg-muted animate-pulse" />
-                      <div className="h-4 w-1/3 bg-muted animate-pulse rounded" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full bg-muted animate-pulse" />
-                      <div className="h-4 w-2/5 bg-muted animate-pulse rounded" />
-                    </div>
-                  </div>
-                  <div className="border-t p-4 flex justify-between">
-                    <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
-                    <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+      {loadFailed ? (
+        <div className="rounded-lg border border-dashed p-8 text-center">
+          <h3 className="mb-2 text-lg font-medium">We couldn't load your itineraries</h3>
+          <p className="mb-6 text-muted-foreground">Please refresh the page or try again in a moment.</p>
+          <Button onClick={() => router.refresh()}>Retry</Button>
+        </div>
       ) : filteredItineraries.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -509,12 +466,6 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
                             Refine with AI
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/itinerary/edit/${itinerary.id}`} className="cursor-pointer">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Itinerary
-                          </Link>
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
@@ -536,7 +487,6 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
         </motion.div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

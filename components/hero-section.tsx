@@ -4,15 +4,11 @@ import { motion } from "framer-motion"
 import { ArrowRight, Globe, Leaf, Play, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { VideoDialog } from "@/components/video-dialog"
 
 export function HeroSection() {
-  const [videoOpen, setVideoOpen] = useState(false)
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -45,7 +41,6 @@ export function HeroSection() {
 
   return (
     <section className="relative overflow-hidden" aria-label="Hero section">
-      {/* Background image and overlay */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
@@ -58,10 +53,8 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-background/90" />
       </div>
 
-      {/* Content container */}
       <div className="container relative z-10 mx-auto px-4">
         <div className="grid min-h-[90vh] items-center py-20 md:grid-cols-2 md:gap-12 lg:min-h-[85vh]">
-          {/* Left column - Text content */}
           <motion.div
             className="flex flex-col items-start text-left"
             initial="hidden"
@@ -98,9 +91,11 @@ export function HeroSection() {
                 size="lg"
                 variant="outline"
                 className="rounded-full border-white/20 bg-white/10 px-8 text-base text-white backdrop-blur-sm hover:bg-white/20"
-                onClick={() => setVideoOpen(true)}
+                asChild
               >
-                <Play className="mr-2 h-4 w-4" /> Watch How It Works
+                <Link href="/#how-it-works">
+                  <Play className="mr-2 h-4 w-4" /> See How It Works
+                </Link>
               </Button>
             </motion.div>
 
@@ -116,7 +111,6 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right column - Visual element */}
           <motion.div
             className="relative hidden md:block"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -150,7 +144,6 @@ export function HeroSection() {
                 </div>
               </div>
 
-              {/* Floating elements */}
               <div className="absolute -left-4 top-1/4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
                 <Leaf className="h-8 w-8 text-primary" />
               </div>
@@ -167,7 +160,6 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Wave divider */}
       <div className="absolute bottom-0 left-0 right-0">
         <svg
           className="fill-background"
@@ -178,9 +170,6 @@ export function HeroSection() {
           <path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path>
         </svg>
       </div>
-
-      {/* Video Dialog */}
-      <VideoDialog open={videoOpen} onOpenChange={setVideoOpen} />
     </section>
   )
 }

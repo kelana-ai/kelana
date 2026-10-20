@@ -1,23 +1,23 @@
-import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { notFound } from "next/navigation"
 import type { ReactElement } from "react"
+import { createClient } from "@/utils/supabase/server"
 import ItineraryClient from "./itinerary-client"
-
-export const revalidate = 60
 
 export default async function ItineraryPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }): Promise<ReactElement> {
   const { id } = await params
-  const supabase = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  const supabase = await createClient()
 
+  // RLS (itineraries_select / days_select / activities_select) restricts this to
+  // the owner — a non-owner (or anonymous request) gets no row -> notFound().
   const { data: itn, error } = await supabase
     .from("itineraries")
     .select(
       `
-      id, name, description, status, 
+      id, name, description, status,
       destination_name, destination_lat, destination_lng,
       date_from, date_to,
       travel_type, travel_styles, dietary_needs,
@@ -25,7 +25,7 @@ export default async function ItineraryPage({
       itinerary_days (
         id, day_index, date,
         itinerary_activities (
-          id, activity_index, start_time, end_time, title, description, 
+          id, activity_index, start_time, end_time, title, description,
           type, status, location_name, location_lat, location_lng, address,
           cost, currency, eco_tags
         )

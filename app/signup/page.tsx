@@ -50,13 +50,13 @@ export default function SignupPage() {
     setPasswordsMatch(true)
     const result = await signup(formData)
 
-    setIsSubmitting(false)
     if (result?.error) {
       setError(result.error.message)
-    } else {
-      toast.success("Signup successful! Please check your email for the confirmation link.")
-      router.push("/login")
+      setIsSubmitting(false)
+      return
     }
+    toast.success("Account created! You're now signed in.")
+    router.push("/dashboard")
   }
 
   return (
@@ -64,7 +64,7 @@ export default function SignupPage() {
       title="Create an account"
       description="Join Kelana to start planning your eco-conscious travel experiences"
     >
-      {isLoading || user ? (
+      {(isLoading || user) && !isSubmitting ? (
         <AuthFormSkeleton />
       ) : (
         <Card className="border shadow-sm">
@@ -93,15 +93,12 @@ export default function SignupPage() {
                     id="email"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="you@example.com"
                     required
                     className="pl-9"
-                    aria-describedby="email-description"
                   />
                 </div>
-                <p id="email-description" className="text-xs text-muted-foreground">
-                  We'll send a confirmation link to this email
-                </p>
               </div>
 
               <div className="space-y-2">
@@ -114,6 +111,7 @@ export default function SignupPage() {
                     id="password"
                     name="password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     minLength={8}
                     className="pl-9"
@@ -136,6 +134,7 @@ export default function SignupPage() {
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
+                    autoComplete="new-password"
                     required
                     className={`pl-9 ${!passwordsMatch ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     aria-describedby="confirm-password-error"
