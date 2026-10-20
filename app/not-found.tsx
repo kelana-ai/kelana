@@ -62,7 +62,7 @@ export default function NotFoundPage() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/my-itineraries">View My Itineraries</Link>
+            <Link href="/itinerary">View My Itineraries</Link>
           </Button>
         </div>
       </motion.div>
