@@ -43,9 +43,16 @@ create index if not exists idx_itineraries_user_id on public.itineraries (user_i
 
 -- Security: rls_auto_enable() is SECURITY DEFINER; it must not be callable from the public API.
 -- The event trigger still invokes it regardless of these grants.
-revoke execute on function public.rls_auto_enable() from public;
-revoke execute on function public.rls_auto_enable() from anon;
-revoke execute on function public.rls_auto_enable() from authenticated;
+-- The function is provisioned by the platform and is not defined in this repo, so guard for projects without it.
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke execute on function public.rls_auto_enable() from public;
+    revoke execute on function public.rls_auto_enable() from anon;
+    revoke execute on function public.rls_auto_enable() from authenticated;
+  end if;
+end
+$$;
 
 -- Security: avatars is a public bucket served via public object URLs, which do not need a
 -- SELECT policy. The broad policy only enables clients to list every file, so remove it.
