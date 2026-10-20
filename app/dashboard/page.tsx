@@ -101,7 +101,9 @@ export default function DashboardPage() {
         return <Globe className="h-4 w-4 text-blue-500" />
       case "accommodation":
         return <MapPin className="h-4 w-4 text-green-500" />
-      case "activity":
+      case "sightseeing":
+      case "wellness":
+      case "event":
         return <Sparkles className="h-4 w-4 text-amber-500" />
       default:
         return <Calendar className="h-4 w-4 text-primary" />
@@ -244,7 +246,7 @@ export default function DashboardPage() {
                       <div className="text-3xl font-bold text-green-500">
                         {data?.stats.carbonSaved ? `${data.stats.carbonSaved}kg` : "0kg"}
                       </div>
-                      <p className="text-xs text-muted-foreground">Compared to conventional travel</p>
+                      <p className="text-xs text-muted-foreground">Estimated vs. conventional travel</p>
                       <div className="mt-3">
                         <Progress value={data?.stats.carbonProgress || 0} className="h-1" />
                       </div>
@@ -537,7 +539,7 @@ export default function DashboardPage() {
                     <Leaf className="h-5 w-5 text-green-500" />
                     Eco Impact Score
                   </CardTitle>
-                  <CardDescription>Your environmental impact compared to average travelers</CardDescription>
+                  <CardDescription>Based on the estimated CO₂ savings of your itineraries</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col items-center">

@@ -3,6 +3,8 @@
 import { createClient } from "@/utils/supabase/server"
 import { formatDistanceToNow } from "date-fns"
 
+import { effectiveStatus, formatDateKey, toDateKey } from "@/lib/itinerary"
+
 export type DashboardData = {
   stats: {
     activeTrips: number
@@ -62,7 +64,8 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
       throw itinerariesError
     }
 
-    const list = itineraries ?? []
+    const today = toDateKey(new Date())
+    const list = (itineraries ?? []).map((itn) => ({ ...itn, status: effectiveStatus(itn.status, itn.date_to, today) }))
     const isActive = (status: string) => status === "confirmed" || status === "planning"
 
     const activeTrips = list.filter((itn) => isActive(itn.status)).length
@@ -77,21 +80,20 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
       id: itn.id,
       name: itn.name,
       destination: itn.destination_name,
-      dates: `${new Date(itn.date_from).toLocaleDateString()} - ${new Date(itn.date_to).toLocaleDateString()}`,
+      dates: `${formatDateKey(itn.date_from)} - ${formatDateKey(itn.date_to)}`,
       status: itn.status,
       lastUpdated: formatDistanceToNow(new Date(itn.updated_at || itn.created_at), { addSuffix: true }),
       icon: `/places/${itn.icon}.png`,
     }))
 
     const now = new Date()
-    const nextWeek = new Date()
-    nextWeek.setDate(now.getDate() + 7)
+    const nextWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7)
 
     const { data: days, error: daysError } = await supabase
       .from("itinerary_days")
       .select("id, itinerary_id, date")
-      .gte("date", now.toISOString().split("T")[0])
-      .lte("date", nextWeek.toISOString().split("T")[0])
+      .gte("date", today)
+      .lte("date", toDateKey(nextWeek))
       .order("date", { ascending: true })
 
     if (daysError) {
@@ -120,7 +122,7 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
           return {
             id: activity.id,
             title: activity.title,
-            date: new Date(parentDay?.date || "").toLocaleDateString(),
+            date: parentDay?.date ? formatDateKey(parentDay.date) : "",
             time: activity.start_time,
             type: activity.type,
             itineraryId: parentDay?.itinerary_id ?? "",
@@ -140,7 +142,7 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
       return { name: month.toLocaleString("en-US", { month: "short" }), carbon }
     })
 
-    const { data: costRows, error: costError } = await supabase.from("itinerary_activities").select("type, cost")
+    const { data: costRows, error: costError } = await supabase.from("itinerary_activities").select("type, cost").limit(5000)
     if (costError) {
       throw costError
     }
@@ -163,17 +165,17 @@ export async function fetchDashboardData(): Promise<{ data: DashboardData | null
     let ecoRating = "No data"
     let ecoMessage = ""
     if (ecoScore >= 80) {
-      ecoRating = "Excellent!"
-      ecoMessage = "You're in the top 15% of eco-conscious travelers"
+      ecoRating = "Excellent"
+      ecoMessage = "Your plans show large estimated savings"
     } else if (ecoScore >= 60) {
       ecoRating = "Very Good"
-      ecoMessage = "You're making a significant positive impact"
+      ecoMessage = "Your plans show strong estimated savings"
     } else if (ecoScore >= 40) {
       ecoRating = "Good"
       ecoMessage = "You're on the right track to greener travel"
     } else if (ecoScore > 0) {
       ecoRating = "Getting Started"
-      ecoMessage = "Keep improving your eco-friendly travel choices"
+      ecoMessage = "Try rail or bus options to raise your estimated savings"
     }
 
     const destinationData = Array.from(new Set(list.map((itn) => itn.destination_name)))

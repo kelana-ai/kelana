@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, type Variants } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -27,12 +27,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useUser } from "@/contexts/user-context"
+import { effectiveStatus, formatDateKey, toDateKey } from "@/lib/itinerary"
 import {
   Calendar,
   Clock,
   CreditCard,
-  Edit,
   Filter,
   Leaf,
   MapPin,
@@ -45,7 +44,7 @@ import {
 } from "lucide-react"
 import { deleteItinerary } from "./actions"
 
-type Itinerary = {
+export type Itinerary = {
   id: string
   name: string
   description: string | null
@@ -64,14 +63,16 @@ type Itinerary = {
 
 interface ItineraryListProps {
   initialItineraries: Itinerary[]
-  loading?: boolean
+  loadFailed?: boolean
 }
 
-export function ItineraryList({ initialItineraries, loading = false }: ItineraryListProps) {
+export function ItineraryList({ initialItineraries, loadFailed = false }: ItineraryListProps) {
   const router = useRouter()
-  const { user } = useUser()
-  const [itineraries, setItineraries] = useState<Itinerary[]>(initialItineraries)
-  const [isLoading, setIsLoading] = useState(loading)
+  const [stored, setItineraries] = useState<Itinerary[]>(initialItineraries)
+  const itineraries = useMemo(() => {
+    const today = toDateKey(new Date())
+    return stored.map((item) => ({ ...item, status: effectiveStatus(item.status, item.end_date, today) as Itinerary["status"] }))
+  }, [stored])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("newest")
@@ -79,11 +80,6 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
   const [itineraryToDelete, setItineraryToDelete] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("all")
   const [isDeleting, setIsDeleting] = useState(false)
-
-  useEffect(() => {
-    setItineraries(initialItineraries)
-    setIsLoading(loading)
-  }, [initialItineraries, loading])
 
   const filteredItineraries = useMemo(() => {
     let result = [...itineraries]
@@ -143,13 +139,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
     return result
   }, [itineraries, searchQuery, statusFilter, sortBy, activeTab])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
+  const formatDate = (dateString: string) => formatDateKey(dateString)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -191,7 +181,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
   }
 
   const handleDeleteItinerary = async () => {
-    if (!itineraryToDelete || !user) return
+    if (!itineraryToDelete) return
 
     try {
       setIsDeleting(true)
@@ -202,7 +192,7 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
         throw new Error(result.error || "Failed to delete itinerary")
       }
 
-      setItineraries(itineraries.filter((item) => item.id !== itineraryToDelete))
+      setItineraries((prev) => prev.filter((item) => item.id !== itineraryToDelete))
       toast.success("Itinerary deleted successfully")
 
       router.refresh()
@@ -364,41 +354,12 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
         </div>
       </motion.div>
 
-      {isLoading ? (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <motion.div key={i} variants={itemVariants}>
-              <Card className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="p-6">
-                    <div className="h-6 w-3/4 mb-2 bg-muted animate-pulse rounded" />
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="h-4 w-4 rounded-full bg-muted animate-pulse" />
-                      <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-4 w-4 rounded-full bg-muted animate-pulse" />
-                      <div className="h-4 w-1/3 bg-muted animate-pulse rounded" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full bg-muted animate-pulse" />
-                      <div className="h-4 w-2/5 bg-muted animate-pulse rounded" />
-                    </div>
-                  </div>
-                  <div className="border-t p-4 flex justify-between">
-                    <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
-                    <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+      {loadFailed ? (
+        <div className="rounded-lg border border-dashed p-8 text-center">
+          <h3 className="mb-2 text-lg font-medium">We couldn't load your itineraries</h3>
+          <p className="mb-6 text-muted-foreground">Please refresh the page or try again in a moment.</p>
+          <Button onClick={() => router.refresh()}>Retry</Button>
+        </div>
       ) : filteredItineraries.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -503,12 +464,6 @@ export function ItineraryList({ initialItineraries, loading = false }: Itinerary
                         <DropdownMenuItem asChild>
                           <Link href={`/itinerary/${itinerary.id}/refine`} className="cursor-pointer">
                             Refine with AI
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/itinerary/edit/${itinerary.id}`} className="cursor-pointer">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Itinerary
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
