@@ -25,7 +25,7 @@ export default function GlobalError({
         <div style={{ maxWidth: "28rem", textAlign: "center" }}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: "0 0 0.5rem" }}>Something went wrong</h1>
           <p style={{ color: "#525252", margin: "0 0 1.5rem", lineHeight: 1.5 }}>
-            A critical error occurred. Please try again — if it keeps happening, come back a little later.
+            A critical error occurred. Please try again. If it keeps happening, come back a little later.
           </p>
           <button
             onClick={reset}
