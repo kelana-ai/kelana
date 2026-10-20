@@ -150,8 +150,17 @@ test("day 1 is the picked start date and was not shifted", async () => {
 })
 
 test("a map marker opens a popup", async () => {
-  await page.locator(".leaflet-marker-icon").nth(1).click({ force: true })
+  await page.locator(".leaflet-marker-icon").last().click({ force: true })
   await expect(page.locator(".leaflet-popup-content")).toBeVisible()
+})
+
+test("popup text from the model is shown as text, not as HTML", async () => {
+  test.skip(!mocked, "needs the markup that the mock model puts in a description")
+  await page.locator(".leaflet-popup-close-button").click()
+  await page.locator(".leaflet-marker-icon").filter({ hasText: /^2$/ }).click()
+  const popup = page.locator(".leaflet-popup-content")
+  await expect(popup).toContainText("Walk the ridge <b>before</b> the heat.")
+  await expect(popup.locator("b")).toHaveCount(0)
 })
 
 test("the download button saves the itinerary as a text file", async () => {
