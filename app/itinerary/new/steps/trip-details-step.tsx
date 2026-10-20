@@ -37,7 +37,7 @@ export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
           <FormItem>
             <FormLabel>Trip Name</FormLabel>
             <FormControl>
-              <Input placeholder="e.g., Bali Eco Adventure" {...field} />
+              <Input placeholder="e.g., Bali in October" {...field} />
             </FormControl>
             <FormDescription>Give your trip a memorable name to easily identify it later</FormDescription>
             <FormMessage />

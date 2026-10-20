@@ -27,15 +27,15 @@ export function HeroSection() {
   const features = [
     {
       icon: <Sparkles className="h-5 w-5" />,
-      text: "AI-Powered Itinerary Planning",
+      text: "Day-by-day itineraries",
     },
     {
       icon: <Leaf className="h-5 w-5" />,
-      text: "Eco-Conscious Recommendations",
+      text: "Low-carbon options first",
     },
     {
       icon: <Globe className="h-5 w-5" />,
-      text: "Support Local Communities",
+      text: "Locally owned places",
     },
   ]
 
@@ -44,7 +44,7 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
-          alt="Scenic mountain landscape with greener travel elements"
+          alt="Mountain landscape"
           fill
           priority
           className="object-cover object-center"
@@ -63,7 +63,7 @@ export function HeroSection() {
           >
             <motion.div variants={itemVariants} className="mb-4">
               <Badge className="rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm">
-                Greener Travel Planning
+                AI trip planner
               </Badge>
             </motion.div>
 
@@ -71,14 +71,14 @@ export function HeroSection() {
               variants={itemVariants}
               className="mb-6 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl"
             >
-              Plan Meaningful, <br className="hidden sm:inline" />
-              <span className="text-primary">Low-Impact Travel</span> <br className="hidden sm:inline" />
+              Plan a <br className="hidden sm:inline" />
+              <span className="text-primary">low-impact trip</span> <br className="hidden sm:inline" />
               with Kelana
             </motion.h1>
 
             <motion.p variants={itemVariants} className="mb-8 max-w-md text-lg text-white/90 md:text-xl">
-              Create personalized travel experiences that respect local communities and minimize environmental impact,
-              powered by AI assistance.
+              Say where you're going and how you like to travel. Kelana writes a day-by-day plan that favours trains,
+              walkable routes and locally owned places.
             </motion.p>
 
             <motion.div variants={itemVariants} className="mb-10 flex flex-col gap-4 sm:flex-row">
@@ -123,22 +123,22 @@ export function HeroSection() {
 
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative h-[400px] w-[400px] overflow-hidden rounded-2xl border border-white/20 shadow-2xl">
-                  <Image src="/hero-card.jpg" alt="Eco-friendly travel experience" fill className="object-cover" />
+                  <Image src="/hero-card.jpg" alt="Sample itinerary card" fill className="object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <div className="mb-2 flex items-center gap-2">
-                      <Badge className="bg-primary/80 text-white">Eco-Friendly</Badge>
-                      <Badge className="bg-white/20 backdrop-blur-sm">Personalized</Badge>
+                      <Badge className="bg-primary/80 text-white">Sample plan</Badge>
+                      <Badge className="bg-white/20 backdrop-blur-sm">Bali</Badge>
                     </div>
-                    <h3 className="mb-1 text-xl font-semibold text-white">Bali Eco Retreat</h3>
-                    <p className="text-sm text-white/80">Greener accommodations and local experiences</p>
+                    <h3 className="mb-1 text-xl font-semibold text-white">3 days in Ubud</h3>
+                    <p className="text-sm text-white/80">Walkable stops and locally owned places</p>
 
                     <div className="mt-4 flex items-center gap-2">
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
                         <Leaf className="h-3 w-3 text-white" />
                       </div>
-                      <span className="text-xs font-medium text-white">320kg CO₂ saved compared to typical travel</span>
+                      <span className="text-xs font-medium text-white">Estimated 320 kg CO₂ saved vs. a typical trip</span>
                     </div>
                   </div>
                 </div>

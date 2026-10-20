@@ -77,10 +77,10 @@ export function ReviewStep({ form }: { form: UseFormReturn<FormValues> }) {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="mb-2 font-medium text-primary">Eco-Conscious Planning</h3>
+            <h3 className="mb-2 font-medium text-primary">What Kelana favours</h3>
             <p className="text-sm text-muted-foreground">
-              We'll prioritize sustainable accommodations, low-carbon transportation options, and experiences that
-              support local communities based on your preferences.
+              Low-carbon transport, locally owned places and plant-based food come first, within your budget and
+              preferences.
             </p>
           </div>
         </div>

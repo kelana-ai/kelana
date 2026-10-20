@@ -15,15 +15,15 @@ import { useRef } from "react"
 const features = [
   {
     icon: <Sparkles className="h-6 w-6 text-primary" />,
-    title: "AI-Powered Itinerary Builder",
+    title: "Day-by-day itineraries",
     description:
-      "Describe your trip once and get a day-by-day plan shaped by your travel style, diet and budget, with low-impact transport and local experiences suggested first.",
+      "Describe the trip once and get a day-by-day plan that fits your travel style, diet and budget, with low-impact transport and local places first.",
   },
   {
     icon: <Leaf className="h-6 w-6 text-primary" />,
-    title: "Greener Stays & Experiences",
+    title: "Lower-carbon choices",
     description:
-      "Plans favour rail and bus over flights, walkable routes, locally owned places and plant-forward food, all pinned on an interactive map.",
+      "Plans favour rail and bus over flights, walkable routes, locally owned places and plant-based food. Stops with a known location are pinned on a map.",
   },
   {
     icon: <Recycle className="h-6 w-6 text-primary" />,
@@ -36,18 +36,18 @@ const features = [
 const steps = [
   {
     number: 1,
-    title: "Share Your Preferences",
+    title: "Describe the trip",
     description: "Tell us your destination, dates, travel style, dietary needs and budget.",
   },
   {
     number: 2,
-    title: "Get AI Recommendations",
-    description: "Our AI generates a day-by-day itinerary with eco-friendly options and local experiences.",
+    title: "Get a plan",
+    description: "Kelana writes a day-by-day itinerary with low-impact options and local places.",
   },
   {
     number: 3,
-    title: "Refine & Explore",
-    description: "Ask the AI to adjust your plan, download it, and explore every stop on the map.",
+    title: "Refine and download",
+    description: "Ask for changes in plain text, download the plan, and check the stops on the map.",
   },
 ]
 
@@ -92,10 +92,9 @@ export default function LandingPage() {
 
       <section id="features" className="container mx-auto px-4 py-24" aria-label="Features section">
         <Reveal className="mb-16 text-center">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">Discover Our Features</h2>
+          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">What Kelana does</h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
-            Explore how Kelana helps you create meaningful travel experiences while minimizing your environmental
-            footprint.
+            Plan a trip, see its estimated cost and carbon, and adjust it until it fits.
           </p>
         </Reveal>
 
@@ -131,7 +130,7 @@ export default function LandingPage() {
         <Reveal className="mb-16 text-center">
           <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">How It Works</h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
-            Three simple steps to create your perfect eco-conscious travel experience.
+            From a rough idea to a day-by-day plan in three steps.
           </p>
         </Reveal>
 
@@ -162,11 +161,11 @@ export default function LandingPage() {
       <section id="sustainability" className="bg-primary/5 py-24" aria-label="Sustainability approach">
         <div className="container mx-auto px-4">
           <Reveal className="mx-auto max-w-3xl rounded-2xl border bg-card p-8 text-center shadow-sm">
-            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">Our Approach to Sustainability</h2>
+            <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">About the numbers</h2>
             <p className="mb-6 text-muted-foreground">
-              Kelana is an AI planner. It prioritises lower-carbon transport, locally owned places and plant-forward food, and
-              shows estimated costs and CO₂ savings for each plan. These numbers are AI-generated estimates to help you compare
-              options; always confirm details with providers before you travel.
+              Kelana favours lower-carbon transport, locally owned places and plant-based food, and shows an estimated cost
+              and CO₂ saving for each plan. The figures are AI-generated estimates for comparing options. Check details with
+              providers before you travel.
             </p>
             <Button size="lg" className="rounded-full px-8" asChild>
               <Link href="/signup">

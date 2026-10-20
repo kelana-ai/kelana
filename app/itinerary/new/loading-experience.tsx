@@ -9,7 +9,6 @@ import {
   Calendar,
   Check,
   Clock,
-  Compass,
   Globe,
   Leaf,
   MapPin,
@@ -32,46 +31,13 @@ interface LoadingExperienceProps {
 }
 
 const loadingMessages = [
-  {
-    message: "Researching eco-friendly accommodations",
-    icon: <Palmtree className="h-5 w-5" />,
-  },
-  {
-    message: "Finding sustainable transportation options",
-    icon: <Train className="h-5 w-5" />,
-  },
-  {
-    message: "Discovering local dining experiences",
-    icon: <Utensils className="h-5 w-5" />,
-  },
-  {
-    message: "Calculating carbon footprint savings",
-    icon: <Leaf className="h-5 w-5" />,
-  },
-  {
-    message: "Planning daily activities",
-    icon: <Calendar className="h-5 w-5" />,
-  },
-  {
-    message: "Mapping out your journey",
-    icon: <Route className="h-5 w-5" />,
-  },
-  {
-    message: "Optimizing your travel route",
-    icon: <Compass className="h-5 w-5" />,
-  },
-  {
-    message: "Checking for seasonal events",
-    icon: <Sun className="h-5 w-5" />,
-  },
-  {
-    message: "Finding hidden local gems",
-    icon: <Sparkles className="h-5 w-5" />,
-  },
-  {
-    message: "Finalizing your eco-conscious itinerary",
-    icon: <Check className="h-5 w-5" />,
-  },
+  { message: "Choosing where to stay", icon: <Palmtree className="h-5 w-5" /> },
+  { message: "Picking low-carbon transport", icon: <Train className="h-5 w-5" /> },
+  { message: "Finding places to eat", icon: <Utensils className="h-5 w-5" /> },
+  { message: "Planning each day", icon: <Calendar className="h-5 w-5" /> },
+  { message: "Ordering the stops", icon: <Route className="h-5 w-5" /> },
+  { message: "Estimating costs and carbon", icon: <Leaf className="h-5 w-5" /> },
+  { message: "Writing up the itinerary", icon: <Check className="h-5 w-5" /> },
 ]
 
 export function LoadingExperience({ destination, tripName, onError }: LoadingExperienceProps) {
@@ -132,10 +98,10 @@ export function LoadingExperience({ destination, tripName, onError }: LoadingExp
         transition={{ duration: 0.5 }}
         className="mb-8 text-center"
       >
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Creating Your Adventure</h1>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Creating your itinerary</h1>
         <p className="mt-2 text-muted-foreground">
-          We're crafting your perfect eco-friendly itinerary for{" "}
-          <span className="font-medium text-primary">{destination}</span>
+          Planning your trip to <span className="font-medium text-primary">{destination}</span>. This can take a minute
+          or two.
         </p>
       </motion.div>
 

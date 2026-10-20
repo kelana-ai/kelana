@@ -16,12 +16,12 @@ export default function Footer() {
           <div className="flex flex-col gap-2">
             <Image src="/logo.png" alt="Kelana" width={750} height={250} className="h-7 w-auto self-start md:h-8" />
             <p className="max-w-xs text-sm text-muted-foreground">
-              Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.
+              Low-impact trip planning with AI-generated itineraries.
             </p>
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-medium">Explore</h3>
+            <h3 className="mb-4 text-sm font-medium">Pages</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/about" className="text-muted-foreground hover:text-foreground">

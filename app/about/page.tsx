@@ -14,28 +14,28 @@ const teamMembers = [
     name: "Definda Putri Arisna",
     role: "Co-Founder & CEO",
     image: "/team/definda.jpg",
-    bio: "Leads vision and strategy, with a passion for greener innovation.",
+    bio: "Leads vision and strategy.",
     linkedin: "https://au.linkedin.com/in/defindaputri",
   },
   {
     name: "Muhammad Fazil Tirtana",
     role: "Co-Founder & CTO",
     image: "/team/fazil.jpg",
-    bio: "Builds and scales the tech that powers Kelana's platform.",
+    bio: "Builds the Kelana platform.",
     linkedin: "https://id.linkedin.com/in/faziltirtana",
   },
   {
     name: "Naura Olif Mazaya",
     role: "Co-Founder & COO",
     image: "/team/olif.jpg",
-    bio: "Oversees operations and partner relations with care and detail.",
+    bio: "Runs operations and partner relations.",
     linkedin: "https://hk.linkedin.com/in/naura-olif",
   },
   {
     name: "Nadya Demita Camila",
     role: "Co-Founder & Head of Experience",
     image: "/team/nadya.jpg",
-    bio: "Designs user journeys that are seamless, mindful, and impactful.",
+    bio: "Designs the user experience.",
     linkedin: "https://id.linkedin.com/in/nadya-demita-camila-0a2123218",
   },
 ]
@@ -44,22 +44,22 @@ const values = [
   {
     icon: <Leaf className="h-6 w-6 text-primary" />,
     title: "Lower-impact choices first",
-    description: "Plans favour rail and bus over flights, walkable routes, locally owned places and plant-forward food.",
+    description: "Plans favour rail and bus over flights, walkable routes, locally owned places and plant-based food.",
   },
   {
     icon: <Users className="h-6 w-6 text-primary" />,
     title: "Local communities",
-    description: "We nudge travellers towards locally owned businesses and community-run experiences wherever the AI can identify them.",
+    description: "Plans point to locally owned businesses and community-run activities where the AI can identify them.",
   },
   {
     icon: <Heart className="h-6 w-6 text-primary" />,
-    title: "Meaningful experiences",
-    description: "Every day mixes culture, nature and food so a trip feels intentional rather than rushed.",
+    title: "A mix of activities",
+    description: "Each day includes transport, a meal, sightseeing and a wellness or local-culture activity.",
   },
   {
     icon: <Sparkles className="h-6 w-6 text-primary" />,
     title: "Honest estimates",
-    description: "Costs and carbon figures are AI-generated estimates and are labelled as such. We would rather be upfront than precise-looking.",
+    description: "Costs and carbon figures are AI-generated estimates, and the app labels them that way.",
   },
 ]
 
@@ -75,8 +75,8 @@ export default function AboutPage() {
                 Travel planning with a <span className="text-primary">lighter footprint</span>
               </h1>
               <p className="mb-8 text-lg text-muted-foreground">
-                Kelana is an AI travel planner that turns a few questions into a day-by-day itinerary built around lower-carbon
-                transport, local businesses and sustainable choices, so exploring the world doesn&apos;t come at the expense of its future.
+                Kelana is an AI travel planner. A few questions become a day-by-day itinerary that favours lower-carbon
+                transport and local businesses.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button size="lg" asChild>
@@ -99,7 +99,7 @@ export default function AboutPage() {
               <div className="relative aspect-square overflow-hidden rounded-2xl">
                 <Image
                   src="/about-hero.jpg"
-                  alt="Team members discussing greener travel plans"
+                  alt="People working together around a table"
                   width={800}
                   height={800}
                   className="h-full w-full object-cover"
@@ -115,7 +115,7 @@ export default function AboutPage() {
       <section id="our-values" className="container py-20">
         <div className="mb-12 text-center">
           <Badge className="mb-4">Our Values</Badge>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">What guides the plans we build</h2>
+          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">How the plans are built</h2>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           {values.map((value) => (
