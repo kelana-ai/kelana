@@ -5,6 +5,7 @@ import {
   countTripDays,
   effectiveStatus,
   formatDateKey,
+  itineraryToText,
   listTripDays,
   normalizeTime,
   normalizeTimes,
@@ -105,6 +106,60 @@ describe("effectiveStatus", () => {
     expect(effectiveStatus("confirmed", "2026-06-01", "2026-07-01")).toBe("completed")
     expect(effectiveStatus("confirmed", "2026-07-01", "2026-07-01")).toBe("confirmed")
     expect(effectiveStatus("cancelled", "2026-06-01", "2026-07-01")).toBe("cancelled")
+  })
+})
+
+describe("itineraryToText", () => {
+  const trip = {
+    name: "Ubud trip",
+    destination_name: "Ubud, Bali",
+    date_from: "2026-10-25",
+    date_to: "2026-10-26",
+    days: [
+      {
+        date: "2026-10-25",
+        activities: [
+          { start_time: "09:00:00", end_time: "10:30:00", title: "Rice terrace walk", description: "Easy loop", address: "Tegallalang", cost: 12 },
+          { start_time: "13:00:00", end_time: null, title: "Lunch", description: "", address: null, cost: 0 },
+        ],
+      },
+      { date: "2026-10-26", activities: [] },
+    ],
+  }
+
+  it("starts with the name, then the destination with its dates", () => {
+    const [name, header] = itineraryToText(trip).split("\n")
+    expect(name).toBe("Ubud trip")
+    expect(header).toBe("Ubud, Bali | Oct 25, 2026 - Oct 26, 2026")
+  })
+
+  it("numbers the days and shows the dates that were picked", () => {
+    const text = itineraryToText(trip)
+    expect(text).toContain("Day 1 - Oct 25, 2026")
+    expect(text).toContain("Day 2 - Oct 26, 2026")
+  })
+
+  it("trims seconds from times and shows a cost only when there is one", () => {
+    const text = itineraryToText(trip)
+    expect(text).toContain("  09:00-10:30  Rice terrace walk (~$12)")
+    expect(text).toContain("  13:00  Lunch")
+    expect(text).not.toContain("Lunch (~$")
+  })
+
+  it("adds the address and description under an activity only when they exist", () => {
+    const lines = itineraryToText(trip).split("\n")
+    const walk = lines.findIndex((l) => l.includes("Rice terrace walk"))
+    expect(lines[walk + 1]).toBe("         Tegallalang")
+    expect(lines[walk + 2]).toBe("         Easy loop")
+    const lunch = lines.findIndex((l) => l.includes("Lunch"))
+    expect(lines[lunch + 1]).toBe("")
+  })
+
+  it("keeps a day without activities and separates days with a blank line", () => {
+    const lines = itineraryToText(trip).split("\n")
+    const second = lines.indexOf("Day 2 - Oct 26, 2026")
+    expect(lines[second - 1]).toBe("")
+    expect(lines[second + 1]).toBe("")
   })
 })
 
