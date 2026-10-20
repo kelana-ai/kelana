@@ -79,7 +79,7 @@ pnpm test
 pnpm build
 ```
 
-CI runs the same four. `pnpm start` serves the production build.
+CI runs the same checks, with a coverage report from `pnpm test:coverage`. `pnpm start` serves the production build.
 
 ## How it works
 
