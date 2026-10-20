@@ -1,277 +1,133 @@
 "use server"
 
-import { openai } from "@ai-sdk/openai"
-import { createClient } from "@/utils/supabase/server"
-import { generateObject } from "ai"
-import { differenceInCalendarDays, eachDayOfInterval, format, parseISO } from "date-fns"
 import { z } from "zod"
 
-const ItineraryInput = z.object({
-  tripName: z.string(),
-  destination: z.preprocess(
-    (v) => (typeof v === "string" ? JSON.parse(v) : v),
-    z.object({ name: z.string(), lat: z.number(), lng: z.number() }),
-  ),
-  homeLocation: z.preprocess(
-    (v) => (typeof v === "string" ? JSON.parse(v) : v),
-    z.object({ name: z.string().optional(), lat: z.number().optional(), lng: z.number().optional() }).optional(),
-  ),
-  dateRange: z.preprocess(
-    (v) => (typeof v === "string" ? JSON.parse(v) : v),
-    z.object({ from: z.string(), to: z.string() }),
-  ),
-  travelType: z.enum(["solo", "couple", "friends", "family"]),
-  travelStyles: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.string())),
-  dietaryNeeds: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.string())),
-  budget: z.preprocess((v) => (typeof v === "string" ? Number.parseFloat(v) : v), z.number()),
-})
+import { cleanGeneratedItinerary, countTripDays, isDateKey, listTripDays, sanitizeText } from "@/lib/itinerary"
+import { checkRateLimit } from "@/lib/rate-limit"
+import {
+  DIETARY_NEED_IDS,
+  MAX_BUDGET,
+  MAX_TRIP_DAYS,
+  MIN_BUDGET,
+  TRAVEL_STYLE_IDS,
+  TRAVEL_TYPES,
+} from "@/lib/trip-options"
+import { createClient } from "@/utils/supabase/server"
+import { buildCreatePrompt, runModel, saveItinerary } from "../generation"
 
-const DaySchema = z.object({
-  id: z.string(),
-  date: z.string(),
-  activities: z.array(
-    z.object({
-      id: z.string(),
-      start_time: z.string(),
-      end_time: z.string(),
-      title: z.string(),
-      description: z.string(),
-      type: z.enum([
-        "transportation",
-        "accommodation",
-        "food",
-        "drink",
-        "sightseeing",
-        "wellness",
-        "logistics",
-        "event",
-        "other",
-      ]),
-      ecoTag: z.string(),
-      cost: z.number(),
-      currency: z.string(),
-      location:
-        z
-          .object({
-            name: z.string(),
-            lat: z.number(),
-            lng: z.number(),
-            address: z.string(),
-          })
-          .nullable(),
+const dateKey = z.string().refine(isDateKey, "Invalid date")
+
+const ItineraryInput = z
+  .object({
+    tripName: z.string().trim().min(2).max(100),
+    destination: z.object({
+      name: z.string().trim().min(2).max(300),
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
     }),
-  ),
-})
+    homeLocation: z
+      .object({
+        name: z.string().max(300).optional(),
+        lat: z.number().min(-90).max(90).optional(),
+        lng: z.number().min(-180).max(180).optional(),
+      })
+      .optional(),
+    dateFrom: dateKey,
+    dateTo: dateKey,
+    travelType: z.enum(TRAVEL_TYPES),
+    travelStyles: z.array(z.enum(TRAVEL_STYLE_IDS)).min(1).max(TRAVEL_STYLE_IDS.length),
+    dietaryNeeds: z.array(z.enum(DIETARY_NEED_IDS)).max(DIETARY_NEED_IDS.length),
+    budget: z.number().min(MIN_BUDGET).max(MAX_BUDGET),
+  })
+  .refine((v) => countTripDays(v.dateFrom, v.dateTo) >= 1, { message: "End date must not be before the start date." })
+  .refine((v) => countTripDays(v.dateFrom, v.dateTo) <= MAX_TRIP_DAYS, {
+    message: `Trips can be at most ${MAX_TRIP_DAYS} days long.`,
+  })
 
-const ItinerarySchema = z.object({
-  name: z.string(),
-  destination: z.string(),
-  date_from: z.string(),
-  date_to: z.string(),
-  days: z.array(DaySchema),
-  budget: z.object({
-    total: z.number(),
-    spent: z.number(),
-    remaining: z.number(),
-  }),
-  carbon: z.object({
-    saved: z.number(),
-    total: z.number(),
-    percentage: z.number(),
-  }),
-  icon: z.string(),
-  sourceUrl: z.string(),
-})
+export type SubmitItineraryResult = { success: true; itineraryId: string } | { success: false; error: string }
 
-export async function submitItinerary(formData: FormData) {
+const HOURLY_LIMIT = 5
+const DAILY_LIMIT = 20
+
+export async function submitItinerary(input: unknown): Promise<SubmitItineraryResult> {
+  const parsed = ItineraryInput.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid trip details." }
+  }
+  const trip = parsed.data
+
   try {
-    const { tripName, destination, homeLocation, dateRange, travelType, travelStyles, dietaryNeeds, budget } =
-      ItineraryInput.parse(Object.fromEntries(formData.entries()))
-
     const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) {
-      return { success: false, error: "Not authenticated" }
+    if (!user) return { success: false, error: "Please sign in to create an itinerary." }
+
+    const memory = checkRateLimit(`create:${user.id}`, HOURLY_LIMIT, 3_600_000)
+    if (!memory.ok) {
+      return { success: false, error: `You've created several itineraries recently. Please try again in ${Math.ceil(memory.retryAfterSec / 60)} minutes.` }
     }
-
-    const from = parseISO(dateRange.from)
-    const to   = parseISO(dateRange.to)
-
-    const formattedFrom = format(from, "MMM d, yyyy")
-    const formattedTo   = format(to,   "MMM d, yyyy")
-    const daysCount     = differenceInCalendarDays(to, from) + 1
-
-    const dateLine = `${formattedFrom} - ${formattedTo} (${daysCount} days)`
-    const tripDates = eachDayOfInterval({ start: from, end: to }).map((d) => format(d, "yyyy-MM-dd"))
-
-    const { object } = await generateObject({
-      model: openai.responses("gpt-4o"),
-      maxOutputTokens: 16000,
-      schema: ItinerarySchema,
-      prompt: `
-        You are an expert travel planner. Develop a **comprehensive, eco-conscious travel itinerary** for a real-world trip, ensuring all details are **accurate, verifiable, and well-researched**. Adhere strictly to the following JSON schema:
-
-        - **Itinerary**: name, destination, date_from, date_to, icon, budget, carbon
-        - **Day**: id, date, activities[]
-        - **Activity**: id, start_time, end_time, title, description, type, ecoTag, cost (USD), currency, location { name, lat, lng, address }, sourceUrl
-
-        **Overview:**
-
-        - **Trip Name**: ${tripName}
-        - **Destination**: ${destination.name} (Lat: ${destination.lat}, Lng: ${destination.lng})
-        - **Home Location**: ${homeLocation?.lat && homeLocation?.lng ? `${homeLocation.name || "Not specified"} (Lat: ${homeLocation.lat}, Lng: ${homeLocation.lng})` : "Not specified"}
-        - **Dates**: ${dateLine}
-        - **Required dates (${daysCount} days)**: Return EXACTLY ${daysCount} Day objects in 'days', one per date below, in order, using the exact value as each day's 'date' (YYYY-MM-DD). Do not skip, merge, or stop early:
-          ${tripDates.join(", ")}
-        - **Travel Type**: ${travelType}
-        - **Travel Styles**: ${travelStyles.join(", ")}
-        - **Dietary Preferences**: ${dietaryNeeds.length > 0 ? dietaryNeeds.join(", ") : "None"}
-        - **Budget**: $${budget}
-
-        **Structure & Expectations:**
-
-        1. **Daily Breakdown**: Produce one Day object for every date listed above — exactly ${daysCount} days. Never summarize multiple days into one or stop before the last date.
-        2. **Daily Activities**: Include at least one activity from each category: transportation, dining, sightseeing, and wellness or cultural/local engagement.
-        3. **Activity Details**:
-          - Use real, verifiable locations with accurate 'lat', 'lng', full address, and a valid 'sourceUrl' (Google Maps link or official webpage).
-          - Provide a 3-5 sentence description covering:
-            1. What the activity involves.
-            2. Why it's eco-friendly (e.g., solar panels, zero-waste, carbon-neutral certification).
-            3. Concrete facts (e.g., opening hours, year founded, awards or certifications).
-          - Specify a realistic cost (USD per person).
-          - Label 'type', 'ecoTag', 'start_time', and 'end_time' appropriately.
-        4. **Verification**: Exclude any activity that cannot be verified with a real 'sourceUrl'.
-
-        **Sustainability Emphasis:**
-
-        - Prioritize transportation methods in the following order: rail > bus > EV > flights.
-        - Highlight green-certified accommodations, public transport, and walkable routes.
-        - Recommend locally owned, ethical businesses.
-        - Favor plant-based, farm-to-table, or organic menus.
-        - Emphasize cooperatives or nonprofit-run activities.
-
-        **Metrics & Breakdown:**
-
-        - **Total Trip Cost** (USD), itemized by:
-          - Accommodation
-          - Food
-          - Transport
-          - Experiences
-        - **Carbon Footprint**:
-          - Total emitted (kg)
-          - Total saved (kg)
-          - Percentage reduced
-
-        **Mandatory Quality Rules:**
-
-        - Avoid fabrications; ensure every detail is verifiable.
-        - Use only real, existing locations with a web or map presence.
-        - Omit any activity lacking a valid 'sourceUrl'.
-
-        **Final Icon:**
-
-        After generating the itinerary JSON, select one icon name from the following list and include it as the top-level 'icon' property:
-
-        ["adventure", "africa", "alaska", "backpacking", "bali", "business", "canada", "city", "costa-rica", "countryside", "culture", "family", "festival", "global", "greece", "island", "morocco", "mystery", "new-zealand", "paris", "peru", "roadtrip", "summer", "switzerland", "tokyo", "wellness", "winter"]
-      `,
-    })
-
-    const { data: itRow, error: itErr } = await supabase
+    const since = new Date(Date.now() - 86_400_000).toISOString()
+    const { count } = await supabase
       .from("itineraries")
-      .insert({
-        user_id: user.id,
-        name: object.name,
-        description: `Eco-friendly itinerary to ${object.destination}`,
-        status: "confirmed",
-        destination_name: object.destination,
-        destination_lat: destination.lat,
-        destination_lng: destination.lng,
-        date_from: object.date_from,
-        date_to: object.date_to,
-        travel_type: travelType,
-        travel_styles: travelStyles,
-        dietary_needs: dietaryNeeds,
-        budget: {
-          total: object.budget.total,
-          spent: object.budget.spent,
-          remaining: object.budget.remaining,
-        },
-        carbon_metrics: {
-          saved: object.carbon.saved,
-          total: object.carbon.total,
-          percentage: object.carbon.percentage,
-        },
-        icon: object.icon,
-      })
-      .select("id")
-      .single()
-
-    if (itErr || !itRow) throw itErr || new Error("Failed to insert itinerary")
-    const itineraryId = itRow.id
-
-    for (let i = 0; i < object.days.length; i++) {
-      const day = object.days[i]
-      const { data: dRow, error: dErr } = await supabase
-        .from("itinerary_days")
-        .insert({
-          itinerary_id: itineraryId,
-          day_index: i,
-          date: day.date,
-        })
-        .select("id")
-        .single()
-      if (dErr || !dRow) throw dErr
-      const dayId = dRow.id
-
-      for (let j = 0; j < day.activities.length; j++) {
-        const act = day.activities[j]
-
-        const { error: aErr } = await supabase.from("itinerary_activities").insert({
-          day_id: dayId,
-          activity_index: j,
-          start_time: act.start_time,
-          end_time: act.end_time,
-          title: act.title,
-          description: act.description,
-          type: act.type,
-          status: "planned",
-          location_name: act.location?.name,
-          location_lat: act.location?.lat,
-          location_lng: act.location?.lng,
-          address: act.location?.address,
-          cost: act.cost || 0,
-          currency: act.currency || "USD",
-          eco_tags: [act.ecoTag],
-        })
-        if (aErr) throw aErr
-      }
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", since)
+    if ((count ?? 0) >= DAILY_LIMIT) {
+      return { success: false, error: "Daily itinerary limit reached. Please try again tomorrow." }
     }
 
-    if (homeLocation?.lat && homeLocation?.lng) {
-      await supabase
+    const dayKeys = listTripDays(trip.dateFrom, trip.dateTo)
+    const home = trip.homeLocation?.lat !== undefined && trip.homeLocation?.lng !== undefined ? trip.homeLocation : undefined
+
+    const generated = await runModel(
+      buildCreatePrompt(
+        {
+          tripName: sanitizeText(trip.tripName, 100),
+          destination: { ...trip.destination, name: sanitizeText(trip.destination.name, 300) },
+          homeLocation: home ? { ...home, name: sanitizeText(home.name, 300) } : null,
+          travelType: trip.travelType,
+          travelStyles: trip.travelStyles,
+          dietaryNeeds: trip.dietaryNeeds,
+          budgetUsd: trip.budget,
+        },
+        dayKeys,
+      ),
+    )
+    const clean = cleanGeneratedItinerary(generated, dayKeys, trip.budget, trip.tripName)
+
+    const itineraryId = await saveItinerary(
+      supabase,
+      {
+        userId: user.id,
+        description: `Eco-friendly itinerary to ${sanitizeText(trip.destination.name, 120)}`,
+        destinationName: clean.destination || trip.destination.name,
+        destinationLat: trip.destination.lat,
+        destinationLng: trip.destination.lng,
+        dateFrom: trip.dateFrom,
+        dateTo: trip.dateTo,
+        travelType: trip.travelType,
+        travelStyles: trip.travelStyles,
+        dietaryNeeds: trip.dietaryNeeds,
+      },
+      clean,
+    )
+
+    if (home) {
+      const { error } = await supabase
         .from("profiles")
         .update({
-          home_lat: homeLocation.lat,
-          home_lng: homeLocation.lng,
-          preferences: {
-            travelStyles: travelStyles,
-          },
-          dietary_needs: dietaryNeeds,
+          home_lat: home.lat,
+          home_lng: home.lng,
+          preferences: { travelStyles: trip.travelStyles },
+          dietary_needs: trip.dietaryNeeds,
         })
         .eq("id", user.id)
+      if (error) console.error("Could not save profile defaults:", error.message)
     }
 
-    return {
-      success: true,
-      itineraryId: itineraryId,
-    }
+    return { success: true, itineraryId }
   } catch (error) {
     console.error("Error creating itinerary:", error)
-    return {
-      success: false,
-      error: "We couldn't generate your itinerary. Please try again.",
-    }
+    return { success: false, error: "We couldn't generate your itinerary. Please try again." }
   }
 }

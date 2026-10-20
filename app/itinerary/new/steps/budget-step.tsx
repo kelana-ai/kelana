@@ -33,7 +33,7 @@ export function BudgetStep({ form }: { form: UseFormReturn<FormValues> }) {
             <FormControl>
               <div className="space-y-8">
                 <Tabs
-                  defaultValue={getBudgetTabValue(field.value)}
+                  value={getBudgetTabValue(field.value)}
                   onValueChange={(val) => {
                     const found = budgetRanges.find((r) => r.label === val)
                     if (found) field.onChange(found.value)

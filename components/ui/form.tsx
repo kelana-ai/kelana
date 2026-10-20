@@ -13,6 +13,7 @@ import {
   type FieldValues,
 } from "react-hook-form"
 
+import { firstErrorMessage } from "@/lib/form-errors"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
@@ -137,7 +138,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : props.children
+  const body = error ? firstErrorMessage(error) : props.children
 
   if (!body) {
     return null

@@ -5,13 +5,14 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, type FieldErrors } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form } from "@/components/ui/form"
 import { useUser } from "@/contexts/user-context"
+import { toDateKey } from "@/lib/itinerary"
 import { cn } from "@/lib/utils"
 import { submitItinerary } from "./actions"
 import { steps } from "./constants"
@@ -56,18 +57,54 @@ export default function NewItineraryPage() {
     defaultValues: {
       tripName: "",
       destination: { name: "", lat: 0, lng: 0 },
-      homeLocation:
-        profile?.home_lat && profile?.home_lng ? { name: "", lat: profile.home_lat, lng: profile.home_lng } : undefined,
+      homeLocation: undefined,
       dateRange: {
         from: new Date(),
         to: new Date(new Date().setDate(new Date().getDate() + 7)),
       },
       travelType: "solo",
-      travelStyles: profile?.preferences?.travelStyles || [],
-      dietaryNeeds: profile?.dietary_needs || [],
+      travelStyles: [],
+      dietaryNeeds: [],
       budget: 2500,
     },
   })
+
+  // The profile loads asynchronously; apply saved defaults once, without overwriting anything the user already touched.
+  const profileApplied = useRef(false)
+  useEffect(() => {
+    if (!profile || profileApplied.current) return
+    profileApplied.current = true
+    const dirty = form.formState.dirtyFields
+    if (!dirty.homeLocation && profile.home_lat && profile.home_lng) {
+      form.setValue("homeLocation", { name: "", lat: profile.home_lat, lng: profile.home_lng })
+    }
+    if (!dirty.travelStyles && profile.preferences?.travelStyles?.length) {
+      form.setValue("travelStyles", profile.preferences.travelStyles)
+    }
+    if (!dirty.dietaryNeeds && profile.dietary_needs?.length) {
+      form.setValue("dietaryNeeds", profile.dietary_needs)
+    }
+  }, [profile, form])
+
+  // "Plan a trip here" links from the landing page pass ?destination=Name; resolve it once with Nominatim.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("destination")?.trim()
+    if (!wanted) return
+    const controller = new AbortController()
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(wanted)}&limit=1`, {
+      headers: { "Accept-Language": "en" },
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((results: { display_name: string; lat: string; lon: string }[]) => {
+        const hit = results[0]
+        if (!hit || form.getValues("destination").name) return
+        form.setValue("destination", { name: hit.display_name, lat: Number.parseFloat(hit.lat), lng: Number.parseFloat(hit.lon) })
+        if (!form.getValues("tripName")) form.setValue("tripName", `${wanted.split(",")[0]} eco trip`)
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [form])
 
   useEffect(() => {
     if (formContainerRef.current) {
@@ -87,38 +124,48 @@ export default function NewItineraryPage() {
     setIsSubmitting(true)
     setShowLoadingExperience(true)
 
-    const formData = new FormData()
-    formData.append("tripName", data.tripName)
-    formData.append("destination", JSON.stringify(data.destination))
-    formData.append("homeLocation", JSON.stringify(data.homeLocation || {}))
-    formData.append(
-      "dateRange",
-      JSON.stringify({
-        from: data.dateRange.from.toISOString(),
-        to: data.dateRange.to.toISOString(),
-      }),
-    )
-    formData.append("travelType", data.travelType)
-    formData.append("travelStyles", JSON.stringify(data.travelStyles))
-    formData.append("dietaryNeeds", JSON.stringify(data.dietaryNeeds))
-    formData.append("budget", data.budget.toString())
-
-    submitItinerary(formData)
+    submitItinerary({
+      tripName: data.tripName,
+      destination: data.destination,
+      homeLocation: data.homeLocation?.lat !== undefined ? data.homeLocation : undefined,
+      dateFrom: toDateKey(data.dateRange.from),
+      dateTo: toDateKey(data.dateRange.to),
+      travelType: data.travelType,
+      travelStyles: data.travelStyles,
+      dietaryNeeds: data.dietaryNeeds,
+      budget: data.budget,
+    })
       .then((response) => {
-        if (response.success && response.itineraryId) {
+        if (response.success) {
           toast.success("Itinerary generated successfully!")
           router.push(`/itinerary/${response.itineraryId}`)
         } else {
-          setShowError(new Error(response.error || "Failed to generate itinerary"))
+          setShowError(new Error(response.error))
           setIsSubmitting(false)
-          setShowLoadingExperience(false)
         }
       })
       .catch((error) => {
-        setShowError(error)
+        setShowError(error instanceof Error ? error : new Error("Failed to generate itinerary"))
         setIsSubmitting(false)
-        setShowLoadingExperience(false)
       })
+  }
+
+  const fieldStep: Record<string, number> = {
+    tripName: 0,
+    destination: 0,
+    dateRange: 0,
+    homeLocation: 1,
+    travelType: 2,
+    travelStyles: 3,
+    dietaryNeeds: 4,
+    budget: 5,
+  }
+
+  function onInvalid(errors: FieldErrors<FormValues>) {
+    const fields = Object.keys(errors)
+    const step = Math.min(...fields.map((f) => fieldStep[f] ?? 0))
+    setCurrentStep(step)
+    toast.error("Please complete the highlighted fields before generating your itinerary.")
   }
 
   async function nextStep() {
@@ -151,13 +198,12 @@ export default function NewItineraryPage() {
 
   const handleRetry = () => {
     setShowError(null)
-    setIsSubmitting(true)
-    setShowLoadingExperience(true)
     onSubmit(form.getValues())
   }
 
   const handleCancel = () => {
     setShowError(null)
+    setShowLoadingExperience(false)
   }
 
   if (showLoadingExperience) {
@@ -238,7 +284,7 @@ export default function NewItineraryPage() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
             <Card className="border-2">
               <CardHeader>
                 <div className="flex items-center gap-2">
