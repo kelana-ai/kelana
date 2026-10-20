@@ -19,8 +19,8 @@ env:
 
 jobs:
   deploy:
-    # pull requests from forks get no secrets
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # pull requests from forks and from Dependabot get no secrets
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
