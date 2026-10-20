@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 
-type Profile = {
+export type Profile = {
   id: string
   full_name: string | null
   username: string | null
@@ -41,196 +41,97 @@ export const useUser = () => useContext(UserContext)
 export function UserProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), [])
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(() => {
-    if (typeof window === "undefined") return null
-    const json = localStorage.getItem("profile")
-    return json ? (JSON.parse(json) as Profile) : null
-  })
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const currentAvatarPathRef = useRef<string | null>(null)
-  const initialized = useRef(false)
-  const fetchingRef = useRef(false)
-  const lastAuthEventRef = useRef<string | null>(null)
+  const userRef = useRef<User | null>(null)
 
-  const getAvatarUrl = useCallback(
-    (path: string) => {
-      if (path.startsWith("http")) return path
-      return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl
-    },
-    [supabase],
-  )
+  const avatarUrl = useMemo(() => {
+    const path = profile?.avatar_url
+    if (!path) return null
+    if (path.startsWith("http")) return path
+    return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl
+  }, [profile?.avatar_url, supabase])
 
-  const createProfileIfNotExists = useCallback(
-    async (userId: string, userMetadata?: User["user_metadata"]) => {
-      try {
-        const { data, error } = await supabase
+  // Loads the profile, creating the row when the signup trigger has not (e.g. for accounts that predate it).
+  const loadProfile = useCallback(
+    async (sessionUser: User): Promise<Profile> => {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", sessionUser.id).maybeSingle()
+      if (error) console.error("Profile fetch error:", error.message)
+      if (data) return data as Profile
+
+      if (!error) {
+        const { data: created, error: createError } = await supabase
           .from("profiles")
           .insert({
-            id: userId,
-            full_name: userMetadata?.full_name || null,
-            avatar_url: userMetadata?.avatar_url || null,
+            id: sessionUser.id,
+            full_name: sessionUser.user_metadata?.full_name || null,
+            avatar_url: sessionUser.user_metadata?.avatar_url || null,
           })
           .select()
           .single()
+        if (created) return created as Profile
+        if (createError) console.error("Failed to create profile:", createError.message)
+      }
 
-        if (error) {
-          console.error("Failed to create profile:", error.message || error)
-          return null
-        }
-
-        return data as Profile
-      } catch (err) {
-        console.error("Create profile exception:", err instanceof Error ? err.message : err)
-        return null
+      return {
+        id: sessionUser.id,
+        full_name: sessionUser.user_metadata?.full_name || null,
+        username: null,
+        avatar_url: sessionUser.user_metadata?.avatar_url || null,
+        website: null,
+        updated_at: null,
       }
     },
     [supabase],
   )
 
-  const fetchProfile = useCallback(
-    async (userId: string, userMetadata?: User["user_metadata"]) => {
-      try {
-        const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
-
-        if (error) {
-          if (error.code === 'PGRST116') {
-            console.warn("Profile not found, creating new profile for user:", userId)
-            return await createProfileIfNotExists(userId, userMetadata)
-          }
-          console.error("Profile fetch error:", error.message || error)
-          return null
-        }
-
-        return data as Profile
-      } catch (err) {
-        console.error("Profile fetch exception:", err instanceof Error ? err.message : err)
-        return null
-      }
-    },
-    [supabase, createProfileIfNotExists],
-  )
-
-  const updateUserState = useCallback(
-    async (sessionUser: User) => {
-      if (fetchingRef.current) return
-      fetchingRef.current = true
-
-      try {
-        setUser(sessionUser)
-        setIsLoading(true)
-
-        const fresh = await fetchProfile(sessionUser.id, sessionUser.user_metadata)
-
-        if (fresh) {
-          setProfile(fresh)
-          localStorage.setItem("profile", JSON.stringify(fresh))
-
-          const avatarPath = fresh.avatar_url
-          if (!avatarPath) {
-            currentAvatarPathRef.current = null
-            setAvatarUrl(null)
-          } else if (avatarPath !== currentAvatarPathRef.current) {
-            setAvatarUrl(getAvatarUrl(avatarPath))
-            currentAvatarPathRef.current = avatarPath
-          }
-        } else {
-          const minimalProfile: Profile = {
-            id: sessionUser.id,
-            full_name: sessionUser.user_metadata?.full_name || null,
-            username: null,
-            avatar_url: sessionUser.user_metadata?.avatar_url || null,
-            website: null,
-            updated_at: new Date().toISOString(),
-          }
-          setProfile(minimalProfile)
-          localStorage.setItem("profile", JSON.stringify(minimalProfile))
-        }
-      } finally {
-        setIsLoading(false)
-        fetchingRef.current = false
-      }
-    },
-    [getAvatarUrl, fetchProfile],
-  )
-
-  const userRef = useRef(user)
-  const fetchProfileRef = useRef(fetchProfile)
-  const getAvatarUrlRef = useRef(getAvatarUrl)
-
-  useEffect(() => {
-    userRef.current = user
-    fetchProfileRef.current = fetchProfile
-    getAvatarUrlRef.current = getAvatarUrl
-  })
-
   const refreshProfile = useCallback(async () => {
-    const currentUser = userRef.current
-    if (!currentUser) return
-
-    try {
-      const fresh = await fetchProfileRef.current(currentUser.id, currentUser.user_metadata)
-
-      if (fresh) {
-        setProfile(fresh)
-        localStorage.setItem("profile", JSON.stringify(fresh))
-
-        const avatarPath = fresh.avatar_url
-        if (!avatarPath) {
-          currentAvatarPathRef.current = null
-          setAvatarUrl(null)
-        } else if (avatarPath !== currentAvatarPathRef.current) {
-          setAvatarUrl(getAvatarUrlRef.current(avatarPath))
-          currentAvatarPathRef.current = avatarPath
-        }
-      }
-    } catch (error) {
-      console.error("Refresh profile error:", error)
-    }
-  }, [])
+    const current = userRef.current
+    if (!current) return
+    setProfile(await loadProfile(current))
+  }, [loadProfile])
 
   useEffect(() => {
-    if (initialized.current) return
-    initialized.current = true
+    let cancelled = false
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        updateUserState(session.user)
-      } else {
+    const apply = async (sessionUser: User | null) => {
+      userRef.current = sessionUser
+      if (!sessionUser) {
+        setUser(null)
+        setProfile(null)
         setIsLoading(false)
+        return
       }
-    })
+      setUser(sessionUser)
+      const loaded = await loadProfile(sessionUser)
+      if (cancelled || userRef.current?.id !== sessionUser.id) return
+      setProfile(loaded)
+      setIsLoading(false)
+    }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      const eventKey = `${event}-${session?.user?.id || 'null'}`
-      if (lastAuthEventRef.current === eventKey) {
+      if (event === "TOKEN_REFRESHED" && session?.user && userRef.current?.id === session.user.id) {
+        userRef.current = session.user
         return
       }
-      lastAuthEventRef.current = eventKey
+      // Defer Supabase calls out of the auth callback to avoid a GoTrue client deadlock.
+      setTimeout(() => {
+        if (!cancelled) void apply(session?.user ?? null)
+      }, 0)
+    })
 
-      if (session?.user) {
-        // Defer Supabase calls out of the auth callback to avoid the GoTrue client deadlock.
-        const sessionUser = session.user
-        setTimeout(() => {
-          updateUserState(sessionUser)
-        }, 0)
-      } else {
-        setUser(null)
-        setProfile(null)
-        setAvatarUrl(null)
-        localStorage.removeItem("profile")
-        setIsLoading(false)
-        fetchingRef.current = false
-      }
+    // INITIAL_SESSION is emitted to the subscription above; this covers clients that do not emit it.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!cancelled && !userRef.current) void apply(session?.user ?? null)
     })
 
     return () => {
+      cancelled = true
       subscription.unsubscribe()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase, loadProfile])
 
   const value = useMemo(
     () => ({ user, profile, avatarUrl, isLoading, refreshProfile }),

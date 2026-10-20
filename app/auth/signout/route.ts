@@ -1,11 +1,17 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
-export async function POST() {
+// Behind Fly's proxy request.url carries the internal host, so prefer the configured site URL, then the forwarded host.
+function siteUrl(request: NextRequest) {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+  return host ? `${host.startsWith('localhost') ? 'http' : proto}://${host}` : request.nextUrl.origin
+}
+
+export async function POST(request: NextRequest) {
   const supabase = await createClient()
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
   const {
     data: { user },
@@ -13,10 +19,8 @@ export async function POST() {
 
   if (user) {
     await supabase.auth.signOut()
+    revalidatePath('/', 'layout')
   }
 
-  revalidatePath('/', 'layout')
-  return NextResponse.redirect(siteUrl, {
-    status: 302,
-  })
+  return NextResponse.redirect(new URL('/', siteUrl(request)), { status: 303 })
 }

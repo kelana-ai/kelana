@@ -68,9 +68,9 @@ export default function Header() {
                   <Image
                     src="/logo.png"
                     alt="logo"
-                    width={500}
-                    height={500}
-                    className="w-20 md:w-24 h:6 md:h-8"
+                    width={750}
+                    height={250}
+                    className="h-7 w-auto md:h-8"
                   />
                 </div>
               </DialogTitle>
@@ -143,9 +143,9 @@ export default function Header() {
             <Image
               src="/logo.png"
               alt="logo"
-              width={500}
-              height={500}
-              className="w-20 md:w-24 h:6 md:h-8"
+              width={750}
+              height={250}
+              className="h-7 w-auto md:h-8"
             />
           </Link>
         </div>
@@ -166,7 +166,9 @@ export default function Header() {
         </nav>
 
         <div className="hidden lg:flex lg:items-center lg:gap-2">
-          {isUserLoggedIn && !isLoading ? (
+          {isLoading ? (
+            <div className="h-9 w-40" aria-hidden />
+          ) : isUserLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 px-2">
