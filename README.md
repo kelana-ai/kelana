@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/banner.svg" width="100%" alt="Kelana: plan meaningful, low-impact trips with AI-generated itineraries">
+  <img src="docs/banner.svg" width="100%" alt="Kelana: low-impact trip planning with AI-generated itineraries">
 </div>
 
 <div align="center">
