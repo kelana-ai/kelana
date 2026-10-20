@@ -40,8 +40,8 @@ export function ActivityCard({ activity, index }: ActivityCardProps) {
   const TypeIcon = iconMap[activity.type] || Compass
 
   const timeDisplay = activity.end_time
-    ? `${activity.start_time} - ${activity.end_time}`
-    : activity.start_time
+    ? `${activity.start_time.slice(0, 5)} - ${activity.end_time.slice(0, 5)}`
+    : activity.start_time.slice(0, 5)
 
   const ecoTag =
     activity.eco_tags && activity.eco_tags.length > 0
@@ -91,7 +91,7 @@ export function ActivityCard({ activity, index }: ActivityCardProps) {
                 </p>
               </motion.div>
 
-              {activity.description.length > 100 && (
+              {(activity.description?.length ?? 0) > 100 && (
                 <button
                   className="mt-2 text-xs font-medium text-primary hover:underline"
                   onClick={(e) => {

@@ -5,17 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useUser } from "@/contexts/user-context"
-import { format, parseISO } from "date-fns"
+import { effectiveStatus, formatDateKey, itineraryToText } from "@/lib/itinerary"
 import { Compass, Download, Heart, MapPin } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useMemo } from "react"
 import { ActivityCard } from "./activity-card"
 import { BudgetCard } from "./budget-card"
 import { CarbonImpactCard } from "./carbon-impact-card"
 import { ItineraryHeader } from "./itinerary-header"
 import ItineraryMap from "./itinerary-map"
-import { LocalPartnersCard } from "./local-partners-card"
+import { PlacesCard } from "./local-partners-card"
 
 export interface ActivityRow {
   id: string
@@ -73,53 +71,79 @@ export default function ItineraryClient({
 }: {
   itinerary: ItineraryRow
 }) {
-  const { user, isLoading } = useUser()
-  const router = useRouter()
+  const dateRange = `${formatDateKey(itn.date_from, "MMM d")} - ${formatDateKey(itn.date_to)}`
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/")
-    }
-  }, [user, isLoading, router])
-
-  const from = parseISO(itn.date_from)
-  const to = parseISO(itn.date_to)
-  const dateRange = `${format(from, "MMM d")} - ${format(to, "MMM d, yyyy")}`
-
-  const days = itn.itinerary_days
-    .sort((a, b) => a.day_index - b.day_index)
-    .map((d) => ({
-      id: `day-${d.day_index + 1}`,
-      date: format(parseISO(d.date), "MMM d, yyyy"),
-      activities: d.itinerary_activities.sort((a, b) => a.activity_index - b.activity_index),
-    }))
+  const days = useMemo(
+    () =>
+      [...itn.itinerary_days]
+        .sort((a, b) => a.day_index - b.day_index)
+        .map((d) => ({
+          id: `day-${d.day_index + 1}`,
+          rawDate: d.date,
+          date: formatDateKey(d.date),
+          activities: [...d.itinerary_activities].sort((a, b) => a.activity_index - b.activity_index),
+        })),
+    [itn.itinerary_days],
+  )
   const firstDay = days[0]?.id ?? ""
 
-  const allActivities = days.flatMap((day) =>
-    day.activities.map((act) => ({
-      title: act.title,
-      description: act.description,
-      time: act.start_time + (act.end_time ? ` - ${act.end_time}` : ""),
-      eco_tag: act.eco_tags[0] || "",
-      type: act.type,
-      location: {
-        name: act.location_name || undefined,
-        lat: act.location_lat || undefined,
-        lng: act.location_lng || undefined,
-      },
-    })),
+  const mapActivities = useMemo(
+    () =>
+      days
+        .flatMap((day, dayIndex) =>
+          day.activities.map((act) => ({
+            title: act.title,
+            description: act.description,
+            time: act.start_time.slice(0, 5) + (act.end_time ? ` - ${act.end_time.slice(0, 5)}` : ""),
+            eco_tag: act.eco_tags[0] || "",
+            day: `Day ${dayIndex + 1}`,
+            lat: act.location_lat,
+            lng: act.location_lng,
+          })),
+        )
+        .filter((a): a is typeof a & { lat: number; lng: number } => a.lat !== null && a.lng !== null)
+        .map((a) => ({ ...a, lat: Number(a.lat), lng: Number(a.lng) })),
+    [days],
   )
 
-  const partners = Array.from(
-    new Map<string, { name: string; address: string }>(
-      itn.itinerary_days.flatMap((d) => d.itinerary_activities)
-        .filter((act) => act.location_name && act.address)
-        .map((act) => [
-          act.location_name!,
-          { name: act.location_name!, address: act.address! },
-        ]),
-    ).values(),
+  const places = useMemo(
+    () =>
+      Array.from(
+        new Map<string, { name: string; address: string }>(
+          days
+            .flatMap((d) => d.activities)
+            .filter((act) => act.location_name && act.address)
+            .map((act) => [act.location_name!, { name: act.location_name!, address: act.address! }]),
+        ).values(),
+      ),
+    [days],
   )
+
+  function downloadItinerary() {
+    const text = itineraryToText({
+      name: itn.name,
+      destination_name: itn.destination_name,
+      date_from: itn.date_from,
+      date_to: itn.date_to,
+      days: days.map((d) => ({
+        date: d.rawDate,
+        activities: d.activities.map((a) => ({
+          start_time: a.start_time,
+          end_time: a.end_time,
+          title: a.title,
+          description: a.description,
+          address: a.address,
+          cost: a.cost,
+        })),
+      })),
+    })
+    const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }))
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `${itn.name.replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "itinerary"}.txt`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/50">
@@ -128,7 +152,7 @@ export default function ItineraryClient({
         destination={itn.destination_name}
         dateRange={dateRange}
         id={itn.id}
-        status={itn.status}
+        status={effectiveStatus(itn.status, itn.date_to)}
       />
 
       <div className="container mx-auto py-12 px-4 space-y-10">
@@ -149,12 +173,12 @@ export default function ItineraryClient({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" onClick={downloadItinerary} aria-label="Download itinerary">
                           <Download className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Download itinerary</p>
+                        <p>Download as text</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -202,8 +226,9 @@ export default function ItineraryClient({
               <CardContent className="px-4 h-[400px]">
                 <ItineraryMap
                   destination={itn.destination_name}
-                  destinationCoords={[itn.destination_lat, itn.destination_lng]}
-                  activities={allActivities}
+                  lat={itn.destination_lat}
+                  lng={itn.destination_lng}
+                  activities={mapActivities}
                 />
               </CardContent>
             </Card>
@@ -211,14 +236,14 @@ export default function ItineraryClient({
 
           <aside className="space-y-6">
             <BudgetCard
-              budgetTotal={itn.budget.total}
-              budgetSpent={itn.budget.spent}
-              budgetRemaining={itn.budget.remaining}
+              budgetTotal={itn.budget.total ?? 0}
+              budgetSpent={itn.budget.spent ?? 0}
+              budgetRemaining={itn.budget.remaining ?? 0}
             />
 
-            <CarbonImpactCard carbonSaved={itn.carbon_metrics.saved} carbonPercentage={itn.carbon_metrics.percentage} />
+            <CarbonImpactCard carbonSaved={itn.carbon_metrics.saved ?? 0} carbonPercentage={itn.carbon_metrics.percentage ?? 0} />
 
-            <LocalPartnersCard partners={partners} />
+            <PlacesCard places={places} />
 
             <Card className="shadow-md transition-all duration-300 hover:shadow-lg pt-0">
               <CardHeader className="bg-primary/5 border-b pt-6">

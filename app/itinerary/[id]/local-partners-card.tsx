@@ -4,30 +4,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
 import { MapPin } from "lucide-react"
 
-interface Partner {
+interface Place {
   name: string
   address: string
 }
 
-interface LocalPartnersCardProps {
-  partners: Partner[]
+interface PlacesCardProps {
+  places: Place[]
 }
 
-export function LocalPartnersCard({ partners }: LocalPartnersCardProps) {
-  if (partners.length === 0) {
+export function PlacesCard({ places }: PlacesCardProps) {
+  if (places.length === 0) {
     return null
   }
 
   const MAX_DISPLAY = 5
-  const visible = partners.slice(0, MAX_DISPLAY)
-  const hiddenCount = partners.length - MAX_DISPLAY
+  const visible = places.slice(0, MAX_DISPLAY)
+  const hiddenCount = places.length - MAX_DISPLAY
 
   return (
     <Card className="shadow-md transition-all duration-300 hover:shadow-lg overflow-visible my-4 pt-0">
       <CardHeader className="bg-primary/5 border-b pt-6">
         <CardTitle className="flex items-center gap-2 text-base">
           <MapPin className="h-5 w-5 text-primary" />
-          Local Partners
+          Places on this trip
         </CardTitle>
       </CardHeader>
       <CardContent className="px-6 py-1.5 overflow-visible">

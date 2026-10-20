@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "framer-motion"
-import { Leaf, Recycle } from "lucide-react"
+import { Leaf } from "lucide-react"
 import { useEffect, useState } from "react"
 
 interface CarbonImpactCardProps {
@@ -66,25 +66,9 @@ export function CarbonImpactCard({ carbonSaved, carbonPercentage }: CarbonImpact
           <p className="text-center text-sm text-muted-foreground">
             <span className="font-medium text-primary">{carbonSaved} kg</span> CO₂ saved vs. conventional travel
           </p>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-primary/5 rounded-lg p-3 w-full"
-          >
-            <div className="flex items-start gap-2">
-              <Recycle className="mt-0.5 h-4 w-4 text-primary" />
-              <div>
-                <p className="text-sm font-medium">Eco‑Friendly Choices</p>
-                <ul className="mt-1 text-xs text-muted-foreground list-inside list-disc space-y-1">
-                  <li>Green‑certified accommodation</li>
-                  <li>Shared transportation</li>
-                  <li>Local &amp; organic dining</li>
-                  <li>Low‑impact activities</li>
-                </ul>
-              </div>
-            </div>
-          </motion.div>
+          <p className="text-center text-xs text-muted-foreground">
+            AI-generated estimate based on the chosen transport, stays and activities. It is not an audited carbon calculation.
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -17,7 +17,7 @@ export function BudgetCard({ budgetTotal, budgetSpent, budgetRemaining }: Budget
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setProgress((budgetSpent / budgetTotal) * 100)
+      setProgress(budgetTotal > 0 ? Math.min(100, (budgetSpent / budgetTotal) * 100) : 0)
     }, 300)
 
     return () => clearTimeout(timer)
@@ -60,6 +60,7 @@ export function BudgetCard({ budgetTotal, budgetSpent, budgetRemaining }: Budget
               <p className="font-medium">${budgetRemaining}</p>
             </motion.div>
           </div>
+          <p className="text-xs text-muted-foreground">Spent is the sum of estimated per-person activity costs, not a quote.</p>
         </div>
       </CardContent>
     </Card>
