@@ -238,7 +238,7 @@ export function ItineraryList({ initialItineraries, loadFailed = false }: Itiner
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Itineraries</h1>
-          <p className="text-muted-foreground">Manage and view all your eco-conscious travel plans</p>
+          <p className="text-muted-foreground">All your itineraries</p>
         </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -371,7 +371,7 @@ export function ItineraryList({ initialItineraries, loadFailed = false }: Itiner
           <p className="mb-6 text-muted-foreground">
             {searchQuery || statusFilter !== "all" || activeTab !== "all"
               ? "Try adjusting your filters or search query"
-              : "Create your first eco-conscious travel itinerary to get started"}
+              : "Create your first itinerary to get started"}
           </p>
           <Button asChild>
             <Link href="/itinerary/new">

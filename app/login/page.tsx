@@ -48,7 +48,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Welcome back" description="Sign in to your account to continue your eco-conscious journey">
+    <AuthLayout title="Welcome back" description="Sign in to your account">
       {(isLoading || user) && !isSubmitting ? (
         <AuthFormSkeleton />
       ) : (

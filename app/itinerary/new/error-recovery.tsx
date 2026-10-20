@@ -28,19 +28,13 @@ export function ErrorRecovery({ error, onRetry, onCancel }: ErrorRecoveryProps) 
               <div className="rounded-full bg-destructive/10 p-2 text-destructive">
                 <AlertCircle className="h-6 w-6" />
               </div>
-              <CardTitle>Generation Error</CardTitle>
+              <CardTitle>Could not generate the itinerary</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="mb-4 text-muted-foreground">
-              We encountered an issue while generating your itinerary. This could be due to:
+            <p className="text-muted-foreground">
+              Something went wrong while generating your itinerary. The problem is often temporary, so trying again can help.
             </p>
-            <ul className="ml-6 list-disc space-y-1 text-sm text-muted-foreground">
-              <li>Temporary service disruption</li>
-              <li>Network connectivity issues</li>
-              <li>High server load</li>
-              <li>Unusual destination or requirements</li>
-            </ul>
             <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               <p className="font-medium">Error details:</p>
               <p className="mt-1 break-words">{errorMessage}</p>
@@ -48,10 +42,10 @@ export function ErrorRecovery({ error, onRetry, onCancel }: ErrorRecoveryProps) 
           </CardContent>
           <CardFooter className="flex flex-col gap-3 sm:flex-row">
             <Button variant="outline" className="w-full sm:w-auto" onClick={onCancel}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Form
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to form
             </Button>
             <Button className="w-full sm:w-auto" onClick={onRetry}>
-              Try Again
+              Try again
             </Button>
           </CardFooter>
         </Card>

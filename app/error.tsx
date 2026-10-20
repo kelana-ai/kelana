@@ -23,8 +23,7 @@ export default function Error({
       </div>
       <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">Something went wrong</h1>
       <p className="mt-3 max-w-md text-muted-foreground">
-        An unexpected error occurred while loading this page. You can try again, or head back home if the problem
-        persists.
+        The page could not be loaded. Try again, or go back home.
       </p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Button onClick={reset} className="gap-2">

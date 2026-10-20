@@ -32,7 +32,7 @@ export const travelStyles = [
   { id: "cruise", label: "Cruise Voyages", icon: "🚢" },
   { id: "backpacker", label: "Budget Backpacker", icon: "🎒" },
   { id: "photography", label: "Photography & Scenic", icon: "📸" },
-  { id: "spiritual", label: "Spiritual Journeys", icon: "🕌" },
+  { id: "spiritual", label: "Spiritual Places", icon: "🕌" },
 ]
 
 export const dietaryNeeds = [

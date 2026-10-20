@@ -28,13 +28,13 @@ import { TravelTypeStep } from "./steps/travel-type-step"
 import { TripDetailsStep } from "./steps/trip-details-step"
 
 const stepDescriptions = [
-  "Tell us about your trip destination and dates",
-  "Where are you starting your journey from?",
-  "Who will be joining you on this adventure?",
-  "What kind of experiences are you looking for?",
-  "Any special dietary requirements we should know about?",
-  "Let's set a budget for your eco-friendly journey",
-  "Review your itinerary details before we generate your plan",
+  "Where are you going, and when?",
+  "Where are you starting from?",
+  "Who is coming with you?",
+  "What do you want to do?",
+  "Any dietary needs?",
+  "Set a budget for the trip",
+  "Check the details before generating the plan",
 ]
 
 export default function NewItineraryPage() {
@@ -220,9 +220,9 @@ export default function NewItineraryPage() {
     <div className="container py-8" ref={formContainerRef}>
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">Create Your Eco-Friendly Itinerary</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Plan a trip</h1>
           <p className="mt-2 text-muted-foreground">
-            Let's plan a sustainable travel experience that's good for you and the planet
+            Answer a few questions and Kelana will write the itinerary.
           </p>
         </div>
 

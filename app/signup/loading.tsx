@@ -5,7 +5,7 @@ export default function SignupLoading() {
   return (
     <AuthLayout
       title="Create an account"
-      description="Join Kelana to start planning your eco-conscious travel experiences"
+      description="Create an account to plan and save trips"
     >
       <AuthFormSkeleton />
     </AuthLayout>

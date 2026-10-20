@@ -17,7 +17,7 @@ const siteUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "Kelana | Eco-Conscious Travel Planning",
-  description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
+  description: "Plan low-impact trips with AI-generated itineraries, cost estimates and carbon estimates.",
   keywords: "eco travel, greener tourism, green travel, eco-friendly travel, responsible tourism",
   authors: [{ name: "Kelana Team" }],
   openGraph: {
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "/",
     title: "Kelana | Eco-Conscious Travel Planning",
-    description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
+    description: "Plan low-impact trips with AI-generated itineraries, cost estimates and carbon estimates.",
     siteName: "Kelana",
     images: [
       {
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Kelana | Eco-Conscious Travel Planning",
-    description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
+    description: "Plan low-impact trips with AI-generated itineraries, cost estimates and carbon estimates.",
     images: ["/kelana-og.png"],
   },
 }

@@ -167,7 +167,7 @@ export default function ItineraryClient({
                       Daily Itinerary
                     </CardTitle>
                     <CardDescription className="pt-2.5">
-                      Your eco-conscious travel plan for {itn.destination_name}
+                      Your plan for {itn.destination_name}
                     </CardDescription>
                   </div>
                   <TooltipProvider>

@@ -45,20 +45,14 @@ export default function NotFoundPage() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="max-w-md"
       >
-        <h1 className="mb-2 text-4xl font-bold tracking-tight sm:text-5xl">Oops! Trail not found</h1>
-        <p className="mb-6 text-muted-foreground">
-          It seems you've wandered off the beaten path. Even the most adventurous travelers sometimes get lost!
-        </p>
-
-        <div className="mb-8 rounded-lg bg-muted p-4 text-sm">
-          <p className="italic">"Not all who wander are lost, but in this case... you definitely are."</p>
-        </div>
+        <h1 className="mb-2 text-4xl font-bold tracking-tight sm:text-5xl">Page not found</h1>
+        <p className="mb-8 text-muted-foreground">This page doesn't exist or has moved.</p>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
           <Button asChild size="lg" className="gap-2">
             <Link href="/">
               <ArrowLeft className="h-4 w-4" />
-              Back to Home Base
+              Back to home
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">

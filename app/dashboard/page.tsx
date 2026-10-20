@@ -122,7 +122,7 @@ export default function DashboardPage() {
             exit={{ opacity: 0, y: -20 }}
             className="mb-6 rounded-lg bg-primary/10 p-4 text-center"
           >
-            <p className="text-sm font-medium text-primary">Welcome back to your eco-conscious travel dashboard! 🌿</p>
+            <p className="text-sm font-medium text-primary">You're signed in</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                 {profile?.full_name || profile?.username || user?.email?.split("@")[0] || "Traveler"}
               </span>
             </h1>
-            <p className="text-muted-foreground">Continue planning your eco-conscious adventures</p>
+            <p className="text-muted-foreground">Your trips, budget and estimated carbon savings</p>
           </motion.div>
         )}
 
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                     </div>
                     <h3 className="mb-2 text-lg font-medium">No itineraries yet</h3>
                     <p className="mb-4 text-sm text-muted-foreground">
-                      Create your first eco-conscious travel itinerary to get started
+                      Create your first itinerary to get started
                     </p>
                     <Button asChild>
                       <Link href="/itinerary/new">
