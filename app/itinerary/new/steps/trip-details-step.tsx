@@ -3,7 +3,6 @@
 import { format } from "date-fns"
 import { Calendar, Loader2, MapPin, Search } from "lucide-react"
 import dynamic from "next/dynamic"
-import { useRef } from "react"
 import type { UseFormReturn } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -12,7 +11,6 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import type { MapComponentHandle } from "@/components/map-component"
 import type { FormValues } from "../schema"
 import { useLocationSearch } from "../use-location-search"
 
@@ -26,10 +24,8 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
 })
 
 export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
-  const mapRef = useRef<MapComponentHandle | null>(null)
   const search = useLocationSearch((location) => {
-    form.setValue("destination", location)
-    mapRef.current?.setLocation(location)
+    form.setValue("destination", location, { shouldValidate: form.formState.isSubmitted || Boolean(form.getFieldState("destination").error) })
   })
 
   return (
@@ -106,11 +102,11 @@ export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
 
                 <div className="h-[300px] overflow-hidden rounded-md border">
                   <MapComponent
+                    value={field.value.name && field.value.lat !== 0 ? field.value : null}
                     onLocationSelect={(location) => {
-                      form.setValue("destination", location)
+                      form.setValue("destination", location, { shouldValidate: Boolean(form.getFieldState("destination").error) })
                       search.setQuery(location.name)
                     }}
-                    ref={mapRef}
                   />
                 </div>
 
@@ -165,8 +161,12 @@ export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
                 <CalendarComponent
                   mode="range"
                   selected={field.value}
-                  onSelect={field.onChange}
+                  onSelect={(range) => {
+                    field.onChange(range)
+                    if (form.getFieldState("dateRange").error) void form.trigger("dateRange")
+                  }}
                   numberOfMonths={2}
+                  disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
                 />
               </PopoverContent>
             </Popover>

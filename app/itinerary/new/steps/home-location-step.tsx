@@ -2,13 +2,11 @@
 
 import { Home, Loader2, Search } from "lucide-react"
 import dynamic from "next/dynamic"
-import { useRef } from "react"
 import type { UseFormReturn } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import type { MapComponentHandle } from "@/components/map-component"
 import type { FormValues } from "../schema"
 import { useLocationSearch } from "../use-location-search"
 
@@ -22,11 +20,7 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
 })
 
 export function HomeLocationStep({ form }: { form: UseFormReturn<FormValues> }) {
-  const mapRef = useRef<MapComponentHandle | null>(null)
-  const search = useLocationSearch((location) => {
-    form.setValue("homeLocation", location)
-    mapRef.current?.setLocation(location)
-  })
+  const search = useLocationSearch((location) => form.setValue("homeLocation", location))
 
   return (
     <div className="space-y-6">
@@ -86,7 +80,7 @@ export function HomeLocationStep({ form }: { form: UseFormReturn<FormValues> }) 
                 )}
 
                 <div className="h-[300px] overflow-hidden rounded-md border">
-                  <MapComponent onLocationSelect={(location) => form.setValue("homeLocation", location)} ref={mapRef} />
+                  <MapComponent value={field.value} onLocationSelect={(location) => form.setValue("homeLocation", location)} />
                 </div>
 
                 {field.value?.name && field.value?.lat !== undefined && field.value?.lng !== undefined && (
