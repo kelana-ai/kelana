@@ -79,7 +79,7 @@ pnpm test
 pnpm build
 ```
 
-CI runs the same checks, with a coverage report from `pnpm test:coverage`. `pnpm start` serves the production build.
+CI runs the same checks, with a coverage report from `pnpm test:coverage`, and the browser tests in `e2e/`. Run those with `pnpm e2e` after `pnpm exec playwright install chromium`. `pnpm start` serves the production build.
 
 ## How it works
 

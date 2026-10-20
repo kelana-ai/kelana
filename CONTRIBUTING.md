@@ -9,9 +9,15 @@ Follow Getting started in the README. You need Node.js 24 and pnpm, plus a Supab
 1. Pick an issue or open one.
 2. Branch from `main`: `feat/...`, `fix/...`, `docs/...`, `chore/...` or `test/...`.
 3. Commit in small steps with a Conventional Commits prefix (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`). A message is one line, plus a sentence only when the reason is not obvious.
-4. Before pushing, run `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build`.
+4. Before pushing, run `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build`. If you changed a page or a server action, run `pnpm e2e` too.
 5. Open a pull request and link the issue with `Fixes #123` so it closes on merge. CI and a preview deployment run on every pull request.
 6. Ask for a review, then merge once CI is green.
+
+## Tests
+
+- `pnpm test` runs the unit tests. `pnpm test:coverage` also checks the coverage thresholds in `vitest.config.mts`.
+- `pnpm e2e` runs the browser tests in `e2e/` against a local build with a mocked model. Run `pnpm exec playwright install chromium` once first. The tests sign up a throwaway user and delete it at the end, so point `.env` at the dev Supabase project.
+- Set `E2E_BASE_URL` to run the same tests against a deployed site, with that site's `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. They then use the real model, which takes a few minutes and costs a few cents.
 
 ## Code
 
