@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -57,6 +58,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^10.13.0",
     "eslint-config-next": "^16.4.2",
     "tailwindcss": "^4.3.3",
