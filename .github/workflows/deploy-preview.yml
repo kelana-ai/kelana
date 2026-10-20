@@ -19,8 +19,7 @@ env:
 
 jobs:
   deploy:
-    # The repository is public: pull requests from forks get no secrets, and their code must not be deployed with
-    # this project's credentials.
+    # pull requests from forks get no secrets
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     steps:

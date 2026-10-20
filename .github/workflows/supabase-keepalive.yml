@@ -1,7 +1,6 @@
 name: Supabase Keep-alive
 
-# Supabase pauses free projects after a week without activity, so call the no-op ping() function on both projects
-# twice a week. GitHub stops running scheduled workflows after 60 days without repository activity.
+# free Supabase projects pause after a week without activity
 on:
   schedule:
     - cron: "17 3 * * 1,4"

@@ -11,8 +11,7 @@ export default async function ItineraryPage({
   const { id } = await params
   const supabase = await createClient()
 
-  // RLS (itineraries_select / days_select / activities_select) restricts this to
-  // the owner — a non-owner (or anonymous request) gets no row -> notFound().
+  // RLS limits this to the owner; anyone else gets no row
   const { data: itn, error } = await supabase
     .from("itineraries")
     .select(

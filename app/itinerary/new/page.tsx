@@ -69,7 +69,6 @@ export default function NewItineraryPage() {
     },
   })
 
-  // The profile loads asynchronously; apply saved defaults once, without overwriting anything the user already touched.
   const profileApplied = useRef(false)
   useEffect(() => {
     if (!profile || profileApplied.current) return
@@ -86,7 +85,6 @@ export default function NewItineraryPage() {
     }
   }, [profile, form])
 
-  // "Plan a trip here" links from the landing page pass ?destination=Name; resolve it once with Nominatim.
   useEffect(() => {
     const wanted = new URLSearchParams(window.location.search).get("destination")?.trim()
     if (!wanted) return

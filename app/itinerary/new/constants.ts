@@ -55,7 +55,6 @@ export const budgetRanges = [
   { value: 10000, label: "Ultra Luxury" },
 ]
 
-/** Label of the budget preset closest to the slider value, so the tab strip follows the slider. */
 export function getBudgetTabValue(value: number): string {
   return budgetRanges.reduce((best, r) => (Math.abs(r.value - value) < Math.abs(best.value - value) ? r : best)).label
 }

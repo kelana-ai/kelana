@@ -1,4 +1,3 @@
--- Public read (bucket is public); writes restricted to each user's own folder (name = "<uid>/<file>")
 create policy "Avatar images are publicly readable"
   on storage.objects for select
   using (bucket_id = 'avatars');

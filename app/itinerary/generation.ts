@@ -6,7 +6,6 @@ import { z } from "zod"
 import { cleanGeneratedItinerary, type CleanItinerary, type GeneratedItinerary } from "@/lib/itinerary"
 import { ACTIVITY_TYPES, ITINERARY_ICONS } from "@/lib/trip-options"
 
-// The previous default (gpt-4o snapshots) is scheduled for shutdown on 2027-01-14.
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-6-luna"
 
 const ActivitySchema = z.object({
@@ -114,7 +113,6 @@ export function activityRows(dayId: string, activities: CleanItinerary["days"][n
   }))
 }
 
-/** Inserts the whole itinerary in three batched writes and removes the parent row (cascade) if anything fails. */
 export async function saveItinerary(supabase: SupabaseClient, meta: ItineraryMeta, data: CleanItinerary): Promise<string> {
   const { data: itn, error } = await supabase
     .from("itineraries")

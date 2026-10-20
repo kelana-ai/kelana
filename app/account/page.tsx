@@ -170,7 +170,7 @@ function AccountContent({ user, profile }: { user: NonNullable<ReturnType<typeof
       const { error } = await supabase.rpc("delete_my_account")
       if (error) throw error
 
-      // The user no longer exists server-side, so only clear the local session.
+      // the account is already gone on the server, so only the local session can be cleared
       await supabase.auth.signOut({ scope: "local" })
       router.replace("/")
       router.refresh()

@@ -1,4 +1,4 @@
-/** Sliding-window limiter kept in process memory, so it applies per server instance; the daily DB check in the action is the shared limit. */
+// in memory, so the limit applies per server instance
 const hits = new Map<string, number[]>()
 
 export function checkRateLimit(key: string, limit: number, windowMs: number, now = Date.now()): { ok: boolean; retryAfterSec: number } {
