@@ -10,8 +10,12 @@ import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://kelana.fly.dev"),
+  metadataBase: new URL(siteUrl),
   title: "Kelana | Eco-Conscious Travel Planning",
   description: "Plan meaningful, low-impact travel experiences with AI assistance and greener recommendations.",
   keywords: "eco travel, greener tourism, green travel, eco-friendly travel, responsible tourism",
