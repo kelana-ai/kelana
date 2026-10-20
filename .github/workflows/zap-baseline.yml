@@ -1,0 +1,19 @@
+name: ZAP Baseline
+
+on:
+  schedule:
+    - cron: "17 5 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: https://kelana-eco.vercel.app
+          allow_issue_writing: false
+          fail_action: false
