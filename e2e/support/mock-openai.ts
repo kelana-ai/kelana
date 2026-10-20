@@ -12,6 +12,12 @@ const places = [
 ]
 
 function plan(name: string, dayCount: number, instruction: string | null) {
+  const near = (place: (typeof places)[number], day: number) => ({
+    ...place,
+    lat: Number((place.lat + day * 0.012).toFixed(4)),
+    lng: Number((place.lng + day * 0.012).toFixed(4)),
+  })
+
   return {
     name,
     destination: "Ubud, Bali",
@@ -26,18 +32,18 @@ function plan(name: string, dayCount: number, instruction: string | null) {
           ecoTag: "Low carbon",
           cost: 6,
           currency: "USD",
-          location: places[0],
+          location: near(places[0], i),
         },
         {
           start_time: "09:30",
           end_time: "11:30",
           title: `Rice terrace walk, day ${i + 1}`,
-          description: "Walk the ridge before the heat.",
+          description: "Walk the ridge <b>before</b> the heat.",
           type: "sightseeing",
           ecoTag: "Walkable",
           cost: 10,
           currency: "USD",
-          location: places[1],
+          location: near(places[1], i),
         },
         {
           start_time: "12:30",
@@ -48,7 +54,7 @@ function plan(name: string, dayCount: number, instruction: string | null) {
           ecoTag: "Locally owned",
           cost: 8,
           currency: "USD",
-          location: places[2],
+          location: near(places[2], i),
         },
         {
           start_time: "16:00",
