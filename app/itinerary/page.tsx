@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 
 import { createClient } from "@/utils/supabase/server"
-import { ItineraryList, type Itinerary } from "./itinerary-list"
+import type { Itinerary } from "@/lib/itinerary-filters"
+import { ItineraryList } from "./itinerary-list"
 import { ItinerarySkeleton } from "./itinerary-skeleton"
 
 export default function ItineraryPage() {
