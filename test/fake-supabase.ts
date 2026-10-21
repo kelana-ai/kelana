@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 export interface RecordedCall {
   table: string
-  action: "select" | "insert" | "update" | "delete"
+  action: "select" | "insert" | "update" | "delete" | "rpc" | "list" | "remove" | "signOut"
   payload?: unknown
   options?: unknown
   filters: { op: "eq" | "gte" | "lte" | "in"; column: string; value: unknown }[]
@@ -86,7 +86,27 @@ export function fakeSupabase({ user = { id: "user-1" }, reply = () => ({}) }: Op
     return query
   }
 
-  const client = { auth: { getUser: async () => ({ data: { user }, error: null }) }, from }
+  function direct(table: string, action: RecordedCall["action"], payload?: unknown) {
+    const call: RecordedCall = { table, action, payload, filters: [] }
+    calls.push(call)
+    const { data = null, error = null } = reply(call)
+    return { data, error }
+  }
+
+  const client = {
+    auth: {
+      getUser: async () => ({ data: { user }, error: null }),
+      signOut: async (options?: unknown) => direct("auth", "signOut", options),
+    },
+    from,
+    rpc: async (name: string, args?: unknown) => direct(name, "rpc", args),
+    storage: {
+      from: (bucket: string) => ({
+        list: async (prefix?: string) => direct(bucket, "list", prefix),
+        remove: async (paths: string[]) => direct(bucket, "remove", paths),
+      }),
+    },
+  }
   return { client: client as unknown as SupabaseClient, calls }
 }
 
