@@ -10,6 +10,16 @@ export const steps = [
   { id: "step-7", name: "Review", icon: Check },
 ]
 
+export const stepDescriptions = [
+  "Where are you going, and when?",
+  "Where are you starting from?",
+  "Who is coming with you?",
+  "What do you want to do?",
+  "Any dietary needs?",
+  "Set a budget for the trip",
+  "Check the details before generating the plan",
+]
+
 export const travelTypeOptions = [
   { id: "solo", label: "Solo Explorer", icon: "👤", description: "Just me, myself, and I" },
   { id: "couple", label: "Couple", icon: "🧑‍🤝‍🧑", description: "Traveling with a partner" },

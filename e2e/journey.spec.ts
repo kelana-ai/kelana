@@ -298,7 +298,9 @@ test("a model failure shows the recovery screen and saves nothing", async () => 
   await expect(page.getByText(failureTitle)).toBeVisible({ timeout: 60_000 })
   await expect(page.getByText("We couldn't generate your itinerary. Please try again.")).toBeVisible()
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible()
-  await expect(page.getByRole("button", { name: "Back to form" })).toBeVisible()
+  await page.getByRole("button", { name: "Back to form" }).click()
+  await expect(page.getByText("Trip Summary")).toBeVisible()
+  await expect(page.getByRole("button", { name: /Generate Itinerary/ })).toBeEnabled()
 
   await page.goto("/itinerary")
   await expect(page.getByText(failing)).toHaveCount(0)
