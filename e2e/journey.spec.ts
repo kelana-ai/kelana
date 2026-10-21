@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises"
 import { expect, test, type Page } from "@playwright/test"
 
 import { deleteAccount, listAvatars } from "./support/supabase"
-import { dayOfMonth, longMonth, monthDay, shortDate, TRIP_DAYS, tripEnd, tripStart } from "./support/trip"
+import { dayOfMonth, jakartaDate, longMonth, monthDay, shortDate, TRIP_DAYS, tripEnd, tripStart } from "./support/trip"
 
 const mocked = !process.env.E2E_BASE_URL
 const stamp = Date.now()
@@ -110,6 +110,19 @@ test("the wizard asks for a destination before moving on", async () => {
 test("a destination in the URL is looked up and selected", async () => {
   await page.goto("/itinerary/new?destination=" + encodeURIComponent("Ubud, Bali"))
   await expect(page.getByText(/Selected:/)).toContainText("Ubud")
+})
+
+test("the wizard still matches its server-rendered HTML on a later day", async ({ browser }) => {
+  const laterDay = new Date(Date.now() + 3 * 86_400_000)
+  const context = await browser.newContext({ storageState: await page.context().storageState() })
+  const later = await context.newPage()
+  const errors: string[] = []
+  later.on("pageerror", (error) => errors.push(error.message))
+  await later.clock.setFixedTime(laterDay)
+  await later.goto("/itinerary/new")
+  await expect(later.locator("button", { hasText: /\d{4}\s*-\s*[A-Z][a-z]{2}/ }).first()).toContainText(jakartaDate(laterDay))
+  expect(errors).toEqual([])
+  await context.close()
 })
 
 test("the calendar picks the exact days that were clicked", async () => {

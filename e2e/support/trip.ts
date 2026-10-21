@@ -11,5 +11,7 @@ export const TRIP_DAYS = 3
 
 export const shortDate = (date: Date) => format(date, { month: "short", day: "numeric", year: "numeric" })
 export const monthDay = (date: Date) => format(date, { month: "short", day: "numeric" })
+export const jakartaDate = (date: Date) =>
+  date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Jakarta" })
 export const longMonth = (date: Date) => format(date, { month: "long" })
 export const dayOfMonth = (date: Date) => date.getUTCDate()
