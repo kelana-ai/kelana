@@ -5,7 +5,9 @@ export interface RecordedCall {
   action: "select" | "insert" | "update" | "delete"
   payload?: unknown
   options?: unknown
-  filters: { op: "eq" | "gte"; column: string; value: unknown }[]
+  filters: { op: "eq" | "gte" | "lte" | "in"; column: string; value: unknown }[]
+  order?: { column: string; ascending: boolean }
+  limit?: number
 }
 
 export interface Reply {
@@ -57,6 +59,22 @@ export function fakeSupabase({ user = { id: "user-1" }, reply = () => ({}) }: Op
       },
       gte(column: string, value: unknown) {
         call.filters.push({ op: "gte", column, value })
+        return query
+      },
+      lte(column: string, value: unknown) {
+        call.filters.push({ op: "lte", column, value })
+        return query
+      },
+      in(column: string, value: unknown) {
+        call.filters.push({ op: "in", column, value })
+        return query
+      },
+      order(column: string, options?: { ascending?: boolean }) {
+        call.order = { column, ascending: options?.ascending ?? true }
+        return query
+      },
+      limit(count: number) {
+        call.limit = count
         return query
       },
       single: async () => run(),

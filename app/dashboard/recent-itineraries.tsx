@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from "@/components/ui/skeleton"
 import { riseIn } from "@/lib/motion"
 import { cn } from "@/lib/utils"
-import type { DashboardData } from "./actions"
+import type { DashboardData } from "@/lib/dashboard"
 
 type Recent = DashboardData["recentItineraries"][number]
 

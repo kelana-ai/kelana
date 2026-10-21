@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { riseIn, staggerChildren } from "@/lib/motion"
-import type { DashboardData } from "./actions"
+import type { DashboardData } from "@/lib/dashboard"
 
 type Activity = DashboardData["upcomingActivities"][number]
 

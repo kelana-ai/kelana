@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { fetchDashboardData, type DashboardData } from "./actions"
+import type { DashboardData } from "@/lib/dashboard"
+import { fetchDashboardData } from "./actions"
 
 export function useDashboardData(userId: string | undefined) {
   const [data, setData] = useState<DashboardData | null>(null)

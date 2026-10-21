@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 
 import { staggerChildren } from "@/lib/motion"
-import type { DashboardData } from "./actions"
+import type { DashboardData } from "@/lib/dashboard"
 import { EcoTipCard } from "./eco-tip-card"
 import { RecentItineraries } from "./recent-itineraries"
 import { StatCards } from "./stat-cards"
