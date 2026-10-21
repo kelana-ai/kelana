@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { riseIn } from "@/lib/motion"
-import type { DashboardData } from "./actions"
+import type { DashboardData } from "@/lib/dashboard"
 
 interface StatCardProps {
   title: string

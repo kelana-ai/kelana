@@ -17,7 +17,7 @@ import {
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { riseIn } from "@/lib/motion"
-import type { DashboardData } from "./actions"
+import type { DashboardData } from "@/lib/dashboard"
 
 type Analytics = DashboardData["analytics"]
 

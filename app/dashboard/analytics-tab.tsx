@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 
 import { staggerChildren } from "@/lib/motion"
-import type { DashboardData } from "./actions"
+import type { DashboardData } from "@/lib/dashboard"
 import { BudgetAllocationCard, CarbonTrendCard, DestinationImpactCard, EcoScoreCard } from "./analytics-cards"
 
 const container = staggerChildren(0.1)
