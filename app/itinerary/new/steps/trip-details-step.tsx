@@ -3,6 +3,7 @@
 import { format } from "date-fns"
 import { Calendar, Loader2, MapPin, Search } from "lucide-react"
 import dynamic from "next/dynamic"
+import { useSyncExternalStore } from "react"
 import type { UseFormReturn } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,11 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
   ),
 })
 
+const subscribeToNothing = () => () => {}
+
 export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
+  // the prerendered HTML carries the build date, so the default dates only render after hydration
+  const hydrated = useSyncExternalStore(subscribeToNothing, () => true, () => false)
   const search = useLocationSearch((location) => {
     form.setValue("destination", location, { shouldValidate: form.formState.isSubmitted || Boolean(form.getFieldState("destination").error) })
   })
@@ -143,7 +148,7 @@ export function TripDetailsStep({ form }: { form: UseFormReturn<FormValues> }) {
                     className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                   >
                     <Calendar className="mr-2 h-4 w-4" />
-                    {field.value?.from ? (
+                    {hydrated && field.value?.from ? (
                       field.value.to ? (
                         <>
                           {format(field.value.from, "MMM d, yyyy")} - {format(field.value.to, "MMM d, yyyy")}
