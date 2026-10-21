@@ -36,7 +36,7 @@ test.beforeAll(async ({ browser }) => {
 })
 
 test.afterAll(async () => {
-  if (!accountDeleted) await deleteAccount(page)
+  if (!accountDeleted) await deleteAccount(email, password)
   await page.context().close()
 })
 

@@ -35,12 +35,29 @@ export async function listAvatars(page: Page) {
   return ((await response.json()) as { name: string }[]).map((object) => object.name)
 }
 
-export async function deleteAccount(page: Page) {
-  const session = await currentSession(page).catch(() => null)
-  if (!session) return
-  await fetch(`${env("NEXT_PUBLIC_SUPABASE_URL")}/rest/v1/rpc/delete_my_account`, {
+export async function deleteAccount(email: string, password: string) {
+  const base = env("NEXT_PUBLIC_SUPABASE_URL")
+  const login = await fetch(`${base}/auth/v1/token?grant_type=password`, {
     method: "POST",
-    headers: headers(session.token),
-    body: "{}",
-  }).catch(() => undefined)
+    headers: { apikey: env("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"), "content-type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  }).catch(() => null)
+  if (!login?.ok) return
+
+  const { access_token: token, user } = (await login.json()) as { access_token: string; user: { id: string } }
+  const files: { name: string }[] = await fetch(`${base}/storage/v1/object/list/avatars`, {
+    method: "POST",
+    headers: headers(token),
+    body: JSON.stringify({ prefix: user.id, limit: 20 }),
+  })
+    .then((response) => response.json())
+    .catch(() => [])
+  if (files.length) {
+    await fetch(`${base}/storage/v1/object/avatars`, {
+      method: "DELETE",
+      headers: headers(token),
+      body: JSON.stringify({ prefixes: files.map((file) => `${user.id}/${file.name}`) }),
+    }).catch(() => undefined)
+  }
+  await fetch(`${base}/rest/v1/rpc/delete_my_account`, { method: "POST", headers: headers(token), body: "{}" }).catch(() => undefined)
 }
