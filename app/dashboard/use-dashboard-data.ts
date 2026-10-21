@@ -37,27 +37,5 @@ export function useDashboardData(userId: string | undefined) {
     loadData()
   }, [userId])
 
-  const refetch = async () => {
-    if (!userId) return
-
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const result = await fetchDashboardData()
-
-      if (result.error) {
-        throw result.error
-      }
-
-      setData(result.data)
-    } catch (err) {
-      console.error("Error refreshing dashboard data:", err)
-      setError(err instanceof Error ? err : new Error("Failed to refresh dashboard data"))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return { data, isLoading, error, refetch }
+  return { data, isLoading, error }
 }
