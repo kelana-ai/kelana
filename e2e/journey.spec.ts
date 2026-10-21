@@ -148,7 +148,7 @@ test("the itinerary shows the picked dates, a tab per day, map markers and cards
   await expect(page.getByText("Daily Itinerary")).toBeVisible({ timeout: 30_000 })
   await expect(page.locator("body")).toContainText(`${monthDay(tripStart)} - ${monthDay(tripEnd)}, ${tripEnd.getUTCFullYear()}`)
   await expect(page.getByRole("tab", { name: /^Day \d/ })).toHaveCount(TRIP_DAYS)
-  await expect(page.locator(".leaflet-marker-icon").first()).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator(".leaflet-marker-icon").nth(1)).toBeVisible({ timeout: 30_000 })
   expect(await page.locator("[data-slot=card] p.font-medium").count()).toBeGreaterThan(0)
 })
 
