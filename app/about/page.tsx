@@ -63,6 +63,71 @@ const values = [
   },
 ]
 
+function ValuesSection() {
+  return (
+    <section id="our-values" className="container py-20">
+      <div className="mb-12 text-center">
+        <Badge className="mb-4">Our Values</Badge>
+        <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">How the plans are built</h2>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        {values.map((value) => (
+          <Card key={value.title}>
+            <CardContent className="flex gap-4 p-6">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">{value.icon}</div>
+              <div>
+                <h3 className="mb-1 text-lg font-semibold">{value.title}</h3>
+                <p className="text-sm text-muted-foreground">{value.description}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function TeamSection() {
+  return (
+    <section id="our-team" className="bg-muted/30 py-20">
+      <div className="container">
+        <div className="mb-12 text-center">
+          <Badge className="mb-4">Our Team</Badge>
+          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            Meet the <span className="text-primary">Kelana Team</span>
+          </h2>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {teamMembers.map((member) => (
+            <Card key={member.name} className="overflow-hidden transition-all hover:shadow-md">
+              <div className="aspect-square overflow-hidden">
+                <Image
+                  src={member.image}
+                  alt={member.name}
+                  width={400}
+                  height={400}
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold">{member.name}</h3>
+                <p className="mb-4 text-primary">{member.role}</p>
+                <p className="mb-4 text-sm text-muted-foreground">{member.bio}</p>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={member.linkedin} target="_blank" rel="noopener noreferrer">
+                    LinkedIn
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function AboutPage() {
   return (
     <div className="flex flex-col">
@@ -112,62 +177,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section id="our-values" className="container py-20">
-        <div className="mb-12 text-center">
-          <Badge className="mb-4">Our Values</Badge>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">How the plans are built</h2>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          {values.map((value) => (
-            <Card key={value.title}>
-              <CardContent className="flex gap-4 p-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">{value.icon}</div>
-                <div>
-                  <h3 className="mb-1 text-lg font-semibold">{value.title}</h3>
-                  <p className="text-sm text-muted-foreground">{value.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section id="our-team" className="bg-muted/30 py-20">
-        <div className="container">
-          <div className="mb-12 text-center">
-            <Badge className="mb-4">Our Team</Badge>
-            <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Meet the <span className="text-primary">Kelana Team</span>
-            </h2>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {teamMembers.map((member) => (
-              <Card key={member.name} className="overflow-hidden transition-all hover:shadow-md">
-                <div className="aspect-square overflow-hidden">
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    width={400}
-                    height={400}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold">{member.name}</h3>
-                  <p className="mb-4 text-primary">{member.role}</p>
-                  <p className="mb-4 text-sm text-muted-foreground">{member.bio}</p>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={member.linkedin} target="_blank" rel="noopener noreferrer">
-                      LinkedIn
-                    </a>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ValuesSection />
+      <TeamSection />
     </div>
   )
 }
