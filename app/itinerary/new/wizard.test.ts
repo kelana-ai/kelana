@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { Profile } from "@/contexts/user-context"
 import type { FormValues } from "./schema"
-import { defaultTripDates, firstInvalidStep, profileDefaults, submission, suggestedTripName } from "./wizard"
+import { dateRangeLabel, defaultTripDates, firstInvalidStep, profileDefaults, submission, suggestedTripName } from "./wizard"
 
 const profile = (overrides: Partial<Profile> = {}): Profile => ({
   id: "user-1",
@@ -121,5 +121,21 @@ describe("suggestedTripName", () => {
   it("uses the first part of the destination", () => {
     expect(suggestedTripName("Ubud, Bali")).toBe("Ubud eco trip")
     expect(suggestedTripName("Kyoto")).toBe("Kyoto eco trip")
+  })
+})
+
+describe("dateRangeLabel", () => {
+  it("shows both dates of a range", () => {
+    expect(dateRangeLabel({ from: new Date(2026, 10, 2), to: new Date(2026, 10, 9) })).toBe("Nov 2, 2026 - Nov 9, 2026")
+  })
+
+  it("shows only the first date while the range is not finished", () => {
+    expect(dateRangeLabel({ from: new Date(2026, 10, 2) })).toBe("Nov 2, 2026")
+  })
+
+  it("has no label without a first date", () => {
+    expect(dateRangeLabel(undefined)).toBeNull()
+    expect(dateRangeLabel({})).toBeNull()
+    expect(dateRangeLabel({ to: new Date(2026, 10, 9) })).toBeNull()
   })
 })
