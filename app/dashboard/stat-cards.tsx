@@ -57,57 +57,86 @@ function StatCardsSkeleton() {
   )
 }
 
-export function StatCards({ stats, isLoading }: { stats?: DashboardData["stats"]; isLoading: boolean }) {
+const NO_STATS: DashboardData["stats"] = {
+  activeTrips: 0,
+  totalTrips: 0,
+  carbonSaved: 0,
+  carbonProgress: 0,
+  budgetLeft: 0,
+  budgetProgress: 0,
+}
+
+type Stats = DashboardData["stats"]
+
+function ActiveTripsCard({ stats }: { stats: Stats }) {
+  return (
+    <StatCard
+      title="Active Trips"
+      icon={<Calendar className="h-4 w-4 text-blue-500 dark:text-blue-300" />}
+      iconClassName="rounded-full bg-blue-100 p-2 dark:bg-blue-900"
+      value={stats.activeTrips}
+      valueClassName="text-3xl font-bold text-blue-500"
+      caption="Upcoming travel plans"
+      footer={
+        <div className="mt-3 h-1 w-full rounded-full bg-muted">
+          <div
+            className="h-1 rounded-full bg-blue-500"
+            style={{ width: `${Math.min(100, (stats.activeTrips / (stats.totalTrips || 1)) * 100)}%` }}
+          />
+        </div>
+      }
+    />
+  )
+}
+
+function CarbonSavedCard({ stats }: { stats: Stats }) {
+  return (
+    <StatCard
+      title="Carbon Saved"
+      icon={<Leaf className="h-4 w-4 text-green-500 dark:text-green-300" />}
+      iconClassName="rounded-full bg-green-100 p-2 dark:bg-green-900"
+      value={`${stats.carbonSaved}kg`}
+      valueClassName="text-3xl font-bold text-green-500"
+      caption="Estimated vs. conventional travel"
+      footer={
+        <div className="mt-3">
+          <Progress value={stats.carbonProgress} className="h-1" />
+        </div>
+      }
+    />
+  )
+}
+
+function BudgetLeftCard({ stats }: { stats: Stats }) {
+  return (
+    <StatCard
+      title="Budget Left"
+      icon={<Wallet className="h-4 w-4 text-amber-500 dark:text-amber-300" />}
+      iconClassName="rounded-full bg-amber-100 p-2 dark:bg-amber-900"
+      value={`$${stats.budgetLeft.toLocaleString()}`}
+      valueClassName="text-3xl font-bold text-amber-500"
+      caption="For your upcoming trips"
+      footer={
+        <div className="mt-3">
+          <Progress value={stats.budgetProgress} className="h-1" />
+        </div>
+      }
+    />
+  )
+}
+
+export function StatCards({ stats, isLoading }: { stats?: Stats; isLoading: boolean }) {
+  const shown = stats ?? NO_STATS
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {isLoading ? (
         <StatCardsSkeleton />
       ) : (
         <>
-          <StatCard
-            title="Active Trips"
-            icon={<Calendar className="h-4 w-4 text-blue-500 dark:text-blue-300" />}
-            iconClassName="rounded-full bg-blue-100 p-2 dark:bg-blue-900"
-            value={stats?.activeTrips || 0}
-            valueClassName="text-3xl font-bold text-blue-500"
-            caption="Upcoming travel plans"
-            footer={
-              <div className="mt-3 h-1 w-full rounded-full bg-muted">
-                <div
-                  className="h-1 rounded-full bg-blue-500"
-                  style={{
-                    width: `${Math.min(100, ((stats?.activeTrips || 0) / (stats?.totalTrips || 1)) * 100)}%`,
-                  }}
-                />
-              </div>
-            }
-          />
-          <StatCard
-            title="Carbon Saved"
-            icon={<Leaf className="h-4 w-4 text-green-500 dark:text-green-300" />}
-            iconClassName="rounded-full bg-green-100 p-2 dark:bg-green-900"
-            value={stats?.carbonSaved ? `${stats.carbonSaved}kg` : "0kg"}
-            valueClassName="text-3xl font-bold text-green-500"
-            caption="Estimated vs. conventional travel"
-            footer={
-              <div className="mt-3">
-                <Progress value={stats?.carbonProgress || 0} className="h-1" />
-              </div>
-            }
-          />
-          <StatCard
-            title="Budget Left"
-            icon={<Wallet className="h-4 w-4 text-amber-500 dark:text-amber-300" />}
-            iconClassName="rounded-full bg-amber-100 p-2 dark:bg-amber-900"
-            value={`$${stats?.budgetLeft?.toLocaleString() || "0"}`}
-            valueClassName="text-3xl font-bold text-amber-500"
-            caption="For your upcoming trips"
-            footer={
-              <div className="mt-3">
-                <Progress value={stats?.budgetProgress || 0} className="h-1" />
-              </div>
-            }
-          />
+          <ActiveTripsCard stats={shown} />
+          <CarbonSavedCard stats={shown} />
+          <BudgetLeftCard stats={shown} />
         </>
       )}
     </div>

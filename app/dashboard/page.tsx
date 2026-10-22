@@ -1,34 +1,27 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
-import { useRouter } from "next/navigation"
+import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useRequireUser } from "@/contexts/use-require-user"
 import { useUser } from "@/contexts/user-context"
 import { displayName } from "@/lib/display-name"
 import { ecoFacts } from "@/lib/eco-facts"
-import { AnalyticsTab } from "./analytics-tab"
+import { DashboardContent } from "./dashboard-content"
 import { DashboardHeading } from "./dashboard-heading"
-import { OverviewTab } from "./overview-tab"
-import { UpcomingTab } from "./upcoming-tab"
 import { useDashboardData } from "./use-dashboard-data"
 import { WelcomeBanner } from "./welcome-banner"
 
 export default function DashboardPage() {
   const { user, profile, isLoading: isUserLoading } = useUser()
-  const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [randomFact] = useState(() => ecoFacts[Math.floor(Math.random() * ecoFacts.length)])
 
   const { data, isLoading, error } = useDashboardData(user?.id)
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/")
-    }
-  }, [user, isUserLoading, router])
+  useRequireUser()
 
   useEffect(() => {
     if (error) {
@@ -60,18 +53,7 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      <AnimatePresence mode="wait">
-        {activeTab === "overview" && (
-          <OverviewTab
-            key={`overview-${isPageLoading ? "loading" : "loaded"}`}
-            data={data}
-            isLoading={isPageLoading}
-            fact={randomFact}
-          />
-        )}
-        {!isPageLoading && activeTab === "analytics" && <AnalyticsTab key="analytics" analytics={data?.analytics} />}
-        {!isPageLoading && activeTab === "upcoming" && <UpcomingTab key="upcoming" activities={data?.upcomingActivities} />}
-      </AnimatePresence>
+      <DashboardContent activeTab={activeTab} isLoading={isPageLoading} data={data} fact={randomFact} />
     </div>
   )
 }
