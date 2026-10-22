@@ -59,6 +59,62 @@ export interface SubmitDeps {
 const HOURLY_LIMIT = 5
 const DAILY_LIMIT = 20
 
+type Trip = z.infer<typeof ItineraryInput>
+
+async function limitError(supabase: SupabaseClient, userId: string): Promise<string | null> {
+  const memory = checkRateLimit(`create:${userId}`, HOURLY_LIMIT, 3_600_000)
+  if (!memory.ok) {
+    return `You've created several itineraries recently. Please try again in ${Math.ceil(memory.retryAfterSec / 60)} minutes.`
+  }
+  const since = new Date(Date.now() - 86_400_000).toISOString()
+  const { count } = await supabase.from("itineraries").select("id", { count: "exact", head: true }).gte("created_at", since)
+  return (count ?? 0) >= DAILY_LIMIT ? "Daily itinerary limit reached. Please try again tomorrow." : null
+}
+
+function homeOf(trip: Trip) {
+  return trip.homeLocation?.lat !== undefined && trip.homeLocation?.lng !== undefined ? trip.homeLocation : undefined
+}
+
+function modelRequest(trip: Trip, home: Trip["homeLocation"]) {
+  return {
+    tripName: sanitizeText(trip.tripName, 100),
+    destination: { ...trip.destination, name: sanitizeText(trip.destination.name, 300) },
+    homeLocation: home ? { ...home, name: sanitizeText(home.name, 300) } : null,
+    travelType: trip.travelType,
+    travelStyles: trip.travelStyles,
+    dietaryNeeds: trip.dietaryNeeds,
+    budgetUsd: trip.budget,
+  }
+}
+
+function itineraryMeta(userId: string, trip: Trip, destination: string) {
+  return {
+    userId,
+    description: `Eco-friendly itinerary to ${sanitizeText(trip.destination.name, 120)}`,
+    destinationName: destination || trip.destination.name,
+    destinationLat: trip.destination.lat,
+    destinationLng: trip.destination.lng,
+    dateFrom: trip.dateFrom,
+    dateTo: trip.dateTo,
+    travelType: trip.travelType,
+    travelStyles: trip.travelStyles,
+    dietaryNeeds: trip.dietaryNeeds,
+  }
+}
+
+async function saveHomeDefaults(supabase: SupabaseClient, userId: string, home: NonNullable<Trip["homeLocation"]>, trip: Trip) {
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      home_lat: home.lat,
+      home_lng: home.lng,
+      preferences: { travelStyles: trip.travelStyles },
+      dietary_needs: trip.dietaryNeeds,
+    })
+    .eq("id", userId)
+  if (error) console.error("Could not save profile defaults:", error.message)
+}
+
 export async function submit({ getSupabase, generate }: SubmitDeps, input: unknown): Promise<SubmitItineraryResult> {
   const parsed = ItineraryInput.safeParse(input)
   if (!parsed.success) {
@@ -73,67 +129,17 @@ export async function submit({ getSupabase, generate }: SubmitDeps, input: unkno
     } = await supabase.auth.getUser()
     if (!user) return { success: false, error: "Please sign in to create an itinerary." }
 
-    const memory = checkRateLimit(`create:${user.id}`, HOURLY_LIMIT, 3_600_000)
-    if (!memory.ok) {
-      return { success: false, error: `You've created several itineraries recently. Please try again in ${Math.ceil(memory.retryAfterSec / 60)} minutes.` }
-    }
-    const since = new Date(Date.now() - 86_400_000).toISOString()
-    const { count } = await supabase
-      .from("itineraries")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", since)
-    if ((count ?? 0) >= DAILY_LIMIT) {
-      return { success: false, error: "Daily itinerary limit reached. Please try again tomorrow." }
-    }
+    const blocked = await limitError(supabase, user.id)
+    if (blocked) return { success: false, error: blocked }
 
     const dayKeys = listTripDays(trip.dateFrom, trip.dateTo)
-    const home = trip.homeLocation?.lat !== undefined && trip.homeLocation?.lng !== undefined ? trip.homeLocation : undefined
+    const home = homeOf(trip)
 
-    const generated = await generate(
-      buildCreatePrompt(
-        {
-          tripName: sanitizeText(trip.tripName, 100),
-          destination: { ...trip.destination, name: sanitizeText(trip.destination.name, 300) },
-          homeLocation: home ? { ...home, name: sanitizeText(home.name, 300) } : null,
-          travelType: trip.travelType,
-          travelStyles: trip.travelStyles,
-          dietaryNeeds: trip.dietaryNeeds,
-          budgetUsd: trip.budget,
-        },
-        dayKeys,
-      ),
-    )
+    const generated = await generate(buildCreatePrompt(modelRequest(trip, home), dayKeys))
     const clean = cleanGeneratedItinerary(generated, dayKeys, trip.budget, trip.tripName)
 
-    const itineraryId = await saveItinerary(
-      supabase,
-      {
-        userId: user.id,
-        description: `Eco-friendly itinerary to ${sanitizeText(trip.destination.name, 120)}`,
-        destinationName: clean.destination || trip.destination.name,
-        destinationLat: trip.destination.lat,
-        destinationLng: trip.destination.lng,
-        dateFrom: trip.dateFrom,
-        dateTo: trip.dateTo,
-        travelType: trip.travelType,
-        travelStyles: trip.travelStyles,
-        dietaryNeeds: trip.dietaryNeeds,
-      },
-      clean,
-    )
-
-    if (home) {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          home_lat: home.lat,
-          home_lng: home.lng,
-          preferences: { travelStyles: trip.travelStyles },
-          dietary_needs: trip.dietaryNeeds,
-        })
-        .eq("id", user.id)
-      if (error) console.error("Could not save profile defaults:", error.message)
-    }
+    const itineraryId = await saveItinerary(supabase, itineraryMeta(user.id, trip, clean.destination), clean)
+    if (home) await saveHomeDefaults(supabase, user.id, home, trip)
 
     return { success: true, itineraryId }
   } catch (error) {
