@@ -1,15 +1,13 @@
 "use client"
 
 import { useUser } from "@/contexts/user-context"
+import { avatarProblem } from "@/lib/avatar"
 import { createClient } from "@/utils/supabase/client"
 import { Camera, Loader2, UserIcon } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { toast } from "sonner"
-
-const MAX_BYTES = 2 * 1024 * 1024
-const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif"]
-const EXTENSIONS: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" }
+import { replaceAvatar } from "./avatar-data"
 
 export default function Avatar({
   uid,
@@ -35,28 +33,15 @@ export default function Avatar({
     input.value = ""
     if (!file || !uid) return
 
-    if (!ALLOWED.includes(file.type)) {
-      toast.error("Please choose a PNG, JPEG, WebP or GIF image.")
-      return
-    }
-    if (file.size > MAX_BYTES) {
-      toast.error("The image must be 2 MB or smaller.")
+    const problem = avatarProblem(file)
+    if (problem) {
+      toast.error(problem)
       return
     }
 
     setUploading(true)
-    const previous = url
     try {
-      const filePath = `${uid}/${crypto.randomUUID()}.${EXTENSIONS[file.type]}`
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { contentType: file.type })
-      if (uploadError) throw uploadError
-
-      const saved = await onUpload(filePath)
-      if (saved && previous && !previous.startsWith("http") && previous.startsWith(`${uid}/`)) {
-        await supabase.storage.from("avatars").remove([previous])
-      } else if (!saved) {
-        await supabase.storage.from("avatars").remove([filePath])
-      }
+      await replaceAvatar(supabase, uid, file, url, onUpload)
     } catch (error) {
       console.error("Avatar upload error:", error)
       toast.error("Error uploading avatar")

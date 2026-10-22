@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 export interface RecordedCall {
   table: string
-  action: "select" | "insert" | "update" | "delete" | "rpc" | "list" | "remove" | "signOut"
+  action: "select" | "insert" | "update" | "delete" | "rpc" | "list" | "remove" | "signOut" | "upload"
   payload?: unknown
   options?: unknown
   filters: { op: "eq" | "gte" | "lte" | "in"; column: string; value: unknown }[]
@@ -102,6 +102,7 @@ export function fakeSupabase({ user = { id: "user-1" }, reply = () => ({}) }: Op
     rpc: async (name: string, args?: unknown) => direct(name, "rpc", args),
     storage: {
       from: (bucket: string) => ({
+        upload: async (path: string, file: unknown) => direct(bucket, "upload", { path, file }),
         list: async (prefix?: string) => direct(bucket, "list", prefix),
         remove: async (paths: string[]) => direct(bucket, "remove", paths),
       }),
