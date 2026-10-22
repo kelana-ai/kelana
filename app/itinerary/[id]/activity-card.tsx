@@ -16,7 +16,7 @@ import {
   Wine,
 } from "lucide-react"
 import { useState } from "react"
-import type { ActivityRow } from "./itinerary-client"
+import type { ActivityRow } from "@/lib/itinerary-view"
 
 interface ActivityCardProps {
   activity: ActivityRow
