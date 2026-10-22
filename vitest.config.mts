@@ -24,6 +24,8 @@ export default defineConfig({
         "app/account/profile-data.ts": { lines: 95, functions: 95, branches: 90, statements: 95 },
         "app/itinerary/new/wizard.ts": { lines: 95, functions: 95, branches: 90, statements: 95 },
         "app/itinerary/new/loading-progress.ts": { lines: 95, functions: 95, branches: 90, statements: 95 },
+        "app/account/avatar-data.ts": { lines: 95, functions: 95, branches: 90, statements: 95 },
+        "contexts/load-profile.ts": { lines: 95, functions: 95, branches: 90, statements: 95 },
       },
     },
   },
