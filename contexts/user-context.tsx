@@ -4,6 +4,8 @@ import { createClient } from "@/utils/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 
+import { loadProfile } from "./load-profile"
+
 export type Profile = {
   id: string
   full_name: string | null
@@ -52,43 +54,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl
   }, [profile?.avatar_url, supabase])
 
-  const loadProfile = useCallback(
-    async (sessionUser: User): Promise<Profile> => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", sessionUser.id).maybeSingle()
-      if (error) console.error("Profile fetch error:", error.message)
-      if (data) return data as Profile
-
-      if (!error) {
-        const { data: created, error: createError } = await supabase
-          .from("profiles")
-          .insert({
-            id: sessionUser.id,
-            full_name: sessionUser.user_metadata?.full_name || null,
-            avatar_url: sessionUser.user_metadata?.avatar_url || null,
-          })
-          .select()
-          .single()
-        if (created) return created as Profile
-        if (createError) console.error("Failed to create profile:", createError.message)
-      }
-
-      return {
-        id: sessionUser.id,
-        full_name: sessionUser.user_metadata?.full_name || null,
-        username: null,
-        avatar_url: sessionUser.user_metadata?.avatar_url || null,
-        website: null,
-        updated_at: null,
-      }
-    },
-    [supabase],
-  )
+  const loadUserProfile = useCallback((sessionUser: User) => loadProfile(supabase, sessionUser), [supabase])
 
   const refreshProfile = useCallback(async () => {
     const current = userRef.current
     if (!current) return
-    setProfile(await loadProfile(current))
-  }, [loadProfile])
+    setProfile(await loadUserProfile(current))
+  }, [loadUserProfile])
 
   useEffect(() => {
     let cancelled = false
@@ -102,7 +74,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return
       }
       setUser(sessionUser)
-      const loaded = await loadProfile(sessionUser)
+      const loaded = await loadUserProfile(sessionUser)
       if (cancelled || userRef.current?.id !== sessionUser.id) return
       setProfile(loaded)
       setIsLoading(false)
@@ -130,7 +102,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       cancelled = true
       subscription.unsubscribe()
     }
-  }, [supabase, loadProfile])
+  }, [supabase, loadUserProfile])
 
   const value = useMemo(
     () => ({ user, profile, avatarUrl, isLoading, refreshProfile }),
