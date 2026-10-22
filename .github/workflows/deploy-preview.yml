@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 24
       - name: Install Vercel CLI
-        run: npm install --global --ignore-scripts vercel@63.1.2
+        run: npm install --global --ignore-scripts vercel@64.2.0
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=preview
       - name: Build project
