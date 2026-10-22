@@ -1,11 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 
 import { Form } from "@/components/ui/form"
+import { useRequireUser } from "@/contexts/use-require-user"
 import { useUser } from "@/contexts/user-context"
 import { ErrorRecovery } from "./error-recovery"
 import { LoadingExperience } from "./loading-experience"
@@ -19,14 +18,9 @@ import { WizardCard } from "./wizard-card"
 import { defaultTripDates } from "./wizard"
 
 export default function NewItineraryPage() {
-  const { user, profile, isLoading } = useUser()
-  const router = useRouter()
+  const { user, profile } = useUser()
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/")
-    }
-  }, [user, isLoading, router])
+  useRequireUser()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
