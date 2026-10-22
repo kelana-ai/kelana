@@ -53,5 +53,5 @@ export function useTripSubmission(form: UseFormReturn<FormValues>, user: User | 
     setShowLoading(false)
   }
 
-  return { isSubmitting, showLoading, error, setError, submit, retry, cancel }
+  return { isSubmitting, showLoading, error, submit, retry, cancel }
 }
