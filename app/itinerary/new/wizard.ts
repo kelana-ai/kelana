@@ -1,3 +1,5 @@
+import { format } from "date-fns"
+
 import type { Profile } from "@/contexts/user-context"
 import { toDateKey } from "@/lib/itinerary"
 import type { FormValues } from "./schema"
@@ -55,4 +57,10 @@ export function profileDefaults(profile: Profile, dirty: DirtyFields) {
 
 export function suggestedTripName(wanted: string) {
   return `${wanted.split(",")[0]} eco trip`
+}
+
+export function dateRangeLabel(range: { from?: Date; to?: Date } | undefined) {
+  if (!range?.from) return null
+  const from = format(range.from, "MMM d, yyyy")
+  return range.to ? `${from} - ${format(range.to, "MMM d, yyyy")}` : from
 }
