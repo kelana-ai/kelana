@@ -58,7 +58,7 @@ and opening hours before you travel.
 
 ## Getting started
 
-Needs Node.js 24. pnpm 10 is pinned in `package.json`.
+Needs Node.js 24. pnpm 12 is pinned in `package.json`.
 
 ```bash
 pnpm install
@@ -160,7 +160,7 @@ free plan.
 - `typescript` is pinned to `~6.0.3` because typescript-eslint doesn't support
   TypeScript 7 yet.
 - `@types/node` stays on 24 to match the Node 24 runtime.
-- `pnpm.onlyBuiltDependencies` lets only `sharp` run install scripts.
+- `allowBuilds` in `pnpm-workspace.yaml` lets only `sharp` run install scripts.
 - The workflows install the Vercel CLI with npm at an exact version.
 
 ### One-time setup
