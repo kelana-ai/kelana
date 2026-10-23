@@ -32,6 +32,7 @@ export default function PrivacyPage() {
           <li>Supabase hosts the database, authentication and file storage.</li>
           <li>OpenAI receives the trip details you submit (destination, dates, preferences, budget) to generate or refine an itinerary.</li>
           <li>OpenStreetMap (Nominatim and map tiles) receives the places you search for and the map areas you view, directly from your browser.</li>
+          <li>Vercel hosts the app and counts page views and page load times. It sets no cookies and collects no personal data for this.</li>
         </ul>
       </section>
 
