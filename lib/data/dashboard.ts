@@ -34,8 +34,8 @@ export async function listPlannedActivities(supabase: SupabaseClient, dayIds: st
   return data ?? []
 }
 
-export async function listActivityCosts(supabase: SupabaseClient): Promise<{ type: string; cost: number | string | null }[]> {
-  const { data, error } = await supabase.from("itinerary_activities").select("type, cost").limit(5000)
+export async function listBudgetByType(supabase: SupabaseClient): Promise<{ type: string; cost: number }[]> {
+  const { data, error } = await supabase.rpc("budget_by_type")
   if (error) throw error
   return data ?? []
 }

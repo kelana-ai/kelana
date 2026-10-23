@@ -11,7 +11,7 @@ import {
   upcomingWindow,
   type DashboardData,
 } from "@/lib/dashboard"
-import { listActivityCosts, listDashboardItineraries, listDaysBetween, listPlannedActivities } from "@/lib/data/dashboard"
+import { listBudgetByType, listDashboardItineraries, listDaysBetween, listPlannedActivities } from "@/lib/data/dashboard"
 import { effectiveStatus, toDateKey } from "@/lib/itinerary"
 
 export type DashboardResult = { data: DashboardData | null; error: Error | null }
@@ -31,13 +31,13 @@ export async function loadDashboard(getSupabase: () => Promise<SupabaseClient>, 
     if (!user) return { data: null, error: new Error("Not authenticated") }
 
     const today = toDateKey(now)
-    const itineraries = (await listDashboardItineraries(supabase, user.id)).map((itn) => ({
-      ...itn,
-      status: effectiveStatus(itn.status, itn.date_to, today),
-    }))
     const window = upcomingWindow(now)
-    const upcoming = await loadUpcoming(supabase, window.from, window.to)
-    const costs = await listActivityCosts(supabase)
+    const [stored, upcoming, costs] = await Promise.all([
+      listDashboardItineraries(supabase, user.id),
+      loadUpcoming(supabase, window.from, window.to),
+      listBudgetByType(supabase),
+    ])
+    const itineraries = stored.map((itn) => ({ ...itn, status: effectiveStatus(itn.status, itn.date_to, today) }))
 
     const stats = dashboardStats(itineraries)
     return {
