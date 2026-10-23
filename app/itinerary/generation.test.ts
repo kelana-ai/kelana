@@ -58,11 +58,14 @@ describe("runModel", () => {
     vi.restoreAllMocks()
   })
 
-  it("asks the configured model for an object in the itinerary shape and returns it", async () => {
+  it("asks the configured model for an object in the itinerary shape and returns it with the token counts", async () => {
     const itinerary = generatedItinerary(2)
-    vi.mocked(generateText).mockResolvedValue({ output: itinerary } as never)
+    vi.mocked(generateText).mockResolvedValue({
+      output: itinerary,
+      totalUsage: { inputTokens: 1200, outputTokens: 3400, totalTokens: 4600, inputTokenDetails: {}, outputTokenDetails: {} },
+    } as never)
 
-    expect(await runModel("plan a trip")).toBe(itinerary)
+    expect(await runModel("plan a trip")).toEqual({ itinerary, usage: { inputTokens: 1200, outputTokens: 3400, totalTokens: 4600 } })
     expect(generateText).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: "plan a trip",
@@ -75,7 +78,7 @@ describe("runModel", () => {
 
   it("stops waiting for the model after four minutes", async () => {
     const timeout = vi.spyOn(AbortSignal, "timeout")
-    vi.mocked(generateText).mockResolvedValue({ output: generatedItinerary(1) } as never)
+    vi.mocked(generateText).mockResolvedValue({ output: generatedItinerary(1), totalUsage: {} } as never)
 
     await runModel("plan a trip")
 

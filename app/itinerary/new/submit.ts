@@ -1,14 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
-import {
-  cleanGeneratedItinerary,
-  countTripDays,
-  isDateKey,
-  listTripDays,
-  sanitizeText,
-  type GeneratedItinerary,
-} from "@/lib/itinerary"
+import { cleanGeneratedItinerary, countTripDays, isDateKey, listTripDays, sanitizeText } from "@/lib/itinerary"
 import { checkRateLimit } from "@/lib/rate-limit"
 import {
   DIETARY_NEED_IDS,
@@ -21,6 +14,7 @@ import {
 import { countItinerariesSince, saveItinerary } from "@/lib/data/itineraries"
 import { saveTripDefaults } from "@/lib/data/profiles"
 import { buildCreatePrompt } from "../generation"
+import { runTraced, withTrace, type ModelRun, type Trace } from "../trace"
 
 const dateKey = z.string().refine(isDateKey, "Invalid date")
 
@@ -55,7 +49,7 @@ export type SubmitItineraryResult = { success: true; itineraryId: string } | { s
 
 export interface SubmitDeps {
   getSupabase: () => Promise<SupabaseClient>
-  generate: (prompt: string) => Promise<GeneratedItinerary>
+  generate: (prompt: string) => Promise<ModelRun>
 }
 
 const HOURLY_LIMIT = 5
@@ -115,7 +109,7 @@ async function saveHomeDefaults(supabase: SupabaseClient, userId: string, home: 
   }).catch((error: Error) => console.error("Could not save profile defaults:", error.message))
 }
 
-export async function submit({ getSupabase, generate }: SubmitDeps, input: unknown): Promise<SubmitItineraryResult> {
+async function create({ getSupabase, generate }: SubmitDeps, input: unknown, trace: Trace): Promise<SubmitItineraryResult> {
   const parsed = ItineraryInput.safeParse(input)
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid trip details." }
@@ -133,9 +127,10 @@ export async function submit({ getSupabase, generate }: SubmitDeps, input: unkno
     if (blocked) return { success: false, error: blocked }
 
     const dayKeys = listTripDays(trip.dateFrom, trip.dateTo)
+    trace.days = dayKeys.length
     const home = homeOf(trip)
 
-    const generated = await generate(buildCreatePrompt(modelRequest(trip, home), dayKeys))
+    const generated = await runTraced(trace, generate, buildCreatePrompt(modelRequest(trip, home), dayKeys))
     const clean = cleanGeneratedItinerary(generated, dayKeys, trip.budget, trip.tripName)
 
     const itineraryId = await saveItinerary(supabase, itineraryMeta(user.id, trip, clean.destination), clean)
@@ -143,7 +138,12 @@ export async function submit({ getSupabase, generate }: SubmitDeps, input: unkno
 
     return { success: true, itineraryId }
   } catch (error) {
+    trace.outcome = "error"
     console.error("Error creating itinerary:", error)
     return { success: false, error: "We couldn't generate your itinerary. Please try again." }
   }
+}
+
+export function submit(deps: SubmitDeps, input: unknown) {
+  return withTrace("create", (trace) => create(deps, input, trace))
 }

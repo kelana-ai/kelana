@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { GeneratedItinerary } from "@/lib/itinerary"
 import { resetRateLimits } from "@/lib/rate-limit"
 import { fakeSupabase, steps, type Reply } from "@/test/fake-supabase"
-import { generatedItinerary } from "@/test/fixtures"
+import { generatedItinerary, modelRun, usage } from "@/test/fixtures"
+import type { ModelRun } from "../../trace"
 import { refine } from "./refine"
 
 const NOW = new Date("2026-10-20T10:00:00Z")
@@ -72,7 +73,7 @@ function setup(options: { user?: { id: string } | null; replies?: Record<string,
     },
   })
   const getSupabase = vi.fn(async () => client)
-  const generate = vi.fn<(prompt: string) => Promise<GeneratedItinerary>>(async () => options.itinerary ?? generatedItinerary(2))
+  const generate = vi.fn<(prompt: string) => Promise<ModelRun>>(async () => modelRun(options.itinerary ?? generatedItinerary(2)))
   const revalidate = vi.fn<(path: string) => void>()
   return { deps: { getSupabase, generate, revalidate }, getSupabase, generate, revalidate, calls }
 }
@@ -89,6 +90,7 @@ describe("refine", () => {
     vi.useFakeTimers()
     vi.setSystemTime(NOW)
     vi.spyOn(console, "error").mockImplementation(() => {})
+    vi.spyOn(console, "log").mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -296,6 +298,59 @@ describe("refine", () => {
       expect(steps(calls)).toEqual(["select itineraries", "rpc replace_itinerary_plan"])
       expect(revalidate).not.toHaveBeenCalled()
       expect(console.error).toHaveBeenCalledWith("Error refining itinerary:", { message: "write failed" })
+    })
+  })
+
+  describe("log", () => {
+    const logged = () => JSON.parse(vi.mocked(console.log).mock.calls[0][0] as string)
+
+    it("writes one line with the outcome, the durations and the token counts", async () => {
+      const { deps } = setup()
+      await refine(deps, request)
+
+      expect(console.log).toHaveBeenCalledTimes(1)
+      expect(logged()).toEqual({
+        event: "itinerary.generation",
+        action: "refine",
+        outcome: "success",
+        durationMs: 0,
+        modelMs: 0,
+        days: 2,
+        ...usage,
+      })
+    })
+
+    it("holds nothing the person wrote", async () => {
+      const { deps } = setup()
+      await refine(deps, { ...request, instruction: "Move the secret honeymoon dinner to Villa Rahasia." })
+
+      const line = vi.mocked(console.log).mock.calls[0][0] as string
+      for (const text of ["secret", "honeymoon", "Villa", "Rahasia", "Ubud", "Rice terrace", ID]) expect(line).not.toContain(text)
+    })
+
+    it.each([
+      ["invalid input", () => setup(), { ...request, instruction: "hi" }],
+      ["a visitor who is not signed in", () => setup({ user: null }), request],
+      ["an itinerary that cannot be found", () => setup({ replies: { "select itineraries": { data: null } } }), request],
+    ])("reports %s as rejected, without model figures", async (_label, make, input) => {
+      await refine(make().deps, input)
+
+      expect(logged()).toEqual({ event: "itinerary.generation", action: "refine", outcome: "rejected", durationMs: 0 })
+    })
+
+    it("reports a failed model call as an error with its duration and no token counts", async () => {
+      const { deps, generate } = setup()
+      generate.mockRejectedValue(new Error("rate limited"))
+      await refine(deps, request)
+
+      expect(logged()).toEqual({ event: "itinerary.generation", action: "refine", outcome: "error", durationMs: 0, modelMs: 0, days: 2 })
+    })
+
+    it("reports a failed replacement as an error that still carries the token counts", async () => {
+      const { deps } = setup({ replies: { "rpc replace_itinerary_plan": { error: { message: "write failed" } } } })
+      await refine(deps, request)
+
+      expect(logged()).toMatchObject({ outcome: "error", ...usage })
     })
   })
 })

@@ -1,16 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
-import {
-  cleanGeneratedItinerary,
-  sanitizeText,
-  type ActivityType,
-  type CleanItinerary,
-  type GeneratedItinerary,
-} from "@/lib/itinerary"
+import { cleanGeneratedItinerary, sanitizeText, type ActivityType, type CleanItinerary } from "@/lib/itinerary"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { getPlan, replacePlan, type PlanDay, type PlanRow } from "@/lib/data/itineraries"
 import { buildRefinePrompt } from "../../generation"
+import { runTraced, withTrace, type ModelRun, type Trace } from "../../trace"
 
 const Input = z.object({
   itineraryId: z.uuid(),
@@ -21,7 +16,7 @@ export type RefineResult = { success: true } | { success: false; error: string }
 
 export interface RefineDeps {
   getSupabase: () => Promise<SupabaseClient>
-  generate: (prompt: string) => Promise<GeneratedItinerary>
+  generate: (prompt: string) => Promise<ModelRun>
   revalidate: (path: string) => void
 }
 
@@ -83,7 +78,7 @@ async function loadPlan(supabase: SupabaseClient, itineraryId: string): Promise<
   return { ok: true, itn, days, totalBudget: Number(itn.budget?.total ?? 0) }
 }
 
-export async function refine({ getSupabase, generate, revalidate }: RefineDeps, input: unknown): Promise<RefineResult> {
+async function run({ getSupabase, generate, revalidate }: RefineDeps, input: unknown, trace: Trace): Promise<RefineResult> {
   const parsed = Input.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid request." }
   const { itineraryId, instruction } = parsed.data
@@ -105,10 +100,11 @@ export async function refine({ getSupabase, generate, revalidate }: RefineDeps, 
     const { itn, days, totalBudget } = plan
 
     const dayKeys = days.map((d) => d.date)
+    trace.days = dayKeys.length
     const snapshot = snapshotOf(days)
     const current = currentPlan(itn, snapshot, totalBudget)
 
-    const generated = await generate(buildRefinePrompt(current, sanitizeText(instruction, 1000), dayKeys))
+    const generated = await runTraced(trace, generate, buildRefinePrompt(current, sanitizeText(instruction, 1000), dayKeys))
     const clean = cleanGeneratedItinerary(generated, dayKeys, totalBudget, itn.name)
 
     await replacePlan(supabase, itineraryId, clean.days, clean)
@@ -116,7 +112,12 @@ export async function refine({ getSupabase, generate, revalidate }: RefineDeps, 
     revalidate(`/itinerary/${itineraryId}`)
     return { success: true }
   } catch (error) {
+    trace.outcome = "error"
     console.error("Error refining itinerary:", error)
     return { success: false, error: "We couldn't refine your itinerary. Your original plan is unchanged." }
   }
+}
+
+export function refine(deps: RefineDeps, input: unknown) {
+  return withTrace("refine", (trace) => run(deps, input, trace))
 }
