@@ -70,6 +70,11 @@ Fill in `.env` first (see below) and run the SQL in `supabase/migrations/`
 against your Supabase project. The app is then at
 [http://localhost:3000](http://localhost:3000).
 
+`pnpm seed` adds a demo account (`demo@example.com`) with three trips to an
+empty dev project, so local runs and previews have something to show. It can
+be run again without duplicating anything and refuses to run against
+production.
+
 ## Verify
 
 ```bash
