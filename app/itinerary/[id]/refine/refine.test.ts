@@ -54,14 +54,8 @@ const stored = {
   ],
 }
 
-const newDayRows = [
-  { id: "day-1", day_index: 0 },
-  { id: "day-2", day_index: 1 },
-]
-
 const defaultReplies: Record<string, Reply | Reply[]> = {
   "select itineraries": { data: stored },
-  "insert itinerary_days": { data: newDayRows },
 }
 
 function setup(options: { user?: { id: string } | null; replies?: Record<string, Reply | Reply[]>; itinerary?: GeneratedItinerary } = {}) {
@@ -231,10 +225,7 @@ describe("refine", () => {
           { date: "2026-11-02", day_index: 0, itinerary_activities: [activity({ description: null, location_name: null, address: null })] },
         ],
       }
-      const { deps, generate } = setup({
-        itinerary: generatedItinerary(1),
-        replies: { "select itineraries": { data: sparse }, "insert itinerary_days": { data: [newDayRows[0]] } },
-      })
+      const { deps, generate } = setup({ itinerary: generatedItinerary(1), replies: { "select itineraries": { data: sparse } } })
       await refine(deps, request)
 
       const { current } = sectionsOf(generate.mock.calls[0][0])
@@ -271,78 +262,40 @@ describe("refine", () => {
   })
 
   describe("saving", () => {
-    it("replaces the days, updates the totals and refreshes the page", async () => {
+    it("replaces the days and the totals in one call and refreshes the page", async () => {
       const { deps, calls, revalidate } = setup()
       expect(await refine(deps, request)).toEqual({ success: true })
 
-      expect(steps(calls)).toEqual([
-        "select itineraries",
-        "delete itinerary_days",
-        "insert itinerary_days",
-        "insert itinerary_activities",
-        "update itineraries",
+      expect(steps(calls)).toEqual(["select itineraries", "rpc replace_itinerary_plan"])
+      const args = calls[1].payload as {
+        p_itinerary_id: string
+        p_days: { day_index: number; date: string; activities: { title: string }[] }[]
+        p_budget: unknown
+        p_carbon: unknown
+      }
+      expect(args.p_itinerary_id).toBe(ID)
+      expect(args.p_days.map((d) => [d.day_index, d.date])).toEqual([
+        [0, "2026-11-02"],
+        [1, "2026-11-03"],
       ])
-      const [, removal, days, activities, update] = calls
-      expect(removal.filters).toEqual([{ op: "eq", column: "itinerary_id", value: ID }])
-      expect(days.payload).toEqual([
-        { itinerary_id: ID, day_index: 0, date: "2026-11-02" },
-        { itinerary_id: ID, day_index: 1, date: "2026-11-03" },
-      ])
-      expect((activities.payload as { title: string }[]).map((r) => r.title)).toEqual([
+      expect(args.p_days.flatMap((d) => d.activities.map((a) => a.title))).toEqual([
         "Rice terrace walk 1",
         "Lunch at a warung 1",
         "Rice terrace walk 2",
         "Lunch at a warung 2",
       ])
-      expect(update.payload).toEqual({
-        budget: { total: 800, spent: 40, remaining: 760 },
-        carbon_metrics: { saved: 40, total: 60, percentage: 40 },
-        updated_at: "2026-10-20T10:00:00.000Z",
-      })
-      expect(update.filters).toEqual([{ op: "eq", column: "id", value: ID }])
+      expect(args.p_budget).toEqual({ total: 800, spent: 40, remaining: 760 })
+      expect(args.p_carbon).toEqual({ saved: 40, total: 60, percentage: 40 })
       expect(revalidate).toHaveBeenCalledExactlyOnceWith(`/itinerary/${ID}`)
     })
 
-    it("restores the previous days when the new ones cannot be saved", async () => {
-      const { deps, calls, revalidate } = setup({
-        replies: { "insert itinerary_days": [{ error: { message: "write failed" } }, { data: newDayRows }] },
-      })
+    it("changes nothing and does not refresh the page when the replacement fails", async () => {
+      const { deps, calls, revalidate } = setup({ replies: { "rpc replace_itinerary_plan": { error: { message: "write failed" } } } })
 
       expect(await refine(deps, request)).toEqual({ success: false, error: GENERIC_ERROR })
-      expect(steps(calls)).toEqual([
-        "select itineraries",
-        "delete itinerary_days",
-        "insert itinerary_days",
-        "insert itinerary_days",
-        "insert itinerary_activities",
-      ])
-      const [, , , restoredDays, restoredActivities] = calls
-      expect(restoredDays.payload).toEqual([
-        { itinerary_id: ID, day_index: 0, date: "2026-11-02" },
-        { itinerary_id: ID, day_index: 1, date: "2026-11-03" },
-      ])
-      expect((restoredActivities.payload as { title: string; start_time: string }[]).map((r) => [r.title, r.start_time])).toEqual([
-        ["Rice terrace walk", "09:00"],
-        ["Lunch", "13:00"],
-        ["Market visit", "10:00"],
-      ])
+      expect(steps(calls)).toEqual(["select itineraries", "rpc replace_itinerary_plan"])
       expect(revalidate).not.toHaveBeenCalled()
-    })
-
-    it("logs a failed restore and still reports the original failure", async () => {
-      const { deps, calls } = setup({ replies: { "insert itinerary_days": { error: { message: "write failed" } } } })
-
-      expect(await refine(deps, request)).toEqual({ success: false, error: GENERIC_ERROR })
-      expect(steps(calls).filter((s) => s === "insert itinerary_days")).toHaveLength(2)
-      expect(console.error).toHaveBeenCalledWith("Could not restore itinerary after failed refine:", { message: "write failed" })
-    })
-
-    it("stops before inserting when the old days cannot be removed", async () => {
-      const { deps, calls, revalidate } = setup({ replies: { "delete itinerary_days": { error: { message: "denied" } } } })
-
-      expect(await refine(deps, request)).toEqual({ success: false, error: GENERIC_ERROR })
-      expect(steps(calls)).toEqual(["select itineraries", "delete itinerary_days"])
-      expect(revalidate).not.toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith("Error refining itinerary:", { message: "write failed" })
     })
   })
 })

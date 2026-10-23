@@ -6,16 +6,15 @@ import { generatedItinerary } from "@/test/fixtures"
 import {
   activityRows,
   countItinerariesSince,
-  deleteDays,
   getItinerary,
   getItineraryTitle,
   getPlan,
   insertDays,
   listItineraries,
   removeItinerary,
+  replacePlan,
   saveItinerary,
   toListItem,
-  updateTotals,
   type ItineraryListRow,
   type ItineraryMeta,
 } from "./itineraries"
@@ -207,36 +206,62 @@ describe("getPlan", () => {
   })
 })
 
-describe("deleteDays", () => {
-  it("deletes every day of the itinerary", async () => {
+describe("replacePlan", () => {
+  const totals = { budget: { total: 800, spent: 40, remaining: 760 }, carbon: { saved: 30, total: 50, percentage: 60 } }
+  type Args = { p_itinerary_id: string; p_days: { day_index: number; date: string; activities: Record<string, unknown>[] }[]; p_budget: unknown; p_carbon: unknown }
+
+  it("replaces the days, their activities and the totals in one database call", async () => {
     const { client, calls } = database()
 
-    await deleteDays(client, "itn-1")
-    expect(calls[0]).toMatchObject({ table: "itinerary_days", action: "delete", filters: [{ op: "eq", column: "itinerary_id", value: "itn-1" }] })
+    await replacePlan(client, "itn-1", clean.days, totals)
+
+    expect(steps(calls)).toEqual(["rpc replace_itinerary_plan"])
+    const args = calls[0].payload as Args
+    expect(args.p_itinerary_id).toBe("itn-1")
+    expect(args.p_budget).toEqual(totals.budget)
+    expect(args.p_carbon).toEqual(totals.carbon)
+    expect(args.p_days.map((day) => [day.day_index, day.date, day.activities.length])).toEqual([
+      [0, "2026-11-02", 2],
+      [1, "2026-11-03", 2],
+    ])
   })
 
-  it("throws the database error", async () => {
-    await expect(deleteDays(database({ "delete itinerary_days": { error: failure } }).client, "itn-1")).rejects.toBe(failure)
-  })
-})
-
-describe("updateTotals", () => {
-  const totals = { budget: { total: 800, spent: 120, remaining: 680 }, carbon: { saved: 30, total: 50, percentage: 60 } }
-
-  it("stores the budget and the carbon figures and stamps the update time", async () => {
+  it("sends the activities as rows without a day id, in the order the model gave them", async () => {
     const { client, calls } = database()
 
-    await updateTotals(client, "itn-1", totals, new Date("2026-10-21T10:00:00Z"))
-    expect(calls[0]).toMatchObject({
-      table: "itineraries",
-      action: "update",
-      payload: { budget: totals.budget, carbon_metrics: totals.carbon, updated_at: "2026-10-21T10:00:00.000Z" },
-      filters: [{ op: "eq", column: "id", value: "itn-1" }],
+    await replacePlan(client, "itn-1", clean.days, totals)
+
+    const [first] = (calls[0].payload as Args).p_days[0].activities
+    expect(first).toEqual({
+      activity_index: 0,
+      start_time: "09:00",
+      end_time: "10:30",
+      title: "Rice terrace walk 1",
+      description: "Walk the ridge before the heat.",
+      type: "sightseeing",
+      status: "planned",
+      location_name: "Tegallalang",
+      location_lat: -8.4312,
+      location_lng: 115.2793,
+      address: "Tegallalang, Gianyar",
+      cost: 12,
+      currency: "USD",
+      eco_tags: ["Walkable"],
     })
+    expect(first).not.toHaveProperty("day_id")
+  })
+
+  it("sends an empty list for a day without activities", async () => {
+    const { client, calls } = database()
+
+    await replacePlan(client, "itn-1", [{ date: "2026-11-02", activities: [] }], totals)
+
+    expect((calls[0].payload as Args).p_days).toEqual([{ day_index: 0, date: "2026-11-02", activities: [] }])
   })
 
   it("throws the database error", async () => {
-    await expect(updateTotals(database({ "update itineraries": { error: failure } }).client, "itn-1", totals)).rejects.toBe(failure)
+    const { client } = database({ "rpc replace_itinerary_plan": { error: failure } })
+    await expect(replacePlan(client, "itn-1", clean.days, totals)).rejects.toBe(failure)
   })
 })
 
