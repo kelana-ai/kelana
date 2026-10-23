@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
 import { cleanGeneratedItinerary, sanitizeText, type ActivityType, type CleanItinerary } from "@/lib/itinerary"
+import { isEnabled, PAUSED_MESSAGE } from "@/lib/flags"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { getPlan, replacePlan, type PlanDay, type PlanRow } from "@/lib/data/itineraries"
 import { buildRefinePrompt } from "../../generation"
@@ -82,6 +83,7 @@ async function run({ getSupabase, generate, revalidate }: RefineDeps, input: unk
   const parsed = Input.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid request." }
   const { itineraryId, instruction } = parsed.data
+  if (!isEnabled("generation")) return { success: false, error: PAUSED_MESSAGE }
 
   try {
     const supabase = await getSupabase()

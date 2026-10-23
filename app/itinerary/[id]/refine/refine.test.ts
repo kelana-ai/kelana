@@ -96,6 +96,7 @@ describe("refine", () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllEnvs()
   })
 
   describe("input", () => {
@@ -130,6 +131,25 @@ describe("refine", () => {
     it("accepts an instruction of exactly 5 characters", async () => {
       const { deps } = setup()
       expect((await refine(deps, { ...request, instruction: "Hello" })).success).toBe(true)
+    })
+  })
+
+  describe("when generation is switched off", () => {
+    it("says so without touching the database or the model", async () => {
+      vi.stubEnv("FEATURE_GENERATION", "off")
+      const { deps, getSupabase, generate } = setup()
+
+      expect(await refine(deps, request)).toEqual({ success: false, error: "Itinerary generation is switched off for now. Please try again later." })
+      expect(getSupabase).not.toHaveBeenCalled()
+      expect(generate).not.toHaveBeenCalled()
+    })
+
+    it("works as before once the variable is removed", async () => {
+      vi.stubEnv("FEATURE_GENERATION", "off")
+      vi.unstubAllEnvs()
+      const { deps } = setup()
+
+      expect((await refine(deps, request)).success).toBe(true)
     })
   })
 

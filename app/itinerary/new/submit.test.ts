@@ -56,6 +56,7 @@ describe("submit", () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllEnvs()
   })
 
   describe("input", () => {
@@ -114,6 +115,34 @@ describe("submit", () => {
       const { deps, calls } = setup()
       expect((await submit(deps, { ...trip, budget })).success).toBe(true)
       expect(calls[1].payload).toMatchObject({ budget: { total: budget } })
+    })
+  })
+
+  describe("when generation is switched off", () => {
+    it("says so without touching the database or the model", async () => {
+      vi.stubEnv("FEATURE_GENERATION", "off")
+      const { deps, getSupabase, generate } = setup()
+
+      expect(await submit(deps, trip)).toEqual({ success: false, error: "Itinerary generation is switched off for now. Please try again later." })
+      expect(getSupabase).not.toHaveBeenCalled()
+      expect(generate).not.toHaveBeenCalled()
+    })
+
+    it("still reports a request that is not valid as not valid", async () => {
+      vi.stubEnv("FEATURE_GENERATION", "off")
+      const { deps } = setup()
+      const result = await submit(deps, { ...trip, tripName: "a" })
+
+      expect(result.success).toBe(false)
+      expect(!result.success && result.error).not.toBe("Itinerary generation is switched off for now. Please try again later.")
+    })
+
+    it("works as before once the variable is removed", async () => {
+      vi.stubEnv("FEATURE_GENERATION", "off")
+      vi.unstubAllEnvs()
+      const { deps } = setup()
+
+      expect((await submit(deps, trip)).success).toBe(true)
     })
   })
 
