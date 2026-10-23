@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { fakeSupabase, steps, type Reply } from "@/test/fake-supabase"
+import { fakeSupabase, steps, type RecordedCall, type Reply } from "@/test/fake-supabase"
 import { loadDashboard } from "./dashboard"
 
 const NOW = new Date(2026, 9, 21, 12)
@@ -52,19 +52,19 @@ const costs = [
 const defaults: Record<string, Reply> = {
   "select itineraries": { data: itineraries },
   "select itinerary_days": { data: days },
-  "select itinerary_activities": { data: costs },
+  "select itinerary_activities": { data: activities },
+  "rpc budget_by_type": { data: costs },
 }
 
 function setup(options: { user?: { id: string } | null; replies?: Record<string, Reply> } = {}) {
   const { client, calls } = fakeSupabase({
     user: options.user,
-    reply: (call) => {
-      if (call.table === "itinerary_activities" && call.filters.some((f) => f.op === "in")) return { data: activities }
-      return { ...defaults, ...options.replies }[`${call.action} ${call.table}`] ?? {}
-    },
+    reply: (call) => ({ ...defaults, ...options.replies })[`${call.action} ${call.table}`] ?? {},
   })
   return { getSupabase: async () => client, calls }
 }
+
+const callTo = (calls: RecordedCall[], name: string) => calls.find((call) => `${call.action} ${call.table}` === name)
 
 describe("loadDashboard", () => {
   beforeEach(() => {
@@ -88,9 +88,7 @@ describe("loadDashboard", () => {
     const { getSupabase, calls } = setup({ user: { id: "user-9" } })
     await loadDashboard(getSupabase, NOW)
 
-    expect(calls[0]).toMatchObject({
-      table: "itineraries",
-      action: "select",
+    expect(callTo(calls, "select itineraries")).toMatchObject({
       filters: [{ op: "eq", column: "user_id", value: "user-9" }],
       order: { column: "created_at", ascending: false },
     })
@@ -100,22 +98,38 @@ describe("loadDashboard", () => {
     const { getSupabase, calls } = setup()
     await loadDashboard(getSupabase, NOW)
 
-    expect(calls[1].filters).toEqual([
+    expect(callTo(calls, "select itinerary_days")?.filters).toEqual([
       { op: "gte", column: "date", value: "2026-10-21" },
       { op: "lte", column: "date", value: "2026-10-28" },
     ])
-    expect(calls[2].filters).toEqual([
+    expect(callTo(calls, "select itinerary_activities")?.filters).toEqual([
       { op: "in", column: "day_id", value: ["day-2", "day-1"] },
       { op: "eq", column: "status", value: "planned" },
     ])
+  })
+
+  it("gets the budget totals from the database without a row limit", async () => {
+    const { getSupabase, calls } = setup()
+    await loadDashboard(getSupabase, NOW)
+
+    expect(callTo(calls, "rpc budget_by_type")).toMatchObject({ table: "budget_by_type", action: "rpc" })
+    expect(calls.some((call) => call.limit !== undefined)).toBe(false)
+  })
+
+  it("asks for the budget totals before the activities of the upcoming days come back", async () => {
+    const { getSupabase, calls } = setup()
+    await loadDashboard(getSupabase, NOW)
+
+    const order = steps(calls)
+    expect(order.indexOf("rpc budget_by_type")).toBeLessThan(order.indexOf("select itinerary_activities"))
+    expect(order.indexOf("select itineraries")).toBeLessThan(order.indexOf("select itinerary_activities"))
   })
 
   it("skips the activities query when no day is coming up", async () => {
     const { getSupabase, calls } = setup({ replies: { "select itinerary_days": { data: [] } } })
     const result = await loadDashboard(getSupabase, NOW)
 
-    expect(steps(calls)).toEqual(["select itineraries", "select itinerary_days", "select itinerary_activities"])
-    expect(calls[2].limit).toBe(5000)
+    expect(steps(calls)).not.toContain("select itinerary_activities")
     expect(result.data?.upcomingActivities).toEqual([])
   })
 
@@ -171,7 +185,7 @@ describe("loadDashboard", () => {
     expect(data?.recentItineraries[1].status).toBe("completed")
   })
 
-  it.each(["select itineraries", "select itinerary_days", "select itinerary_activities"])("returns the error when %s fails", async (failing) => {
+  it.each(["select itineraries", "select itinerary_days", "select itinerary_activities", "rpc budget_by_type"])("returns the error when %s fails", async (failing) => {
     const failure = { message: "query failed" }
     const { getSupabase } = setup({ replies: { [failing]: { error: failure } } })
     const result = await loadDashboard(getSupabase, NOW)

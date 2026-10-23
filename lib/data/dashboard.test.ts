@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { fakeSupabase, type Reply } from "@/test/fake-supabase"
-import { listActivityCosts, listDashboardItineraries, listDaysBetween, listPlannedActivities } from "./dashboard"
+import { listBudgetByType, listDashboardItineraries, listDaysBetween, listPlannedActivities } from "./dashboard"
 
 const failure = { message: "denied" }
 
@@ -72,21 +72,21 @@ describe("listPlannedActivities", () => {
   })
 })
 
-describe("listActivityCosts", () => {
-  it("reads the type and cost of at most 5000 activities", async () => {
+describe("listBudgetByType", () => {
+  it("asks the database for the cost of each activity type", async () => {
     const rows = [{ type: "food", cost: 12 }]
-    const { client, calls } = database({ "select itinerary_activities": { data: rows } })
+    const { client, calls } = database({ "rpc budget_by_type": { data: rows } })
 
-    expect(await listActivityCosts(client)).toEqual(rows)
-    expect(calls[0].payload).toBe("type, cost")
-    expect(calls[0].limit).toBe(5000)
+    expect(await listBudgetByType(client)).toEqual(rows)
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toMatchObject({ table: "budget_by_type", action: "rpc" })
   })
 
   it("returns an empty list when there is no data", async () => {
-    expect(await listActivityCosts(database().client)).toEqual([])
+    expect(await listBudgetByType(database().client)).toEqual([])
   })
 
   it("throws the database error", async () => {
-    await expect(listActivityCosts(database({ "select itinerary_activities": { error: failure } }).client)).rejects.toBe(failure)
+    await expect(listBudgetByType(database({ "rpc budget_by_type": { error: failure } }).client)).rejects.toBe(failure)
   })
 })
