@@ -4,9 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import type { Profile } from "@/contexts/user-context"
+import type { Profile } from "@/lib/data/profiles"
 import { toggleItem } from "@/lib/profile"
-import { savePreferences } from "./profile-data"
+import { savePreferences } from "@/lib/data/profiles"
 
 export function usePreferencesForm(supabase: SupabaseClient, userId: string, profile: Profile, refreshProfile: () => Promise<void>) {
   const [styles, setStyles] = useState<string[]>(profile.preferences?.travelStyles ?? [])

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { deleteAccount } from "./profile-data"
+import { deleteAccount } from "@/lib/data/profiles"
 
 export function useAccountDeletion(supabase: SupabaseClient, userId: string) {
   const router = useRouter()

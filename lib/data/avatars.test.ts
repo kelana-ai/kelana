@@ -1,7 +1,8 @@
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { fakeSupabase, steps, type Reply } from "@/test/fake-supabase"
-import { replaceAvatar } from "./avatar-data"
+import { avatarPublicUrl, replaceAvatar } from "./avatars"
 
 const file = new File(["x"], "me.png", { type: "image/png" })
 
@@ -51,5 +52,15 @@ describe("replaceAvatar", () => {
     await expect(replaceAvatar(client, "user-1", file, "user-1/old.png", save)).rejects.toBe(failure)
     expect(save).not.toHaveBeenCalled()
     expect(steps(calls)).toEqual(["upload avatars"])
+  })
+})
+
+describe("avatarPublicUrl", () => {
+  it("asks the avatars bucket for the public address of a file", () => {
+    const client = {
+      storage: { from: (bucket: string) => ({ getPublicUrl: (path: string) => ({ data: { publicUrl: `https://files.test/${bucket}/${path}` } }) }) },
+    } as unknown as SupabaseClient
+
+    expect(avatarPublicUrl(client, "user-1/a.png")).toBe("https://files.test/avatars/user-1/a.png")
   })
 })

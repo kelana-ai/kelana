@@ -7,7 +7,7 @@ import { Camera, Loader2, UserIcon } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { toast } from "sonner"
-import { replaceAvatar } from "./avatar-data"
+import { replaceAvatar } from "@/lib/data/avatars"
 
 export default function Avatar({
   uid,

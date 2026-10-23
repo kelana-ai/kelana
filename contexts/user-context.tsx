@@ -1,26 +1,12 @@
 "use client"
 
+import { avatarPublicUrl } from "@/lib/data/avatars"
+import { loadProfile, type Profile } from "@/lib/data/profiles"
 import { createClient } from "@/utils/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 
-import { loadProfile } from "./load-profile"
-
-export type Profile = {
-  id: string
-  full_name: string | null
-  username: string | null
-  avatar_url: string | null
-  website: string | null
-  home_lat?: number | null
-  home_lng?: number | null
-  preferences?: {
-    travelStyles?: string[]
-    [key: string]: unknown
-  } | null
-  dietary_needs?: string[] | null
-  updated_at: string | null
-}
+export type { Profile }
 
 type UserContextType = {
   user: User | null
@@ -51,7 +37,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const path = profile?.avatar_url
     if (!path) return null
     if (path.startsWith("http")) return path
-    return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl
+    return avatarPublicUrl(supabase, path)
   }, [profile?.avatar_url, supabase])
 
   const loadUserProfile = useCallback((sessionUser: User) => loadProfile(supabase, sessionUser), [supabase])

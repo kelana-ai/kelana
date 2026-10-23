@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import type { UseFormReturn } from "react-hook-form"
 
-import type { Profile } from "@/contexts/user-context"
+import type { Profile } from "@/lib/data/profiles"
 import type { FormValues } from "./schema"
 import { profileDefaults } from "./wizard"
 

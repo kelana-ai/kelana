@@ -4,9 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import type { Profile } from "@/contexts/user-context"
+import type { Profile } from "@/lib/data/profiles"
 import { validateProfile } from "@/lib/profile"
-import { saveAvatarPath, saveProfile } from "./profile-data"
+import { saveAvatarPath, saveProfile } from "@/lib/data/profiles"
 
 export function useProfileForm(supabase: SupabaseClient, userId: string, profile: Profile, refreshProfile: () => Promise<void>) {
   const [updating, setUpdating] = useState(false)
