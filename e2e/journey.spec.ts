@@ -19,6 +19,7 @@ test.describe.configure({ mode: "serial" })
 let page: Page
 let accountDeleted = false
 const pageErrors: string[] = []
+const policyViolations: string[] = []
 
 test.beforeAll(async ({ browser }) => {
   const context = await browser.newContext()
@@ -33,6 +34,9 @@ test.beforeAll(async ({ browser }) => {
   await context.route("**/*.tile.openstreetmap.org/**", (route) => route.abort())
   page = await context.newPage()
   page.on("pageerror", (error) => pageErrors.push(`${page.url()}: ${error.message}`))
+  page.on("console", (message) => {
+    if (/Content Security Policy/i.test(message.text())) policyViolations.push(`${page.url()}: ${message.text()}`)
+  })
 })
 
 test.afterAll(async () => {
@@ -328,4 +332,8 @@ test("the deleted user can no longer sign in", async () => {
 
 test("no page raised an uncaught error", () => {
   expect(pageErrors).toEqual([])
+})
+
+test("no page broke the content security policy", () => {
+  expect(policyViolations).toEqual([])
 })

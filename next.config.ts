@@ -1,5 +1,16 @@
 import type { NextConfig } from "next"
 
+import { buildCsp } from "./lib/csp"
+
+const ENFORCE_CSP = false
+
+const csp = buildCsp({
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  development: process.env.NODE_ENV !== "production",
+  preview: process.env.VERCEL_ENV === "preview",
+  enforce: ENFORCE_CSP,
+})
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -7,6 +18,8 @@ const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: ENFORCE_CSP ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only", value: csp },
+  { key: "Reporting-Endpoints", value: 'csp="/api/csp-report"' },
 ]
 
 const nextConfig: NextConfig = {

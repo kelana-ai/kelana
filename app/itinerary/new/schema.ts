@@ -3,6 +3,9 @@ import { z } from "zod"
 import { countTripDays, toDateKey } from "@/lib/itinerary"
 import { MAX_BUDGET, MAX_TRIP_DAYS, MIN_BUDGET } from "@/lib/trip-options"
 
+// Zod builds fast parsers with new Function, which the Content-Security-Policy does not allow
+z.config({ jitless: true })
+
 // react-hook-form drops errors that only exist on nested paths (e.g. "destination.name") when a parent field is
 // triggered, so object-valued fields report their errors at the field itself via refine/custom.
 type DateRange = { from: Date; to: Date }

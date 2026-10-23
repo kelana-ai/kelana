@@ -30,3 +30,25 @@ test("the health endpoint reports that the database answers", async ({ request }
   expect(response.headers()["cache-control"]).toBe("no-store")
   expect(await response.json()).toMatchObject({ status: "ok", database: "ok" })
 })
+
+test("the public pages load without breaking the content security policy", async ({ page }) => {
+  const violations: string[] = []
+  page.on("console", (message) => {
+    if (/Content Security Policy/i.test(message.text())) violations.push(message.text())
+  })
+
+  for (const path of ["/", "/about", "/login", "/signup", "/privacy", "/terms"]) {
+    await page.goto(path)
+    await page.waitForLoadState("networkidle")
+  }
+  expect(violations).toEqual([])
+})
+
+test("pages and routes send a content security policy", async ({ request }) => {
+  for (const path of ["/", "/login", "/api/health", "/does-not-exist"]) {
+    const headers = (await request.get(path)).headers()
+    const policy = headers["content-security-policy"] ?? headers["content-security-policy-report-only"]
+    expect(policy, path).toContain("default-src 'self'")
+  }
+})
+
