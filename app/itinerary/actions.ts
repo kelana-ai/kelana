@@ -1,5 +1,6 @@
 "use server"
 
+import { removeItinerary } from "@/lib/data/itineraries"
 import { createClient } from "@/utils/supabase/server"
 
 export async function deleteItinerary(itineraryId: string) {
@@ -13,10 +14,7 @@ export async function deleteItinerary(itineraryId: string) {
       return { success: false, error: "Not authenticated" }
     }
 
-    const { data, error } = await supabase.from("itineraries").delete().eq("id", itineraryId).select("id")
-
-    if (error) throw error
-    if (!data?.length) return { success: false, error: "Itinerary not found." }
+    if (!(await removeItinerary(supabase, itineraryId))) return { success: false, error: "Itinerary not found." }
 
     return {
       success: true,

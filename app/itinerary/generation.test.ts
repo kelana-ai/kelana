@@ -1,39 +1,16 @@
-import { describe, expect, it } from "vitest"
+import { generateText } from "ai"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { cleanGeneratedItinerary } from "@/lib/itinerary"
-import { fakeSupabase, steps, type Reply } from "@/test/fake-supabase"
 import { generatedItinerary } from "@/test/fixtures"
-import { activityRows, buildCreatePrompt, buildRefinePrompt, insertDays, saveItinerary, type ItineraryMeta } from "./generation"
+import { buildCreatePrompt, buildRefinePrompt, GeneratedItinerarySchema, OPENAI_MODEL, runModel } from "./generation"
+
+vi.mock("ai", () => ({
+  generateText: vi.fn(),
+  Output: { object: (options: unknown) => ({ kind: "object", options }) },
+}))
+vi.mock("@ai-sdk/openai", () => ({ openai: { responses: (model: string) => ({ model }) } }))
 
 const dayKeys = ["2026-11-02", "2026-11-03"]
-const clean = cleanGeneratedItinerary(generatedItinerary(2), dayKeys, 800, "Ubud trip")
-
-const meta: ItineraryMeta = {
-  userId: "user-1",
-  description: "Eco-friendly itinerary to Ubud",
-  destinationName: "Ubud, Bali",
-  destinationLat: -8.5069,
-  destinationLng: 115.2625,
-  dateFrom: "2026-11-02",
-  dateTo: "2026-11-03",
-  travelType: "couple",
-  travelStyles: ["nature"],
-  dietaryNeeds: [],
-}
-
-function database(replies: Record<string, Reply> = {}) {
-  const all: Record<string, Reply> = {
-    "insert itineraries": { data: { id: "itn-1" } },
-    "insert itinerary_days": {
-      data: [
-        { id: "day-1", day_index: 0 },
-        { id: "day-2", day_index: 1 },
-      ],
-    },
-    ...replies,
-  }
-  return fakeSupabase({ reply: (call) => all[`${call.action} ${call.table}`] ?? {} })
-}
 
 describe("buildCreatePrompt", () => {
   it("lists the requested dates and the request as one line of JSON", () => {
@@ -76,112 +53,67 @@ describe("buildRefinePrompt", () => {
   })
 })
 
-describe("activityRows", () => {
-  it("maps an activity with a location to a row", () => {
-    const [row] = activityRows("day-1", clean.days[0].activities)
-
-    expect(row).toEqual({
-      day_id: "day-1",
-      activity_index: 0,
-      start_time: "09:00",
-      end_time: "10:30",
-      title: "Rice terrace walk 1",
-      description: "Walk the ridge before the heat.",
-      type: "sightseeing",
-      status: "planned",
-      location_name: "Tegallalang",
-      location_lat: -8.4312,
-      location_lng: 115.2793,
-      address: "Tegallalang, Gianyar",
-      cost: 12,
-      currency: "USD",
-      eco_tags: ["Walkable"],
-    })
+describe("runModel", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
-  it("stores nulls for an activity without a location or end time", () => {
-    const [, lunch] = activityRows("day-1", clean.days[0].activities)
+  it("asks the configured model for an object in the itinerary shape and returns it", async () => {
+    const itinerary = generatedItinerary(2)
+    vi.mocked(generateText).mockResolvedValue({ output: itinerary } as never)
 
-    expect(lunch).toMatchObject({
-      activity_index: 1,
-      end_time: null,
-      location_name: null,
-      location_lat: null,
-      location_lng: null,
-      address: null,
-    })
-  })
-})
-
-describe("saveItinerary", () => {
-  it("inserts the itinerary, its days and its activities and returns the id", async () => {
-    const { client, calls } = database()
-
-    expect(await saveItinerary(client, meta, clean)).toBe("itn-1")
-    expect(steps(calls)).toEqual(["insert itineraries", "insert itinerary_days", "insert itinerary_activities"])
+    expect(await runModel("plan a trip")).toBe(itinerary)
+    expect(generateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: "plan a trip",
+        model: { model: OPENAI_MODEL },
+        maxOutputTokens: 16000,
+        output: { kind: "object", options: { schema: GeneratedItinerarySchema } },
+      }),
+    )
   })
 
-  it("rethrows the database error and deletes nothing when the itinerary insert fails", async () => {
-    const failure = { message: "denied" }
-    const { client, calls } = database({ "insert itineraries": { error: failure } })
+  it("stops waiting for the model after four minutes", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout")
+    vi.mocked(generateText).mockResolvedValue({ output: generatedItinerary(1) } as never)
 
-    await expect(saveItinerary(client, meta, clean)).rejects.toBe(failure)
-    expect(steps(calls)).toEqual(["insert itineraries"])
+    await runModel("plan a trip")
+
+    expect(timeout).toHaveBeenCalledWith(240_000)
+    expect(vi.mocked(generateText).mock.calls.at(-1)?.[0].abortSignal).toBeInstanceOf(AbortSignal)
   })
 
-  it("fails when the database returns no row and no error", async () => {
-    const { client } = database({ "insert itineraries": {} })
-    await expect(saveItinerary(client, meta, clean)).rejects.toThrow("Failed to insert itinerary")
-  })
+  it("passes on the failure of the model call", async () => {
+    const failure = new Error("rate limited")
+    vi.mocked(generateText).mockRejectedValue(failure)
 
-  it.each(["insert itinerary_days", "insert itinerary_activities"])("deletes the itinerary and rethrows when %s fails", async (failing) => {
-    const failure = { message: "write failed" }
-    const { client, calls } = database({ [failing]: { error: failure } })
-
-    await expect(saveItinerary(client, meta, clean)).rejects.toBe(failure)
-    expect(calls.at(-1)).toMatchObject({
-      table: "itineraries",
-      action: "delete",
-      filters: [{ op: "eq", column: "id", value: "itn-1" }],
-    })
+    await expect(runModel("plan a trip")).rejects.toBe(failure)
   })
 })
 
-describe("insertDays", () => {
-  it("attaches activities to the day ids by day index, not by the order the rows come back", async () => {
-    const { client, calls } = database({
-      "insert itinerary_days": {
-        data: [
-          { id: "second", day_index: 1 },
-          { id: "first", day_index: 0 },
-        ],
-      },
-    })
+describe("GeneratedItinerarySchema", () => {
+  const valid = () => JSON.parse(JSON.stringify(generatedItinerary(2)))
 
-    await insertDays(client, "itn-1", clean.days)
-
-    const rows = calls[1].payload as { day_id: string; title: string }[]
-    expect(rows.map((r) => [r.day_id, r.title])).toEqual([
-      ["second", "Rice terrace walk 2"],
-      ["second", "Lunch at a warung 2"],
-      ["first", "Rice terrace walk 1"],
-      ["first", "Lunch at a warung 1"],
-    ])
+  it("accepts an itinerary in the shape the prompt asks for", () => {
+    expect(GeneratedItinerarySchema.safeParse(valid()).success).toBe(true)
   })
 
-  it("skips the activities insert when the days have no activities", async () => {
-    const { client, calls } = database()
-
-    await insertDays(client, "itn-1", [
-      { date: "2026-11-02", activities: [] },
-      { date: "2026-11-03", activities: [] },
-    ])
-
-    expect(steps(calls)).toEqual(["insert itinerary_days"])
+  it("accepts an activity without an end time or a place", () => {
+    const itinerary = valid()
+    itinerary.days[0].activities[0] = { ...itinerary.days[0].activities[0], end_time: null, location: null }
+    expect(GeneratedItinerarySchema.safeParse(itinerary).success).toBe(true)
   })
 
-  it("fails when the database returns no day rows and no error", async () => {
-    const { client } = database({ "insert itinerary_days": {} })
-    await expect(insertDays(client, "itn-1", clean.days)).rejects.toThrow("Failed to insert days")
+  it.each([
+    ["an activity type it does not know", (i: ReturnType<typeof valid>) => (i.days[0].activities[0].type = "teleport")],
+    ["an icon it does not know", (i: ReturnType<typeof valid>) => (i.icon = "atlantis")],
+    ["a cost that is text", (i: ReturnType<typeof valid>) => (i.days[0].activities[0].cost = "12")],
+    ["no days", (i: ReturnType<typeof valid>) => delete i.days],
+    ["a carbon share that is text", (i: ReturnType<typeof valid>) => (i.carbon.percentage = "42%")],
+  ])("rejects %s", (_label, damage) => {
+    const itinerary = valid()
+    damage(itinerary)
+    expect(GeneratedItinerarySchema.safeParse(itinerary).success).toBe(false)
   })
 })
+
