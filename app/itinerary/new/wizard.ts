@@ -1,6 +1,6 @@
 import { format } from "date-fns"
 
-import type { Profile } from "@/contexts/user-context"
+import type { Profile } from "@/lib/data/profiles"
 import { toDateKey } from "@/lib/itinerary"
 import type { FormValues } from "./schema"
 

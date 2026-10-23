@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { Profile } from "@/contexts/user-context"
+import type { Profile } from "@/lib/data/profiles"
 import type { FormValues } from "./schema"
 import { dateRangeLabel, defaultTripDates, firstInvalidStep, profileDefaults, submission, suggestedTripName } from "./wizard"
 

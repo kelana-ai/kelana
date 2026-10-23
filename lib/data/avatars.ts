@@ -21,3 +21,5 @@ export async function replaceAvatar(
     await supabase.storage.from("avatars").remove([filePath])
   }
 }
+
+export const avatarPublicUrl = (supabase: SupabaseClient, path: string) => supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl
