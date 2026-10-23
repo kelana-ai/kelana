@@ -17,6 +17,7 @@ Follow Getting started in the README. You need Node.js 24 and pnpm, plus a Supab
 
 - `pnpm test` runs the unit tests. `pnpm test:coverage` also checks the coverage thresholds in `vitest.config.mts`.
 - `pnpm e2e` runs the browser tests in `e2e/` against a local build with a mocked model. Run `pnpm exec playwright install chromium` once first. The tests sign up a throwaway user and delete it at the end, so point `.env` at the dev Supabase project.
+- `pnpm test:rls` signs up two throwaway users on the dev project and checks that one cannot read, change or delete the other's itineraries, days, activities, profile or avatar files, and that anonymous requests are refused. It removes both users when it ends and refuses to run against production. Run it before and after applying a migration that touches policies or functions.
 - Set `E2E_BASE_URL` to run the same tests against a deployed site, with that site's `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. They then use the real model, which takes a few minutes and costs a few cents.
 
 ## Code

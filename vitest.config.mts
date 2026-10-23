@@ -5,7 +5,7 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL(".", import.meta.url)) } },
   test: {
     include: ["**/*.test.ts"],
-    exclude: ["node_modules/**", ".next/**"],
+    exclude: ["node_modules/**", ".next/**", "test/rls/**"],
     coverage: {
       provider: "v8",
       include: ["lib/**/*.ts", "utils/**/*.ts", "contexts/**/*.tsx", "app/**/*.{ts,tsx}", "components/**/*.tsx"],
