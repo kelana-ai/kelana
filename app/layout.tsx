@@ -2,6 +2,8 @@ import Footer from "@/components/footer"
 import Header from "@/components/header"
 import { UserProvider } from "@/contexts/user-context"
 import { cn } from "@/lib/utils"
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import type React from "react"
@@ -9,6 +11,8 @@ import { Toaster } from "sonner"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
+
+const onVercel = Boolean(process.env.VERCEL)
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
@@ -60,6 +64,12 @@ export default function RootLayout({
           </div>
           <Toaster position="top-right" />
         </UserProvider>
+        {onVercel && (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        )}
       </body>
     </html>
   )
