@@ -1,9 +1,8 @@
 import { openai } from "@ai-sdk/openai"
-import type { SupabaseClient } from "@supabase/supabase-js"
 import { generateText, Output } from "ai"
 import { z } from "zod"
 
-import { cleanGeneratedItinerary, type CleanItinerary, type GeneratedItinerary } from "@/lib/itinerary"
+import type { GeneratedItinerary } from "@/lib/itinerary"
 import { ACTIVITY_TYPES, ITINERARY_ICONS } from "@/lib/trip-options"
 
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-6-luna"
@@ -76,86 +75,4 @@ export async function runModel(prompt: string): Promise<GeneratedItinerary> {
     prompt,
   })
   return output
-}
-
-export { cleanGeneratedItinerary }
-
-export interface ItineraryMeta {
-  userId: string
-  description: string
-  destinationName: string
-  destinationLat: number
-  destinationLng: number
-  dateFrom: string
-  dateTo: string
-  travelType: string
-  travelStyles: string[]
-  dietaryNeeds: string[]
-}
-
-export function activityRows(dayId: string, activities: CleanItinerary["days"][number]["activities"]) {
-  return activities.map((a, j) => ({
-    day_id: dayId,
-    activity_index: j,
-    start_time: a.start_time,
-    end_time: a.end_time,
-    title: a.title,
-    description: a.description,
-    type: a.type,
-    status: "planned" as const,
-    location_name: a.location?.name ?? null,
-    location_lat: a.location?.lat ?? null,
-    location_lng: a.location?.lng ?? null,
-    address: a.location?.address ?? null,
-    cost: a.cost,
-    currency: "USD",
-    eco_tags: [a.eco_tag],
-  }))
-}
-
-export async function saveItinerary(supabase: SupabaseClient, meta: ItineraryMeta, data: CleanItinerary): Promise<string> {
-  const { data: itn, error } = await supabase
-    .from("itineraries")
-    .insert({
-      user_id: meta.userId,
-      name: data.name,
-      description: meta.description,
-      status: "confirmed",
-      destination_name: meta.destinationName,
-      destination_lat: meta.destinationLat,
-      destination_lng: meta.destinationLng,
-      date_from: meta.dateFrom,
-      date_to: meta.dateTo,
-      travel_type: meta.travelType,
-      travel_styles: meta.travelStyles,
-      dietary_needs: meta.dietaryNeeds,
-      budget: data.budget,
-      carbon_metrics: data.carbon,
-      icon: data.icon,
-    })
-    .select("id")
-    .single()
-  if (error || !itn) throw error ?? new Error("Failed to insert itinerary")
-
-  try {
-    await insertDays(supabase, itn.id, data.days)
-  } catch (err) {
-    await supabase.from("itineraries").delete().eq("id", itn.id)
-    throw err
-  }
-  return itn.id
-}
-
-export async function insertDays(supabase: SupabaseClient, itineraryId: string, days: CleanItinerary["days"]) {
-  const { data: dayRows, error: dayErr } = await supabase
-    .from("itinerary_days")
-    .insert(days.map((d, i) => ({ itinerary_id: itineraryId, day_index: i, date: d.date })))
-    .select("id, day_index")
-  if (dayErr || !dayRows) throw dayErr ?? new Error("Failed to insert days")
-
-  const rows = dayRows.flatMap((row) => activityRows(row.id, days[row.day_index].activities))
-  if (rows.length) {
-    const { error } = await supabase.from("itinerary_activities").insert(rows)
-    if (error) throw error
-  }
 }

@@ -18,7 +18,9 @@ import {
   TRAVEL_STYLE_IDS,
   TRAVEL_TYPES,
 } from "@/lib/trip-options"
-import { buildCreatePrompt, saveItinerary } from "../generation"
+import { countItinerariesSince, saveItinerary } from "@/lib/data/itineraries"
+import { saveTripDefaults } from "@/lib/data/profiles"
+import { buildCreatePrompt } from "../generation"
 
 const dateKey = z.string().refine(isDateKey, "Invalid date")
 
@@ -67,15 +69,17 @@ async function limitError(supabase: SupabaseClient, userId: string): Promise<str
     return `You've created several itineraries recently. Please try again in ${Math.ceil(memory.retryAfterSec / 60)} minutes.`
   }
   const since = new Date(Date.now() - 86_400_000).toISOString()
-  const { count } = await supabase.from("itineraries").select("id", { count: "exact", head: true }).gte("created_at", since)
-  return (count ?? 0) >= DAILY_LIMIT ? "Daily itinerary limit reached. Please try again tomorrow." : null
+  return (await countItinerariesSince(supabase, since)) >= DAILY_LIMIT ? "Daily itinerary limit reached. Please try again tomorrow." : null
 }
 
 function homeOf(trip: Trip) {
-  return trip.homeLocation?.lat !== undefined && trip.homeLocation?.lng !== undefined ? trip.homeLocation : undefined
+  const home = trip.homeLocation
+  return home?.lat !== undefined && home?.lng !== undefined ? { ...home, lat: home.lat, lng: home.lng } : undefined
 }
 
-function modelRequest(trip: Trip, home: Trip["homeLocation"]) {
+type Home = NonNullable<ReturnType<typeof homeOf>>
+
+function modelRequest(trip: Trip, home: Home | undefined) {
   return {
     tripName: sanitizeText(trip.tripName, 100),
     destination: { ...trip.destination, name: sanitizeText(trip.destination.name, 300) },
@@ -102,17 +106,13 @@ function itineraryMeta(userId: string, trip: Trip, destination: string) {
   }
 }
 
-async function saveHomeDefaults(supabase: SupabaseClient, userId: string, home: NonNullable<Trip["homeLocation"]>, trip: Trip) {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      home_lat: home.lat,
-      home_lng: home.lng,
-      preferences: { travelStyles: trip.travelStyles },
-      dietary_needs: trip.dietaryNeeds,
-    })
-    .eq("id", userId)
-  if (error) console.error("Could not save profile defaults:", error.message)
+async function saveHomeDefaults(supabase: SupabaseClient, userId: string, home: Home, trip: Trip) {
+  await saveTripDefaults(supabase, userId, {
+    homeLat: home.lat,
+    homeLng: home.lng,
+    travelStyles: trip.travelStyles,
+    dietaryNeeds: trip.dietaryNeeds,
+  }).catch((error: Error) => console.error("Could not save profile defaults:", error.message))
 }
 
 export async function submit({ getSupabase, generate }: SubmitDeps, input: unknown): Promise<SubmitItineraryResult> {

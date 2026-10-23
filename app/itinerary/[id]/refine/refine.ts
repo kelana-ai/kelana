@@ -9,7 +9,8 @@ import {
   type GeneratedItinerary,
 } from "@/lib/itinerary"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { buildRefinePrompt, insertDays } from "../../generation"
+import { deleteDays, getPlan, insertDays, updateTotals, type PlanDay, type PlanRow } from "@/lib/data/itineraries"
+import { buildRefinePrompt } from "../../generation"
 
 const Input = z.object({
   itineraryId: z.uuid(),
@@ -18,45 +19,15 @@ const Input = z.object({
 
 export type RefineResult = { success: true } | { success: false; error: string }
 
-type ActivityRow = {
-  start_time: string
-  end_time: string | null
-  title: string
-  description: string | null
-  type: string
-  location_name: string | null
-  location_lat: number | null
-  location_lng: number | null
-  address: string | null
-  cost: number
-  eco_tags: string[]
-  activity_index: number
-}
-
 export interface RefineDeps {
   getSupabase: () => Promise<SupabaseClient>
   generate: (prompt: string) => Promise<GeneratedItinerary>
   revalidate: (path: string) => void
 }
 
-type DayRow = { date: string; day_index: number; itinerary_activities: ActivityRow[] }
+type Plan = { ok: true; itn: PlanRow; days: PlanDay[]; totalBudget: number } | { ok: false; error: string }
 
-interface PlanHeader {
-  name: string
-  destination_name: string
-  travel_type: string
-  travel_styles: string[]
-  dietary_needs: string[]
-}
-
-type Plan = { ok: true; itn: PlanHeader; days: DayRow[]; totalBudget: number } | { ok: false; error: string }
-
-const SELECT_PLAN = `id, name, destination_name, travel_type, travel_styles, dietary_needs, budget,
-         itinerary_days ( date, day_index, itinerary_activities (
-           start_time, end_time, title, description, type, location_name, location_lat, location_lng,
-           address, cost, eco_tags, activity_index ) )`
-
-function snapshotOf(days: DayRow[]): CleanItinerary["days"] {
+function snapshotOf(days: PlanDay[]): CleanItinerary["days"] {
   return days.map((d) => ({
     date: d.date,
     activities: [...d.itinerary_activities]
@@ -77,7 +48,7 @@ function snapshotOf(days: DayRow[]): CleanItinerary["days"] {
   }))
 }
 
-function currentPlan(itn: PlanHeader, snapshot: CleanItinerary["days"], budgetUsd: number) {
+function currentPlan(itn: PlanRow, snapshot: CleanItinerary["days"], budgetUsd: number) {
   return {
     name: itn.name,
     destination: itn.destination_name,
@@ -103,19 +74,17 @@ function currentPlan(itn: PlanHeader, snapshot: CleanItinerary["days"], budgetUs
 }
 
 async function loadPlan(supabase: SupabaseClient, itineraryId: string): Promise<Plan> {
-  const { data: itn, error } = await supabase.from("itineraries").select(SELECT_PLAN).eq("id", itineraryId).maybeSingle()
-  if (error || !itn) return { ok: false, error: "Itinerary not found." }
+  const itn = await getPlan(supabase, itineraryId).catch(() => null)
+  if (!itn) return { ok: false, error: "Itinerary not found." }
 
-  const days = [...(itn.itinerary_days as DayRow[])].sort((a, b) => a.day_index - b.day_index)
+  const days = [...itn.itinerary_days].sort((a, b) => a.day_index - b.day_index)
   if (!days.length) return { ok: false, error: "This itinerary has no days to refine." }
 
-  const totalBudget = Number((itn.budget as { total?: number } | null)?.total ?? 0)
-  return { ok: true, itn, days, totalBudget }
+  return { ok: true, itn, days, totalBudget: Number(itn.budget?.total ?? 0) }
 }
 
 async function replaceDays(supabase: SupabaseClient, itineraryId: string, days: CleanItinerary["days"], snapshot: CleanItinerary["days"]) {
-  const { error: delErr } = await supabase.from("itinerary_days").delete().eq("itinerary_id", itineraryId)
-  if (delErr) throw delErr
+  await deleteDays(supabase, itineraryId)
   try {
     await insertDays(supabase, itineraryId, days)
   } catch (err) {
@@ -156,11 +125,7 @@ export async function refine({ getSupabase, generate, revalidate }: RefineDeps, 
 
     await replaceDays(supabase, itineraryId, clean.days, snapshot)
 
-    const { error: updErr } = await supabase
-      .from("itineraries")
-      .update({ budget: clean.budget, carbon_metrics: clean.carbon, updated_at: new Date().toISOString() })
-      .eq("id", itineraryId)
-    if (updErr) throw updErr
+    await updateTotals(supabase, itineraryId, clean)
 
     revalidate(`/itinerary/${itineraryId}`)
     return { success: true }
