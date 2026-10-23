@@ -13,6 +13,17 @@ Follow Getting started in the README. You need Node.js 24 and pnpm, plus a Supab
 5. Open a pull request and link the issue with `Fixes #123` so it closes on merge. CI and a preview deployment run on every pull request.
 6. Ask for a review, then merge once CI is green.
 
+## Definition of done
+
+A change is done when:
+
+1. CI is green: lint, type-check, unit tests with the coverage thresholds, the build and the browser tests.
+2. Someone other than the author has reviewed the pull request.
+3. Behaviour that changed has a test, and a bug fix has a test that fails without the fix.
+4. The docs match: README, CONTRIBUTING and `docs/runbook.md` when a script, a variable or a procedure changed.
+5. A database change ships with its migration and its rollback script in `supabase/rollbacks/`, passes `pnpm test:rls` on the dev project, and is applied to production before the code that needs it is merged.
+6. After the deploy, the author opens the changed page on production, checks `/api/health` and closes the issue.
+
 ## Tests
 
 - `pnpm test` runs the unit tests. `pnpm test:coverage` also checks the coverage thresholds in `vitest.config.mts`.
