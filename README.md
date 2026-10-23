@@ -97,8 +97,9 @@ CI runs the same checks, with a coverage report from `pnpm test:coverage`, and t
 4. Days and activities are written in batches, and the itinerary page reads
    them back with one nested query.
 
-Refining runs the same steps with the user's instruction, and the old days are
-replaced only once the new ones are ready.
+Refining runs the same steps with the user's instruction, and the days and
+totals are replaced in one database transaction, so a failure leaves the old
+plan untouched.
 
 A few details:
 
@@ -117,6 +118,8 @@ Copy `.env.example` to `.env` and fill in:
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key
 - `OPENAI_API_KEY`: used to generate and refine itineraries
 - `OPENAI_MODEL`: optional, overrides the default model
+- `FEATURE_GENERATION`: optional, set to `off` to stop creating and refining
+  itineraries (see `docs/runbook.md`)
 - `NEXT_PUBLIC_SITE_URL`: public URL of the site, used for the sign-out
   redirect and metadata
 
@@ -151,6 +154,8 @@ on `ubuntu-24.04` and live in `.github/workflows/`:
 - `deploy-preview.yml`: a Vercel preview for each PR (skipped for forks), with the URL posted as a comment
 - `deploy-production.yml`: deploys the commit that passed CI on `main`
 - `supabase-keepalive.yml`: calls `ping()` on both Supabase projects twice a week, because the free plan pauses idle projects
+- `e2e.yml` and `e2e-production.yml`: the browser tests, and a weekly run against the live site with the real model
+- `uptime.yml`: requests `/api/health` every five minutes and opens an incident issue when it fails
 
 Production uses the `kelana` Supabase project and previews use `kelana-dev`.
 Environment variables are set per environment in the Vercel project, and
@@ -177,6 +182,8 @@ free plan.
    - `VERCEL_PROJECT_ID`: from `.vercel/project.json`
 3. Add the repository variables the keep-alive workflow reads: `SUPABASE_PROD_URL`, `SUPABASE_PROD_KEY`, `SUPABASE_DEV_URL` and `SUPABASE_DEV_KEY` (public URLs and publishable keys).
 4. Add the environment variables in the Vercel project settings.
+
+If production misbehaves, `docs/runbook.md` lists how to roll back a deploy or a migration and how to switch generation off.
 
 ## License
 

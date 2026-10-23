@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
 import { cleanGeneratedItinerary, countTripDays, isDateKey, listTripDays, sanitizeText } from "@/lib/itinerary"
+import { isEnabled, PAUSED_MESSAGE } from "@/lib/flags"
 import { checkRateLimit } from "@/lib/rate-limit"
 import {
   DIETARY_NEED_IDS,
@@ -115,6 +116,7 @@ async function create({ getSupabase, generate }: SubmitDeps, input: unknown, tra
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid trip details." }
   }
   const trip = parsed.data
+  if (!isEnabled("generation")) return { success: false, error: PAUSED_MESSAGE }
 
   try {
     const supabase = await getSupabase()
