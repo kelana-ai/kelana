@@ -1,4 +1,5 @@
 import type { GeneratedItinerary } from "@/lib/itinerary"
+import type { ModelRun } from "@/app/itinerary/trace"
 
 export function generatedItinerary(dayCount = 2): GeneratedItinerary {
   return {
@@ -33,4 +34,10 @@ export function generatedItinerary(dayCount = 2): GeneratedItinerary {
     carbon: { saved: 40, total: 60, percentage: 40 },
     icon: "bali",
   }
+}
+
+export const usage = { inputTokens: 1200, outputTokens: 3400, totalTokens: 4600 }
+
+export function modelRun(itinerary: GeneratedItinerary = generatedItinerary(2)): ModelRun {
+  return { itinerary, usage }
 }
