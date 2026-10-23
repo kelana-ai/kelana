@@ -23,3 +23,10 @@ for (const path of ["/dashboard", "/itinerary", "/account"]) {
     await expect(page).toHaveURL(/\/login/)
   })
 }
+
+test("the health endpoint reports that the database answers", async ({ request }) => {
+  const response = await request.get("/api/health")
+  expect(response.status()).toBe(200)
+  expect(response.headers()["cache-control"]).toBe("no-store")
+  expect(await response.json()).toMatchObject({ status: "ok", database: "ok" })
+})

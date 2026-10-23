@@ -1,0 +1,43 @@
+name: Uptime
+
+# GitHub may start scheduled runs a few minutes late, so treat the interval as a best effort
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SITE_URL: ${{ vars.PRODUCTION_URL || 'https://kelana-eco.vercel.app' }}
+    steps:
+      - name: Check the health endpoint
+        run: |
+          code=$(curl --silent --show-error --max-time 20 --retry 2 --retry-delay 5 --retry-all-errors \
+            --output response.txt --write-out '%{http_code}' "$SITE_URL/api/health" || true)
+          open=$(gh issue list --label incident --state open --json number --jq '.[0].number // empty')
+
+          if [ "$code" = "200" ]; then
+            if [ -n "$open" ]; then
+              gh issue close "$open" --comment "The health endpoint answers again ($(date -u +%Y-%m-%dT%H:%M:%SZ))."
+            fi
+            exit 0
+          fi
+
+          cat response.txt || true
+          if [ -z "$open" ]; then
+            gh label create incident --color B60205 --description "The site did not pass its health check" 2>/dev/null || true
+            gh issue create --label incident --title "Health check failed" \
+              --body "$SITE_URL/api/health answered HTTP ${code:-000} at $(date -u +%Y-%m-%dT%H:%M:%SZ). Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
+          exit 1
