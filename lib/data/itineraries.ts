@@ -138,24 +138,6 @@ export async function getPlan(supabase: SupabaseClient, id: string): Promise<Pla
   return data as PlanRow | null
 }
 
-export async function deleteDays(supabase: SupabaseClient, itineraryId: string) {
-  const { error } = await supabase.from("itinerary_days").delete().eq("itinerary_id", itineraryId)
-  if (error) throw error
-}
-
-export async function updateTotals(
-  supabase: SupabaseClient,
-  itineraryId: string,
-  totals: Pick<CleanItinerary, "budget" | "carbon">,
-  now = new Date(),
-) {
-  const { error } = await supabase
-    .from("itineraries")
-    .update({ budget: totals.budget, carbon_metrics: totals.carbon, updated_at: now.toISOString() })
-    .eq("id", itineraryId)
-  if (error) throw error
-}
-
 export interface ItineraryMeta {
   userId: string
   description: string
@@ -169,10 +151,11 @@ export interface ItineraryMeta {
   dietaryNeeds: string[]
 }
 
-export function activityRows(dayId: string, activities: CleanItinerary["days"][number]["activities"]) {
-  return activities.map((a, j) => ({
-    day_id: dayId,
-    activity_index: j,
+type CleanActivity = CleanItinerary["days"][number]["activities"][number]
+
+function activityRow(a: CleanActivity, index: number) {
+  return {
+    activity_index: index,
     start_time: a.start_time,
     end_time: a.end_time,
     title: a.title,
@@ -186,7 +169,11 @@ export function activityRows(dayId: string, activities: CleanItinerary["days"][n
     cost: a.cost,
     currency: "USD",
     eco_tags: [a.eco_tag],
-  }))
+  }
+}
+
+export function activityRows(dayId: string, activities: CleanActivity[]) {
+  return activities.map((a, j) => ({ day_id: dayId, ...activityRow(a, j) }))
 }
 
 export async function saveItinerary(supabase: SupabaseClient, meta: ItineraryMeta, data: CleanItinerary): Promise<string> {
@@ -234,4 +221,19 @@ export async function insertDays(supabase: SupabaseClient, itineraryId: string, 
     const { error } = await supabase.from("itinerary_activities").insert(rows)
     if (error) throw error
   }
+}
+
+export async function replacePlan(
+  supabase: SupabaseClient,
+  itineraryId: string,
+  days: CleanItinerary["days"],
+  totals: Pick<CleanItinerary, "budget" | "carbon">,
+) {
+  const { error } = await supabase.rpc("replace_itinerary_plan", {
+    p_itinerary_id: itineraryId,
+    p_days: days.map((d, i) => ({ day_index: i, date: d.date, activities: d.activities.map(activityRow) })),
+    p_budget: totals.budget,
+    p_carbon: totals.carbon,
+  })
+  if (error) throw error
 }

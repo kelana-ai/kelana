@@ -9,7 +9,7 @@ import {
   type GeneratedItinerary,
 } from "@/lib/itinerary"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { deleteDays, getPlan, insertDays, updateTotals, type PlanDay, type PlanRow } from "@/lib/data/itineraries"
+import { getPlan, replacePlan, type PlanDay, type PlanRow } from "@/lib/data/itineraries"
 import { buildRefinePrompt } from "../../generation"
 
 const Input = z.object({
@@ -83,18 +83,6 @@ async function loadPlan(supabase: SupabaseClient, itineraryId: string): Promise<
   return { ok: true, itn, days, totalBudget: Number(itn.budget?.total ?? 0) }
 }
 
-async function replaceDays(supabase: SupabaseClient, itineraryId: string, days: CleanItinerary["days"], snapshot: CleanItinerary["days"]) {
-  await deleteDays(supabase, itineraryId)
-  try {
-    await insertDays(supabase, itineraryId, days)
-  } catch (err) {
-    await insertDays(supabase, itineraryId, snapshot).catch((restoreErr) =>
-      console.error("Could not restore itinerary after failed refine:", restoreErr),
-    )
-    throw err
-  }
-}
-
 export async function refine({ getSupabase, generate, revalidate }: RefineDeps, input: unknown): Promise<RefineResult> {
   const parsed = Input.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid request." }
@@ -123,9 +111,7 @@ export async function refine({ getSupabase, generate, revalidate }: RefineDeps, 
     const generated = await generate(buildRefinePrompt(current, sanitizeText(instruction, 1000), dayKeys))
     const clean = cleanGeneratedItinerary(generated, dayKeys, totalBudget, itn.name)
 
-    await replaceDays(supabase, itineraryId, clean.days, snapshot)
-
-    await updateTotals(supabase, itineraryId, clean)
+    await replacePlan(supabase, itineraryId, clean.days, clean)
 
     revalidate(`/itinerary/${itineraryId}`)
     return { success: true }
