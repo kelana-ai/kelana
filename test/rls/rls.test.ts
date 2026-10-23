@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-const PRODUCTION_REF = "caeawmpnhnipzknsllce"
+import { assertNotProduction } from "../../scripts/guard"
 
 try {
   process.loadEnvFile(".env")
@@ -12,7 +12,7 @@ try {
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 if (!url || !key) throw new Error("Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to the dev project")
-if (url.includes(PRODUCTION_REF)) throw new Error("These tests create users and must never run against production")
+assertNotProduction(url)
 
 const stamp = Date.now()
 const password = `Rls-${stamp}-Check!`

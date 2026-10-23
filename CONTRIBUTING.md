@@ -2,7 +2,7 @@
 
 ## Setup
 
-Follow Getting started in the README. You need Node.js 24 and pnpm, plus a Supabase project and an OpenAI key to run the app.
+Follow Getting started in the README. You need Node.js 24 and pnpm, plus a Supabase project and an OpenAI key to run the app. Run `pnpm seed` once to fill an empty dev project with a demo account and three trips.
 
 ## Workflow
 
