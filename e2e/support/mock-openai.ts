@@ -88,6 +88,15 @@ const server = createServer((req, res) => {
     res.writeHead(200).end("ok")
     return
   }
+  if (req.method === "POST" && req.url === "/turnstile/siteverify") {
+    const form: Buffer[] = []
+    req.on("data", (chunk: Buffer) => form.push(chunk))
+    req.on("end", () => {
+      const ok = new URLSearchParams(Buffer.concat(form).toString()).get("response") === "good-token"
+      res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ success: ok }))
+    })
+    return
+  }
   if (req.method !== "POST" || req.url !== "/v1/responses") {
     res.writeHead(404).end()
     return

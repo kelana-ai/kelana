@@ -6,11 +6,12 @@ import { useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
 
+import type { Captcha } from "@/components/turnstile"
 import { submitItinerary } from "./actions"
 import type { FormValues } from "./schema"
 import { submission } from "./wizard"
 
-export function useTripSubmission(form: UseFormReturn<FormValues>, user: User | null) {
+export function useTripSubmission(form: UseFormReturn<FormValues>, user: User | null, captcha: Captcha) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showLoading, setShowLoading] = useState(false)
@@ -27,7 +28,7 @@ export function useTripSubmission(form: UseFormReturn<FormValues>, user: User | 
     setIsSubmitting(true)
     setShowLoading(true)
 
-    submitItinerary(submission(data))
+    submitItinerary(submission(data, captcha.token ?? undefined))
       .then((response) => {
         if (response.success) {
           toast.success("Itinerary generated successfully!")
@@ -41,16 +42,18 @@ export function useTripSubmission(form: UseFormReturn<FormValues>, user: User | 
         setError(failure instanceof Error ? failure : new Error("Failed to generate itinerary"))
         setIsSubmitting(false)
       })
-  }
-
-  const retry = () => {
-    setError(null)
-    submit(form.getValues())
+      .finally(captcha.reset)
   }
 
   const cancel = () => {
     setError(null)
     setShowLoading(false)
+  }
+
+  const retry = () => {
+    if (captcha.enabled) return cancel()
+    setError(null)
+    submit(form.getValues())
   }
 
   return { isSubmitting, showLoading, error, submit, retry, cancel }

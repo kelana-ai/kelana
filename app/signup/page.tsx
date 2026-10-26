@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { AuthFormSkeleton } from "@/components/auth/auth-form-skeleton"
 import { AuthField, AuthFooter, AuthFormCard, AuthSubmitButton } from "@/components/auth/auth-form"
 import { AuthLayout } from "@/components/auth/auth-layout"
+import { useCaptcha } from "@/components/turnstile"
 import { useRedirectSignedIn } from "@/contexts/use-redirect-signed-in"
 import { useUser } from "@/contexts/user-context"
 import { signup } from "./actions"
@@ -20,6 +21,7 @@ export default function SignupPage() {
   const router = useRouter()
 
   useRedirectSignedIn()
+  const captcha = useCaptcha()
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -38,10 +40,11 @@ export default function SignupPage() {
     }
 
     setPasswordsMatch(true)
-    const result = await signup(formData)
+    const result = await signup(formData, captcha.token ?? undefined)
 
     if (result?.error) {
       setError(result.error.message)
+      captcha.reset()
       setIsSubmitting(false)
       return
     }
@@ -104,7 +107,8 @@ export default function SignupPage() {
               </p>
             )}
           </AuthField>
-          <AuthSubmitButton pending={isSubmitting} pendingLabel="Creating account..." label="Create account" />
+          {captcha.widget}
+          <AuthSubmitButton pending={isSubmitting} blocked={captcha.enabled && !captcha.token} pendingLabel="Creating account..." label="Create account" />
         </AuthFormCard>
       )}
     </AuthLayout>

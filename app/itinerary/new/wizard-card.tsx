@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react"
 import type { UseFormReturn } from "react-hook-form"
 
+import type { Captcha } from "@/components/turnstile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { stepDescriptions, steps } from "./constants"
@@ -18,6 +19,7 @@ interface WizardCardProps {
   form: UseFormReturn<FormValues>
   currentStep: number
   isSubmitting: boolean
+  captcha: Captcha
   onBack: () => void
   onNext: () => void
 }
@@ -27,7 +29,7 @@ function StepIcon({ index }: { index: number }) {
   return <Icon className="h-4 w-4" />
 }
 
-function StepContent({ form, currentStep }: { form: UseFormReturn<FormValues>; currentStep: number }) {
+function StepContent({ form, currentStep, captcha }: { form: UseFormReturn<FormValues>; currentStep: number; captcha: Captcha }) {
   return (
     <>
       {currentStep === 0 && <TripDetailsStep form={form} />}
@@ -36,12 +38,12 @@ function StepContent({ form, currentStep }: { form: UseFormReturn<FormValues>; c
       {currentStep === 3 && <TravelStylesStep form={form} />}
       {currentStep === 4 && <DietaryNeedsStep form={form} />}
       {currentStep === 5 && <BudgetStep form={form} />}
-      {currentStep === 6 && <ReviewStep form={form} />}
+      {currentStep === 6 && <ReviewStep form={form} captcha={captcha.widget} />}
     </>
   )
 }
 
-export function WizardCard({ form, currentStep, isSubmitting, onBack, onNext }: WizardCardProps) {
+export function WizardCard({ form, currentStep, isSubmitting, captcha, onBack, onNext }: WizardCardProps) {
   return (
     <Card className="border-2">
       <CardHeader>
@@ -65,7 +67,7 @@ export function WizardCard({ form, currentStep, isSubmitting, onBack, onNext }: 
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <StepContent form={form} currentStep={currentStep} />
+            <StepContent form={form} currentStep={currentStep} captcha={captcha} />
           </motion.div>
         </AnimatePresence>
       </CardContent>
@@ -80,7 +82,7 @@ export function WizardCard({ form, currentStep, isSubmitting, onBack, onNext }: 
               Continue <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            <Button type="submit" disabled={isSubmitting || (captcha.enabled && !captcha.token)} className="w-full sm:w-auto">
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
 import { Form } from "@/components/ui/form"
+import { useCaptcha } from "@/components/turnstile"
 import { useRequireUser } from "@/contexts/use-require-user"
 import { useUser } from "@/contexts/user-context"
 import { ErrorRecovery } from "./error-recovery"
@@ -39,7 +40,8 @@ export default function NewItineraryPage() {
   useProfileDefaults(form, profile)
   useDestinationPrefill(form)
   const wizard = useWizardSteps(form)
-  const trip = useTripSubmission(form, user)
+  const captcha = useCaptcha()
+  const trip = useTripSubmission(form, user, captcha)
 
   if (trip.showLoading) {
     return trip.error ? (
@@ -65,6 +67,7 @@ export default function NewItineraryPage() {
               form={form}
               currentStep={wizard.currentStep}
               isSubmitting={trip.isSubmitting}
+              captcha={captcha}
               onBack={wizard.back}
               onNext={wizard.next}
             />

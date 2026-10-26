@@ -10,6 +10,7 @@ const csp = buildCsp({
   development: process.env.NODE_ENV !== "production",
   preview: process.env.VERCEL_ENV === "preview",
   upgradeInsecure: Boolean(process.env.VERCEL),
+  turnstile: Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),
 })
 
 const securityHeaders = [

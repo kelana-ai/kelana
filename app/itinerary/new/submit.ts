@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 
 import { cleanGeneratedItinerary, countTripDays, isDateKey, listTripDays, sanitizeText } from "@/lib/itinerary"
+import { CAPTCHA_MESSAGE } from "@/lib/captcha"
 import { isEnabled, PAUSED_MESSAGE } from "@/lib/flags"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { reportError } from "@/lib/report"
@@ -41,6 +42,7 @@ const ItineraryInput = z
     travelStyles: z.array(z.enum(TRAVEL_STYLE_IDS)).min(1).max(TRAVEL_STYLE_IDS.length),
     dietaryNeeds: z.array(z.enum(DIETARY_NEED_IDS)).max(DIETARY_NEED_IDS.length),
     budget: z.number().min(MIN_BUDGET).max(MAX_BUDGET),
+    captchaToken: z.string().max(2048).optional(),
   })
   .refine((v) => countTripDays(v.dateFrom, v.dateTo) >= 1, { message: "End date must not be before the start date." })
   .refine((v) => countTripDays(v.dateFrom, v.dateTo) <= MAX_TRIP_DAYS, {
@@ -52,6 +54,7 @@ export type SubmitItineraryResult = { success: true; itineraryId: string } | { s
 export interface SubmitDeps {
   getSupabase: () => Promise<SupabaseClient>
   generate: (prompt: string) => Promise<ModelRun>
+  verifyCaptcha?: (token: string | undefined) => Promise<boolean>
 }
 
 const HOURLY_LIMIT = 5
@@ -111,13 +114,14 @@ async function saveHomeDefaults(supabase: SupabaseClient, userId: string, home: 
   }).catch((error: Error) => console.error("Could not save profile defaults:", error.message))
 }
 
-async function create({ getSupabase, generate }: SubmitDeps, input: unknown, trace: Trace): Promise<SubmitItineraryResult> {
+async function create({ getSupabase, generate, verifyCaptcha = async () => true }: SubmitDeps, input: unknown, trace: Trace): Promise<SubmitItineraryResult> {
   const parsed = ItineraryInput.safeParse(input)
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid trip details." }
   }
   const trip = parsed.data
   if (!isEnabled("generation")) return { success: false, error: PAUSED_MESSAGE }
+  if (!(await verifyCaptcha(trip.captchaToken))) return { success: false, error: CAPTCHA_MESSAGE }
 
   try {
     const supabase = await getSupabase()

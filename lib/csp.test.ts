@@ -65,6 +65,14 @@ describe("buildCsp", () => {
     expect(directive(policy, "connect-src")).not.toContain("sentry")
   })
 
+  it("allows the Turnstile challenge only when it is switched on", () => {
+    expect(policy).not.toContain("challenges.cloudflare.com")
+    const withChallenge = buildCsp({ turnstile: true })
+
+    for (const name of ["script-src", "frame-src", "connect-src"]) expect(directive(withChallenge, name)).toContain("https://challenges.cloudflare.com")
+    expect(directive(withChallenge, "img-src")).not.toContain("challenges.cloudflare.com")
+  })
+
   it("copes with a missing or invalid project address", () => {
     expect(directive(buildCsp(), "connect-src")).toBe("connect-src 'self' https://nominatim.openstreetmap.org")
     expect(directive(buildCsp({ supabaseUrl: "not a url" }), "img-src")).toBe("img-src 'self' data: blob: https://*.tile.openstreetmap.org")

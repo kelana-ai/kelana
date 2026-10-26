@@ -19,7 +19,7 @@ function SummaryItem({ icon, label, value }: { icon: React.ReactNode; label: str
   )
 }
 
-export function ReviewStep({ form }: { form: UseFormReturn<FormValues> }) {
+export function ReviewStep({ form, captcha }: { form: UseFormReturn<FormValues>; captcha: React.ReactNode }) {
   const values = form.getValues()
 
   return (
@@ -85,6 +85,8 @@ export function ReviewStep({ form }: { form: UseFormReturn<FormValues> }) {
           </div>
         </div>
       </div>
+
+      {captcha}
     </div>
   )
 }
