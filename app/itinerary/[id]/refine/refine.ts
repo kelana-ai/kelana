@@ -4,6 +4,7 @@ import { z } from "zod"
 import { cleanGeneratedItinerary, sanitizeText, type ActivityType, type CleanItinerary } from "@/lib/itinerary"
 import { isEnabled, PAUSED_MESSAGE } from "@/lib/flags"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { reportError } from "@/lib/report"
 import { getPlan, replacePlan, type PlanDay, type PlanRow } from "@/lib/data/itineraries"
 import { buildRefinePrompt } from "../../generation"
 import { runTraced, withTrace, type ModelRun, type Trace } from "../../trace"
@@ -116,6 +117,7 @@ async function run({ getSupabase, generate, revalidate }: RefineDeps, input: unk
   } catch (error) {
     trace.outcome = "error"
     console.error("Error refining itinerary:", error)
+    reportError(error, "refine")
     return { success: false, error: "We couldn't refine your itinerary. Your original plan is unchanged." }
   }
 }

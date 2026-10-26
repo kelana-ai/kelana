@@ -33,6 +33,10 @@ export default function PrivacyPage() {
           <li>OpenAI receives the trip details you submit (destination, dates, preferences, budget) to generate or refine an itinerary.</li>
           <li>OpenStreetMap (Nominatim and map tiles) receives the places you search for and the map areas you view, directly from your browser.</li>
           <li>Vercel hosts the app and counts page views and page load times. It sets no cookies and collects no personal data for this.</li>
+          <li>
+            Sentry receives error reports when error tracking is switched on: the error message with email addresses removed, the address of the page
+            without its query string, and the browser and system names. It receives no account data and no trip details.
+          </li>
         </ul>
       </section>
 

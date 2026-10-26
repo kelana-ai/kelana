@@ -6,6 +6,7 @@ const ENFORCE_CSP = true
 
 const csp = buildCsp({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   development: process.env.NODE_ENV !== "production",
   preview: process.env.VERCEL_ENV === "preview",
   upgradeInsecure: Boolean(process.env.VERCEL),
@@ -29,4 +30,16 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+export default async function config() {
+  if (!process.env.SENTRY_AUTH_TOKEN) return nextConfig
+
+  const { withSentryConfig } = await import("@sentry/nextjs/config")
+  return withSentryConfig(nextConfig, {
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    silent: true,
+    telemetry: false,
+    sourcemaps: { deleteSourcemapsAfterUpload: true },
+  })
+}

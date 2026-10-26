@@ -1,5 +1,6 @@
 interface CspOptions {
   supabaseUrl?: string
+  sentryDsn?: string
   development?: boolean
   preview?: boolean
   upgradeInsecure?: boolean
@@ -25,6 +26,15 @@ const PREVIEW_TOOLBAR = {
   frame: [TOOLBAR],
 }
 
+function ingestOrigin(url: string | undefined) {
+  if (!url) return []
+  try {
+    return [new URL(url).origin]
+  } catch {
+    return []
+  }
+}
+
 function supabaseOrigins(url: string | undefined) {
   if (!url) return { http: [], socket: [] }
   try {
@@ -35,7 +45,7 @@ function supabaseOrigins(url: string | undefined) {
   }
 }
 
-export function buildCsp({ supabaseUrl, development = false, preview = false, upgradeInsecure = false }: CspOptions = {}) {
+export function buildCsp({ supabaseUrl, sentryDsn, development = false, preview = false, upgradeInsecure = false }: CspOptions = {}) {
   const supabase = supabaseOrigins(supabaseUrl)
   const toolbar = preview ? PREVIEW_TOOLBAR : NO_TOOLBAR
 
@@ -45,7 +55,7 @@ export function buildCsp({ supabaseUrl, development = false, preview = false, up
     ["style-src", ["'self'", "'unsafe-inline'", ...toolbar.style]],
     ["img-src", ["'self'", "data:", "blob:", TILES, ...supabase.http, ...toolbar.img]],
     ["font-src", ["'self'", "data:", ...toolbar.font]],
-    ["connect-src", ["'self'", NOMINATIM, ...supabase.http, ...supabase.socket, ...(development ? ["ws://localhost:*"] : []), ...toolbar.connect]],
+    ["connect-src", ["'self'", NOMINATIM, ...supabase.http, ...supabase.socket, ...ingestOrigin(sentryDsn), ...(development ? ["ws://localhost:*"] : []), ...toolbar.connect]],
     ["frame-src", toolbar.frame],
     ["frame-ancestors", ["'self'"]],
     ["base-uri", ["'self'"]],

@@ -4,6 +4,7 @@ import { z } from "zod"
 import { cleanGeneratedItinerary, countTripDays, isDateKey, listTripDays, sanitizeText } from "@/lib/itinerary"
 import { isEnabled, PAUSED_MESSAGE } from "@/lib/flags"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { reportError } from "@/lib/report"
 import {
   DIETARY_NEED_IDS,
   MAX_BUDGET,
@@ -142,6 +143,7 @@ async function create({ getSupabase, generate }: SubmitDeps, input: unknown, tra
   } catch (error) {
     trace.outcome = "error"
     console.error("Error creating itinerary:", error)
+    reportError(error, "create")
     return { success: false, error: "We couldn't generate your itinerary. Please try again." }
   }
 }

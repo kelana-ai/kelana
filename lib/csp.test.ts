@@ -56,6 +56,15 @@ describe("buildCsp", () => {
     expect(directive(preview, "font-src")).toContain("https://assets.vercel.com")
   })
 
+  it("allows the ingest host of the Sentry DSN, and only the host", () => {
+    const withSentry = buildCsp({ sentryDsn: "https://publickey@o123.ingest.sentry.io/456" })
+
+    expect(directive(withSentry, "connect-src")).toBe("connect-src 'self' https://nominatim.openstreetmap.org https://o123.ingest.sentry.io")
+    expect(withSentry).not.toContain("publickey")
+    expect(directive(buildCsp({ sentryDsn: "not a url" }), "connect-src")).toBe("connect-src 'self' https://nominatim.openstreetmap.org")
+    expect(directive(policy, "connect-src")).not.toContain("sentry")
+  })
+
   it("copes with a missing or invalid project address", () => {
     expect(directive(buildCsp(), "connect-src")).toBe("connect-src 'self' https://nominatim.openstreetmap.org")
     expect(directive(buildCsp({ supabaseUrl: "not a url" }), "img-src")).toBe("img-src 'self' data: blob: https://*.tile.openstreetmap.org")

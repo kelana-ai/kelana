@@ -6,9 +6,12 @@ import { resetRateLimits } from "@/lib/rate-limit"
 import { MAX_BUDGET, MIN_BUDGET } from "@/lib/trip-options"
 import { fakeSupabase, steps, type Reply } from "@/test/fake-supabase"
 import { generatedItinerary, modelRun, usage } from "@/test/fixtures"
+import { reportError } from "@/lib/report"
 import { submit } from "./submit"
 
 const NOW = new Date("2026-10-20T10:00:00Z")
+vi.mock("@/lib/report", () => ({ reportError: vi.fn() }))
+
 const GENERIC_ERROR = "We couldn't generate your itinerary. Please try again."
 
 const trip = {
@@ -434,6 +437,35 @@ describe("submit", () => {
       await submit(deps, trip)
 
       expect(logged()).toMatchObject({ outcome: "error", ...usage })
+    })
+  })
+
+  describe("error reports", () => {
+    it("sends a failed model call to the error tracker with the place it came from", async () => {
+      const { deps, generate } = setup()
+      const failure = new Error("rate limited")
+      generate.mockRejectedValue(failure)
+      await submit(deps, trip)
+
+      expect(reportError).toHaveBeenCalledExactlyOnceWith(failure, "create")
+    })
+
+    it("sends a failure to save too", async () => {
+      const failure = { message: "denied" }
+      const { deps } = setup({ replies: { "insert itineraries": { error: failure } } })
+      await submit(deps, trip)
+
+      expect(reportError).toHaveBeenCalledExactlyOnceWith(failure, "create")
+    })
+
+    it.each([
+      ["invalid input", () => setup(), { ...trip, budget: 1 }],
+      ["a visitor who is not signed in", () => setup({ user: null }), trip],
+      ["the daily limit", () => setup({ replies: { "select itineraries": { count: 20 } } }), trip],
+    ])("does not send %s", async (_label, make, input) => {
+      await submit(make().deps, input)
+
+      expect(reportError).not.toHaveBeenCalled()
     })
   })
 })
