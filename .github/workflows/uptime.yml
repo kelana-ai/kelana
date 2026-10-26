@@ -1,10 +1,15 @@
 name: Uptime
 
-# GitHub may start scheduled runs a few minutes late, so treat the interval as a best effort
+# GitHub starts scheduled runs when it has capacity, often hours apart on a quiet repository, so this is
+# a stopgap until an external monitor checks the endpoint every five minutes
 on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+    inputs:
+      url:
+        description: Health endpoint to check, for trying the alert
+        required: false
 
 permissions:
   issues: write
@@ -19,13 +24,14 @@ jobs:
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
-      SITE_URL: ${{ vars.PRODUCTION_URL || 'https://kelana-eco.vercel.app' }}
+      GH_REPO: ${{ github.repository }}
+      HEALTH_URL: ${{ inputs.url || format('{0}/api/health', vars.PRODUCTION_URL || 'https://kelana-eco.vercel.app') }}
     steps:
       - name: Check the health endpoint
         run: |
           code=$(curl --silent --show-error --max-time 20 --retry 2 --retry-delay 5 --retry-all-errors \
-            --output response.txt --write-out '%{http_code}' "$SITE_URL/api/health" || true)
-          open=$(gh issue list --label incident --state open --json number --jq '.[0].number // empty')
+            --output response.txt --write-out '%{http_code}' "$HEALTH_URL" || true)
+          open=$(gh issue list --label incident --state open --json number --jq '.[0].number // empty' || true)
 
           if [ "$code" = "200" ]; then
             if [ -n "$open" ]; then
@@ -38,6 +44,6 @@ jobs:
           if [ -z "$open" ]; then
             gh label create incident --color B60205 --description "The site did not pass its health check" 2>/dev/null || true
             gh issue create --label incident --title "Health check failed" \
-              --body "$SITE_URL/api/health answered HTTP ${code:-000} at $(date -u +%Y-%m-%dT%H:%M:%SZ). Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              --body "$HEALTH_URL answered HTTP ${code:-000} at $(date -u +%Y-%m-%dT%H:%M:%SZ). Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           fi
           exit 1
