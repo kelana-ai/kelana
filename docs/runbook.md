@@ -5,7 +5,7 @@ What to do when something goes wrong in production. Production is the Vercel pro
 ## Check the site
 
 - `https://kelana-eco.vercel.app/api/health` answers 200 when the database answers and 503 when it does not.
-- The Uptime workflow requests it every five minutes (GitHub can start a run a few minutes late). When it fails it opens an issue labelled `incident`, and it closes the issue when the endpoint answers again.
+- The Uptime workflow requests it on a schedule. GitHub often starts scheduled runs hours apart on a quiet repository, so this is a stopgap until an external monitor checks the endpoint every five minutes. When a run fails it opens an issue labelled `incident`, and it closes the issue when the endpoint answers again. Run it by hand with a different `url` to try the alert.
 - Every generate and refine call writes one JSON log line with `event: "itinerary.generation"`, the outcome, the durations and the token counts. Vercel keeps function logs for one hour, so look soon after an alert.
 
 ## Go back after a bad deploy
@@ -47,3 +47,4 @@ Each procedure should be tried once on a preview before it is needed. Add a line
 | Roll back a deployment | not yet | |
 | Run a rollback script | not yet | |
 | Switch generation off | local production build, 2026-10-23 | |
+| Health alert opens and closes an incident | Uptime workflow run by hand with a wrong url, then the right one, 2026-10-26 (#71) | |
