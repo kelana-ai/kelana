@@ -120,6 +120,10 @@ Copy `.env.example` to `.env` and fill in:
 - `OPENAI_MODEL`: optional, overrides the default model
 - `FEATURE_GENERATION`: optional, set to `off` to stop creating and refining
   itineraries (see `docs/runbook.md`)
+- `NEXT_PUBLIC_SENTRY_DSN`: optional, turns on error tracking with Sentry. Events
+  carry no user, request body, cookies, query strings, breadcrumbs or email
+  addresses. `SENTRY_ORG`, `SENTRY_PROJECT` and `SENTRY_AUTH_TOKEN` upload source
+  maps during the build
 - `NEXT_PUBLIC_SITE_URL`: public URL of the site, used for the sign-out
   redirect and metadata
 

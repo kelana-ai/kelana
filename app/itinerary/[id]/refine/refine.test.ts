@@ -5,7 +5,10 @@ import { resetRateLimits } from "@/lib/rate-limit"
 import { fakeSupabase, steps, type Reply } from "@/test/fake-supabase"
 import { generatedItinerary, modelRun, usage } from "@/test/fixtures"
 import type { ModelRun } from "../../trace"
+import { reportError } from "@/lib/report"
 import { refine } from "./refine"
+
+vi.mock("@/lib/report", () => ({ reportError: vi.fn() }))
 
 const NOW = new Date("2026-10-20T10:00:00Z")
 const ID = "6f9619ff-8b86-4011-b42d-00c04fc964ff"
@@ -371,6 +374,35 @@ describe("refine", () => {
       await refine(deps, request)
 
       expect(logged()).toMatchObject({ outcome: "error", ...usage })
+    })
+  })
+
+  describe("error reports", () => {
+    it("sends a failed model call to the error tracker with the place it came from", async () => {
+      const { deps, generate } = setup()
+      const failure = new Error("rate limited")
+      generate.mockRejectedValue(failure)
+      await refine(deps, request)
+
+      expect(reportError).toHaveBeenCalledExactlyOnceWith(failure, "refine")
+    })
+
+    it("sends a failed replacement too", async () => {
+      const failure = { message: "write failed" }
+      const { deps } = setup({ replies: { "rpc replace_itinerary_plan": { error: failure } } })
+      await refine(deps, request)
+
+      expect(reportError).toHaveBeenCalledExactlyOnceWith(failure, "refine")
+    })
+
+    it.each([
+      ["invalid input", () => setup(), { ...request, instruction: "hi" }],
+      ["a visitor who is not signed in", () => setup({ user: null }), request],
+      ["an itinerary that cannot be found", () => setup({ replies: { "select itineraries": { data: null } } }), request],
+    ])("does not send %s", async (_label, make, input) => {
+      await refine(make().deps, input)
+
+      expect(reportError).not.toHaveBeenCalled()
     })
   })
 })

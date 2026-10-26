@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { reportClientError } from "@/lib/report-client"
 import { AlertTriangle, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import { useEffect } from "react"
@@ -14,6 +15,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error(error)
+    reportClientError(error, "page")
   }, [error])
 
   return (
