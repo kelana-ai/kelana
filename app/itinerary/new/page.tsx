@@ -47,7 +47,7 @@ export default function NewItineraryPage() {
     return trip.error ? (
       <ErrorRecovery error={trip.error} onRetry={trip.retry} onCancel={trip.cancel} />
     ) : (
-      <LoadingExperience destination={form.getValues().destination.name} tripName={form.getValues().tripName} />
+      <LoadingExperience destination={form.getValues().destination.name} tripName={form.getValues().tripName} days={trip.days} />
     )
   }
 

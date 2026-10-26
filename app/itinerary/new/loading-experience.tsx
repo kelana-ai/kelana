@@ -4,14 +4,17 @@ import { useEffect } from "react"
 
 import { ecoFacts } from "@/lib/eco-facts"
 import { FactCard, LoadingHeading, LoadingOrb, loadingMessages, ProgressSection, RedirectNote, StatusMessage } from "./loading-visuals"
+import { PlanSoFar } from "./loading-plan"
+import type { PlanDay } from "./stream"
 import { useLoadingProgress } from "./use-loading-progress"
 
 interface LoadingExperienceProps {
   destination: string
   tripName: string
+  days: PlanDay[]
 }
 
-export function LoadingExperience({ destination, tripName }: LoadingExperienceProps) {
+export function LoadingExperience({ destination, tripName, days }: LoadingExperienceProps) {
   const { progress, messageIndex, factIndex } = useLoadingProgress(loadingMessages.length, ecoFacts.length)
 
   useEffect(() => {
@@ -24,6 +27,7 @@ export function LoadingExperience({ destination, tripName }: LoadingExperiencePr
       <LoadingOrb />
       <ProgressSection tripName={tripName} progress={progress} />
       <StatusMessage index={messageIndex} />
+      <PlanSoFar days={days} />
       <FactCard index={factIndex} />
       <RedirectNote />
     </div>

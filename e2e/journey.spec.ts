@@ -310,6 +310,19 @@ test("a model failure shows the recovery screen and saves nothing", async () => 
   await expect(page.getByText(failing)).toHaveCount(0)
 })
 
+test("the plan appears on the loading screen while the model is still writing", async () => {
+  test.skip(!mocked, "needs the slow mock model")
+  test.setTimeout(120_000)
+  await openWizard("Streaming [slow]")
+  await submitWizard()
+
+  const plan = page.getByTestId("plan-so-far")
+  await expect(plan).toContainText("Day 1", { timeout: 30_000 })
+  await expect(page).toHaveURL(/\/itinerary\/new/)
+  await expect(page.getByText("Daily Itinerary")).toBeVisible({ timeout: 90_000 })
+  await expect(page).toHaveURL(itineraryPath)
+})
+
 test("deleting the account signs out and removes the user", async () => {
   await page.goto("/account")
   await page.getByRole("tab", { name: "Account" }).click()
