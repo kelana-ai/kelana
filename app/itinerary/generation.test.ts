@@ -1,11 +1,11 @@
-import { generateText } from "ai"
+import { streamText } from "ai"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { generatedItinerary } from "@/test/fixtures"
 import { buildCreatePrompt, buildRefinePrompt, GeneratedItinerarySchema, OPENAI_MODEL, runModel } from "./generation"
 
 vi.mock("ai", () => ({
-  generateText: vi.fn(),
+  streamText: vi.fn(),
   Output: { object: (options: unknown) => ({ kind: "object", options }) },
 }))
 vi.mock("@ai-sdk/openai", () => ({ openai: { responses: (model: string) => ({ model }) } }))
@@ -54,19 +54,32 @@ describe("buildRefinePrompt", () => {
 })
 
 describe("runModel", () => {
+  const usage = { inputTokens: 1200, outputTokens: 3400, totalTokens: 4600, inputTokenDetails: {}, outputTokenDetails: {} }
+
+  function streaming(options: { partials?: unknown[]; output?: unknown; failure?: unknown; failAfter?: unknown } = {}) {
+    const { partials = [], output = generatedItinerary(1), failure, failAfter } = options
+    vi.mocked(streamText).mockReturnValue({
+      partialOutputStream: (async function* () {
+        for (const partial of partials) yield partial
+        if (failAfter) throw failAfter
+      })(),
+      get output() {
+        return failure ? Promise.reject(failure) : Promise.resolve(output)
+      },
+      totalUsage: Promise.resolve(usage),
+    } as never)
+  }
+
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
   it("asks the configured model for an object in the itinerary shape and returns it with the token counts", async () => {
     const itinerary = generatedItinerary(2)
-    vi.mocked(generateText).mockResolvedValue({
-      output: itinerary,
-      totalUsage: { inputTokens: 1200, outputTokens: 3400, totalTokens: 4600, inputTokenDetails: {}, outputTokenDetails: {} },
-    } as never)
+    streaming({ output: itinerary })
 
     expect(await runModel("plan a trip")).toEqual({ itinerary, usage: { inputTokens: 1200, outputTokens: 3400, totalTokens: 4600 } })
-    expect(generateText).toHaveBeenCalledWith(
+    expect(streamText).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: "plan a trip",
         model: { model: OPENAI_MODEL },
@@ -76,19 +89,42 @@ describe("runModel", () => {
     )
   })
 
+  it("hands each partial result to the callback in the order it arrives", async () => {
+    const partials = [{ days: [{ activities: [{ title: "Wal" }] }] }, { days: [{ activities: [{ title: "Walk" }, { title: "Lunch" }] }] }]
+    streaming({ partials })
+    const seen: unknown[] = []
+
+    await runModel("plan a trip", (partial) => seen.push(partial))
+
+    expect(seen).toEqual(partials)
+  })
+
+  it("works without a callback", async () => {
+    streaming({ partials: [{ days: [] }] })
+
+    await expect(runModel("plan a trip")).resolves.toMatchObject({ usage: { totalTokens: 4600 } })
+  })
+
   it("stops waiting for the model after four minutes", async () => {
     const timeout = vi.spyOn(AbortSignal, "timeout")
-    vi.mocked(generateText).mockResolvedValue({ output: generatedItinerary(1), totalUsage: {} } as never)
+    streaming()
 
     await runModel("plan a trip")
 
     expect(timeout).toHaveBeenCalledWith(240_000)
-    expect(vi.mocked(generateText).mock.calls.at(-1)?.[0].abortSignal).toBeInstanceOf(AbortSignal)
+    expect(vi.mocked(streamText).mock.calls.at(-1)?.[0].abortSignal).toBeInstanceOf(AbortSignal)
   })
 
   it("passes on the failure of the model call", async () => {
     const failure = new Error("rate limited")
-    vi.mocked(generateText).mockRejectedValue(failure)
+    streaming({ failure })
+
+    await expect(runModel("plan a trip")).rejects.toBe(failure)
+  })
+
+  it("passes on a failure that happens while the answer is streaming", async () => {
+    const failure = new Error("connection reset")
+    streaming({ partials: [{ days: [] }], failAfter: failure })
 
     await expect(runModel("plan a trip")).rejects.toBe(failure)
   })
