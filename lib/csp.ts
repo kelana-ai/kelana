@@ -4,6 +4,7 @@ interface CspOptions {
   development?: boolean
   preview?: boolean
   upgradeInsecure?: boolean
+  turnstile?: boolean
 }
 
 export interface CspViolation {
@@ -15,6 +16,7 @@ export interface CspViolation {
 const TILES = "https://*.tile.openstreetmap.org"
 const NOMINATIM = "https://nominatim.openstreetmap.org"
 const TOOLBAR = "https://vercel.live"
+const CHALLENGE = "https://challenges.cloudflare.com"
 
 const NO_TOOLBAR = { script: [], style: [], img: [], font: [], connect: [], frame: [] }
 const PREVIEW_TOOLBAR = {
@@ -45,18 +47,19 @@ function supabaseOrigins(url: string | undefined) {
   }
 }
 
-export function buildCsp({ supabaseUrl, sentryDsn, development = false, preview = false, upgradeInsecure = false }: CspOptions = {}) {
+export function buildCsp({ supabaseUrl, sentryDsn, development = false, preview = false, upgradeInsecure = false, turnstile = false }: CspOptions = {}) {
   const supabase = supabaseOrigins(supabaseUrl)
   const toolbar = preview ? PREVIEW_TOOLBAR : NO_TOOLBAR
+  const challenge = turnstile ? [CHALLENGE] : []
 
   const directives: [string, string[]][] = [
     ["default-src", ["'self'"]],
-    ["script-src", ["'self'", "'unsafe-inline'", ...(development ? ["'unsafe-eval'"] : []), ...toolbar.script]],
+    ["script-src", ["'self'", "'unsafe-inline'", ...(development ? ["'unsafe-eval'"] : []), ...toolbar.script, ...challenge]],
     ["style-src", ["'self'", "'unsafe-inline'", ...toolbar.style]],
     ["img-src", ["'self'", "data:", "blob:", TILES, ...supabase.http, ...toolbar.img]],
     ["font-src", ["'self'", "data:", ...toolbar.font]],
-    ["connect-src", ["'self'", NOMINATIM, ...supabase.http, ...supabase.socket, ...ingestOrigin(sentryDsn), ...(development ? ["ws://localhost:*"] : []), ...toolbar.connect]],
-    ["frame-src", toolbar.frame],
+    ["connect-src", ["'self'", NOMINATIM, ...supabase.http, ...supabase.socket, ...ingestOrigin(sentryDsn), ...(development ? ["ws://localhost:*"] : []), ...toolbar.connect, ...challenge]],
+    ["frame-src", [...toolbar.frame, ...challenge]],
     ["frame-ancestors", ["'self'"]],
     ["base-uri", ["'self'"]],
     ["form-action", ["'self'"]],

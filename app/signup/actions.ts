@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/client'
 
-export async function signup(formData: FormData) {
+export async function signup(formData: FormData, captchaToken?: string) {
   const supabase = createClient()
 
   const data = {
@@ -8,7 +8,7 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signUp(data)
+  const { error } = await supabase.auth.signUp({ ...data, options: { captchaToken } })
 
   if (error) {
     return { error }

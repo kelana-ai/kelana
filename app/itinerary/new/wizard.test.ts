@@ -88,6 +88,11 @@ describe("submission", () => {
     })
   })
 
+  it("adds the security check token only when there is one", () => {
+    expect(submission(values, "token-123").captchaToken).toBe("token-123")
+    expect(submission(values).captchaToken).toBeUndefined()
+  })
+
   it("leaves out a home location that has no coordinates", () => {
     expect(submission({ ...values, homeLocation: undefined }).homeLocation).toBeUndefined()
     expect(submission({ ...values, homeLocation: { name: "Jakarta" } }).homeLocation).toBeUndefined()

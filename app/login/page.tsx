@@ -7,6 +7,7 @@ import { type FormEvent, useState } from "react"
 import { AuthFormSkeleton } from "@/components/auth/auth-form-skeleton"
 import { AuthField, AuthFooter, AuthFormCard, AuthSubmitButton } from "@/components/auth/auth-form"
 import { AuthLayout } from "@/components/auth/auth-layout"
+import { useCaptcha } from "@/components/turnstile"
 import { useRedirectSignedIn } from "@/contexts/use-redirect-signed-in"
 import { useUser } from "@/contexts/user-context"
 import { login } from "./actions"
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const router = useRouter()
 
   useRedirectSignedIn()
+  const captcha = useCaptcha()
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -27,10 +29,11 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget)
 
-    const result = await login(formData)
+    const result = await login(formData, captcha.token ?? undefined)
 
     if (result?.error) {
       setError(result.error.message)
+      captcha.reset()
       setIsSubmitting(false)
       return
     }
@@ -68,7 +71,8 @@ export default function LoginPage() {
             required
             className="pl-9"
           />
-          <AuthSubmitButton pending={isSubmitting} pendingLabel="Signing in..." label="Sign in" />
+          {captcha.widget}
+          <AuthSubmitButton pending={isSubmitting} blocked={captcha.enabled && !captcha.token} pendingLabel="Signing in..." label="Sign in" />
         </AuthFormCard>
       )}
     </AuthLayout>

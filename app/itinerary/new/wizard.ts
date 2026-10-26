@@ -25,7 +25,7 @@ export function defaultTripDates(now = new Date()) {
   return { from: new Date(now), to }
 }
 
-export function submission(data: FormValues) {
+export function submission(data: FormValues, captchaToken?: string) {
   return {
     tripName: data.tripName,
     destination: data.destination,
@@ -36,6 +36,7 @@ export function submission(data: FormValues) {
     travelStyles: data.travelStyles,
     dietaryNeeds: data.dietaryNeeds,
     budget: data.budget,
+    captchaToken,
   }
 }
 

@@ -124,6 +124,12 @@ Copy `.env.example` to `.env` and fill in:
   carry no user, request body, cookies, query strings, breadcrumbs or email
   addresses. `SENTRY_ORG`, `SENTRY_PROJECT` and `SENTRY_AUTH_TOKEN` upload source
   maps during the build
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`: optional, turn on a
+  Cloudflare Turnstile check on sign-up, sign-in and the generate step. Once the
+  secret is set the server refuses a generate request without a valid token.
+  To protect the sign-up and sign-in calls of Supabase too, switch on CAPTCHA in
+  the Supabase Auth settings with the same secret, and only after the site key is
+  live, because Supabase then wants a token on every sign-in
 - `NEXT_PUBLIC_SITE_URL`: public URL of the site, used for the sign-out
   redirect and metadata
 

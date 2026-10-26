@@ -62,11 +62,12 @@ interface AuthSubmitButtonProps {
   pending: boolean
   pendingLabel: string
   label: string
+  blocked?: boolean
 }
 
-export function AuthSubmitButton({ pending, pendingLabel, label }: AuthSubmitButtonProps) {
+export function AuthSubmitButton({ pending, pendingLabel, label, blocked = false }: AuthSubmitButtonProps) {
   return (
-    <Button type="submit" className="w-full transition-all duration-200 hover:shadow-md" disabled={pending}>
+    <Button type="submit" className="w-full transition-all duration-200 hover:shadow-md" disabled={pending || blocked}>
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

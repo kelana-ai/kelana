@@ -149,6 +149,60 @@ describe("submit", () => {
     })
   })
 
+  describe("security check", () => {
+    it("passes the token on to the check and goes on when it passes", async () => {
+      const { deps, generate } = setup()
+      const verifyCaptcha = vi.fn(async () => true)
+
+      expect((await submit({ ...deps, verifyCaptcha }, { ...trip, captchaToken: "good-token" })).success).toBe(true)
+      expect(verifyCaptcha).toHaveBeenCalledExactlyOnceWith("good-token")
+      expect(generate).toHaveBeenCalledTimes(1)
+    })
+
+    it("asks for the check again and touches neither the database nor the model when it fails", async () => {
+      const { deps, getSupabase, generate } = setup()
+      const verifyCaptcha = vi.fn(async () => false)
+
+      expect(await submit({ ...deps, verifyCaptcha }, { ...trip, captchaToken: "bad-token" })).toEqual({
+        success: false,
+        error: "Please complete the security check and try again.",
+      })
+      expect(getSupabase).not.toHaveBeenCalled()
+      expect(generate).not.toHaveBeenCalled()
+    })
+
+    it("hands the check an undefined token when the request has none", async () => {
+      const { deps } = setup()
+      const verifyCaptcha = vi.fn(async () => true)
+      await submit({ ...deps, verifyCaptcha }, trip)
+
+      expect(verifyCaptcha).toHaveBeenCalledExactlyOnceWith(undefined)
+    })
+
+    it("does not accept a token that is longer than 2048 characters", async () => {
+      const { deps, getSupabase } = setup()
+
+      expect((await submit(deps, { ...trip, captchaToken: "t".repeat(2049) })).success).toBe(false)
+      expect(getSupabase).not.toHaveBeenCalled()
+    })
+
+    it("keeps the token out of the request to the model", async () => {
+      const { deps, generate } = setup()
+      await submit(deps, { ...trip, captchaToken: "secret-token-value" })
+
+      expect(generate.mock.calls[0][0]).not.toContain("secret-token-value")
+    })
+
+    it("is not asked about the check when generation is switched off", async () => {
+      vi.stubEnv("FEATURE_GENERATION", "off")
+      const { deps } = setup()
+      const verifyCaptcha = vi.fn(async () => true)
+      await submit({ ...deps, verifyCaptcha }, trip)
+
+      expect(verifyCaptcha).not.toHaveBeenCalled()
+    })
+  })
+
   describe("access", () => {
     it("asks the user to sign in and does not query or call the model", async () => {
       const { deps, calls, generate } = setup({ user: null })

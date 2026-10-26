@@ -36,6 +36,8 @@ export default function PrivacyPage() {
           <li>
             Sentry receives error reports when error tracking is switched on: the error message with email addresses removed, the address of the page
             without its query string, and the browser and system names. It receives no account data and no trip details.
+            Cloudflare Turnstile checks that a visitor is not a bot when it is switched on: it sees the browser and the address of the connection while the
+            check on the sign-up, sign-in and generate pages runs.
           </li>
         </ul>
       </section>
