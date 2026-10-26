@@ -2,13 +2,13 @@ import type { NextConfig } from "next"
 
 import { buildCsp } from "./lib/csp"
 
-const ENFORCE_CSP = false
+const ENFORCE_CSP = true
 
 const csp = buildCsp({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   development: process.env.NODE_ENV !== "production",
   preview: process.env.VERCEL_ENV === "preview",
-  enforce: ENFORCE_CSP,
+  upgradeInsecure: Boolean(process.env.VERCEL),
 })
 
 const securityHeaders = [

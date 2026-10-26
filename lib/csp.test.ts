@@ -32,10 +32,10 @@ describe("buildCsp", () => {
     expect(directive(policy, "report-to")).toBe("report-to csp")
   })
 
-  it("upgrades insecure requests only when it is enforced outside development", () => {
+  it("upgrades insecure requests only when asked to, and never in development", () => {
     expect(policy).not.toContain("upgrade-insecure-requests")
-    expect(buildCsp({ enforce: true }).endsWith("upgrade-insecure-requests")).toBe(true)
-    expect(buildCsp({ enforce: true, development: true })).not.toContain("upgrade-insecure-requests")
+    expect(buildCsp({ upgradeInsecure: true }).endsWith("upgrade-insecure-requests")).toBe(true)
+    expect(buildCsp({ upgradeInsecure: true, development: true })).not.toContain("upgrade-insecure-requests")
   })
 
   it("allows eval and local sockets in development only", () => {
@@ -48,8 +48,12 @@ describe("buildCsp", () => {
 
   it("allows the Vercel toolbar on previews only", () => {
     expect(policy).not.toContain("vercel.live")
+    expect(policy).not.toContain("pusher")
     const preview = buildCsp({ preview: true })
     for (const name of ["script-src", "style-src", "img-src", "font-src", "connect-src", "frame-src"]) expect(directive(preview, name)).toContain("https://vercel.live")
+    expect(directive(preview, "connect-src")).toContain("wss://ws-us3.pusher.com")
+    expect(directive(preview, "img-src")).toContain("https://vercel.com")
+    expect(directive(preview, "font-src")).toContain("https://assets.vercel.com")
   })
 
   it("copes with a missing or invalid project address", () => {

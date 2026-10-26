@@ -2,7 +2,7 @@ interface CspOptions {
   supabaseUrl?: string
   development?: boolean
   preview?: boolean
-  enforce?: boolean
+  upgradeInsecure?: boolean
 }
 
 export interface CspViolation {
@@ -13,7 +13,17 @@ export interface CspViolation {
 
 const TILES = "https://*.tile.openstreetmap.org"
 const NOMINATIM = "https://nominatim.openstreetmap.org"
-const VERCEL_TOOLBAR = "https://vercel.live"
+const TOOLBAR = "https://vercel.live"
+
+const NO_TOOLBAR = { script: [], style: [], img: [], font: [], connect: [], frame: [] }
+const PREVIEW_TOOLBAR = {
+  script: [TOOLBAR],
+  style: [TOOLBAR],
+  img: [TOOLBAR, "https://vercel.com"],
+  font: [TOOLBAR, "https://assets.vercel.com"],
+  connect: [TOOLBAR, "wss://ws-us3.pusher.com"],
+  frame: [TOOLBAR],
+}
 
 function supabaseOrigins(url: string | undefined) {
   if (!url) return { http: [], socket: [] }
@@ -25,18 +35,18 @@ function supabaseOrigins(url: string | undefined) {
   }
 }
 
-export function buildCsp({ supabaseUrl, development = false, preview = false, enforce = false }: CspOptions = {}) {
+export function buildCsp({ supabaseUrl, development = false, preview = false, upgradeInsecure = false }: CspOptions = {}) {
   const supabase = supabaseOrigins(supabaseUrl)
-  const toolbar = preview ? [VERCEL_TOOLBAR] : []
+  const toolbar = preview ? PREVIEW_TOOLBAR : NO_TOOLBAR
 
   const directives: [string, string[]][] = [
     ["default-src", ["'self'"]],
-    ["script-src", ["'self'", "'unsafe-inline'", ...(development ? ["'unsafe-eval'"] : []), ...toolbar]],
-    ["style-src", ["'self'", "'unsafe-inline'", ...toolbar]],
-    ["img-src", ["'self'", "data:", "blob:", TILES, ...supabase.http, ...toolbar]],
-    ["font-src", ["'self'", "data:", ...toolbar]],
-    ["connect-src", ["'self'", NOMINATIM, ...supabase.http, ...supabase.socket, ...(development ? ["ws://localhost:*"] : []), ...toolbar]],
-    ["frame-src", [...toolbar]],
+    ["script-src", ["'self'", "'unsafe-inline'", ...(development ? ["'unsafe-eval'"] : []), ...toolbar.script]],
+    ["style-src", ["'self'", "'unsafe-inline'", ...toolbar.style]],
+    ["img-src", ["'self'", "data:", "blob:", TILES, ...supabase.http, ...toolbar.img]],
+    ["font-src", ["'self'", "data:", ...toolbar.font]],
+    ["connect-src", ["'self'", NOMINATIM, ...supabase.http, ...supabase.socket, ...(development ? ["ws://localhost:*"] : []), ...toolbar.connect]],
+    ["frame-src", toolbar.frame],
     ["frame-ancestors", ["'self'"]],
     ["base-uri", ["'self'"]],
     ["form-action", ["'self'"]],
@@ -48,7 +58,7 @@ export function buildCsp({ supabaseUrl, development = false, preview = false, en
   ]
 
   const lines = directives.filter(([, values]) => values.length > 0).map(([name, values]) => `${name} ${values.join(" ")}`)
-  if (enforce && !development) lines.push("upgrade-insecure-requests")
+  if (upgradeInsecure && !development) lines.push("upgrade-insecure-requests")
   return lines.join("; ")
 }
 
