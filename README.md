@@ -53,7 +53,7 @@ and opening hours before you travel.
 - [Leaflet](https://leafletjs.com) with OpenStreetMap tiles and Nominatim search
 - [React Hook Form](https://react-hook-form.com) + [Zod](https://zod.dev) for the wizard
 - [Motion](https://motion.dev) for animations
-- [Vitest](https://vitest.dev) for unit tests
+- [Vitest](https://vitest.dev) for unit tests and [Stryker](https://stryker-mutator.io) for mutation tests
 - [Vercel](https://vercel.com) and GitHub Actions for hosting and CI/CD
 
 ## Getting started
@@ -166,6 +166,7 @@ on `ubuntu-24.04` and live in `.github/workflows/`:
 - `supabase-keepalive.yml`: calls `ping()` on both Supabase projects twice a week, because the free plan pauses idle projects
 - `e2e.yml` and `e2e-production.yml`: the browser tests, and a weekly run against the live site with the real model
 - `uptime.yml`: requests `/api/health` every five minutes and opens an incident issue when it fails
+- `mutation.yml`: a weekly mutation test of `lib/`, with the report attached to the run
 
 Production uses the `kelana` Supabase project and previews use `kelana-dev`.
 Environment variables are set per environment in the Vercel project, and
