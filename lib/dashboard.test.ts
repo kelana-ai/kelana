@@ -139,11 +139,11 @@ describe("budgetAllocation", () => {
       { type: "accommodation", cost: 50 },
       { type: "transportation", cost: 25 },
       { type: "food", cost: 15 },
-      { type: "drink", cost: 5 },
+      { type: "drink", cost: 6 },
       { type: "sightseeing", cost: 3 },
-      { type: "wellness", cost: 2 },
+      { type: "wellness", cost: 1 },
     ]
-    expect(budgetAllocation(rows).map((b) => b.value)).toEqual([50, 25, 20, 5])
+    expect(budgetAllocation(rows).map((b) => b.value)).toEqual([50, 25, 21, 4])
   })
 
   it("reads costs that arrive as strings and ignores missing or invalid ones", () => {

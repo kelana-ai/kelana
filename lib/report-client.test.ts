@@ -12,7 +12,8 @@ describe("reportClientError", () => {
   it("does nothing without a DSN", async () => {
     const { reportClientError } = await import("./report-client")
     reportClientError(new Error("boom"), "page")
-    await Promise.resolve()
+    await vi.dynamicImportSettled()
+    await new Promise((resolve) => setTimeout(resolve, 0))
 
     expect(captureException).not.toHaveBeenCalled()
   })

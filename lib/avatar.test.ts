@@ -40,3 +40,19 @@ describe("ownedAvatar", () => {
     },
   )
 })
+
+describe("avatar file names", () => {
+  it.each([
+    ["image/png", "png"],
+    ["image/jpeg", "jpg"],
+    ["image/webp", "webp"],
+    ["image/gif", "gif"],
+  ])("gives %s the extension %s", (type, extension) => {
+    expect(avatarPath("user-1", type, "abc")).toBe(`user-1/abc.${extension}`)
+  })
+
+  it("never treats an address as a path, even when the folder of the user starts with http", () => {
+    expect(ownedAvatar("httpuser/old.png", "httpuser")).toBeNull()
+    expect(ownedAvatar("https://httpuser/old.png", "httpuser")).toBeNull()
+  })
+})

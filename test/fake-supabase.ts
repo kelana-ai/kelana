@@ -8,6 +8,7 @@ export interface RecordedCall {
   filters: { op: "eq" | "gte" | "lte" | "in"; column: string; value: unknown }[]
   order?: { column: string; ascending: boolean }
   limit?: number
+  returning?: string
 }
 
 export interface Reply {
@@ -36,6 +37,8 @@ export function fakeSupabase({ user = { id: "user-1" }, reply = () => ({}) }: Op
         if (call.action === "select") {
           call.payload = columns
           call.options = options
+        } else {
+          call.returning = columns
         }
         return query
       },
@@ -102,7 +105,7 @@ export function fakeSupabase({ user = { id: "user-1" }, reply = () => ({}) }: Op
     rpc: async (name: string, args?: unknown) => direct(name, "rpc", args),
     storage: {
       from: (bucket: string) => ({
-        upload: async (path: string, file: unknown) => direct(bucket, "upload", { path, file }),
+        upload: async (path: string, file: unknown, options?: unknown) => direct(bucket, "upload", { path, file, options }),
         list: async (prefix?: string) => direct(bucket, "list", prefix),
         remove: async (paths: string[]) => direct(bucket, "remove", paths),
       }),
