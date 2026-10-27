@@ -246,9 +246,16 @@ describe("upcomingActivities", () => {
     expect(first).toEqual({ id: "a", title: "Market", date: "Oct 23, 2026", time: "10:00:00", type: "food", itineraryId: "trip-1" })
   })
 
-  it("keeps an activity whose day is unknown, after the others", () => {
-    const result = upcomingActivities(days, [activity("orphan", "day-9", "07:00:00"), activity("known", "day-1", "20:00:00")])
-    expect(result.map((a) => a.id)).toEqual(["orphan", "known"])
-    expect(result[0]).toMatchObject({ date: "", itineraryId: "" })
+  it.each([
+    ["first", ["orphan", "known"]],
+    ["last", ["known", "orphan"]],
+  ])("keeps an activity whose day is unknown after the others when it is given %s", (_position, order) => {
+    const given = { orphan: activity("orphan", "day-9", "07:00:00"), known: activity("known", "day-1", "20:00:00") }
+    const result = upcomingActivities(
+      days,
+      order.map((id) => given[id as keyof typeof given]),
+    )
+    expect(result.map((a) => a.id)).toEqual(["known", "orphan"])
+    expect(result[1]).toMatchObject({ date: "", itineraryId: "" })
   })
 })
