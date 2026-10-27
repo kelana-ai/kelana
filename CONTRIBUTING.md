@@ -27,6 +27,7 @@ A change is done when:
 ## Tests
 
 - `pnpm test` runs the unit tests. `pnpm test:coverage` also checks the coverage thresholds in `vitest.config.mts`.
+- `pnpm mutate` changes `lib/` in small ways, such as a flipped comparison or a removed branch, and checks that a test fails each time. It takes about an hour, so it runs weekly in CI and on demand. `docs/mutation-testing.md` explains how to read the report.
 - The acceptance scenarios for sign-up, creating, refining and downloading a trip, and deleting the account are Given/When/Then files in `e2e/features/`. Each scenario has the name of an end-to-end test, and `pnpm test` fails when one does not.
 - `pnpm e2e` runs the browser tests in `e2e/` against a local build with a mocked model. Run `pnpm exec playwright install chromium` once first. The tests sign up a throwaway user and delete it at the end, so point `.env` at the dev Supabase project.
 - `pnpm test:rls` signs up two throwaway users on the dev project and checks that one cannot read, change or delete the other's itineraries, days, activities, profile or avatar files, and that anonymous requests are refused. It removes both users when it ends and refuses to run against production. Run it before and after applying a migration that touches policies or functions.

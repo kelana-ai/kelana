@@ -1,0 +1,51 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "plugins": [
+    "@stryker-mutator/typescript-checker"
+  ],
+  "testRunner": "command",
+  "checkers": [
+    "typescript"
+  ],
+  "tsconfigFile": "tsconfig.mutation.json",
+  "mutate": [
+    "lib/**/*.ts",
+    "!lib/**/*.test.ts",
+    "!lib/eco-facts.ts",
+    "!lib/leaflet-icons.ts",
+    "!lib/motion.ts",
+    "!lib/utils.ts"
+  ],
+  "coverageAnalysis": "off",
+  "reporters": [
+    "clear-text",
+    "progress",
+    "html"
+  ],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "thresholds": {
+    "high": 95,
+    "low": 90,
+    "break": 90
+  },
+  "cleanTempDir": true,
+  "ignorePatterns": [
+    ".next",
+    ".vercel",
+    ".claude",
+    "public",
+    "docs",
+    "reports",
+    "coverage",
+    "playwright-report",
+    "test-results",
+    ".github"
+  ],
+  "concurrency": 4,
+  "commandRunner": {
+    "command": "node node_modules/vitest/vitest.mjs run --reporter=dot --maxWorkers=2"
+  },
+  "timeoutMS": 60000
+}
