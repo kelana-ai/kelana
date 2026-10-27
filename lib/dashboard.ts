@@ -68,6 +68,7 @@ export interface UpcomingActivity {
 
 const UPCOMING_DAYS = 7
 const UPCOMING_LIMIT = 10
+const AFTER_ALL_DAYS = "9999-12-31"
 const isActive = (status: string) => status === "confirmed" || status === "planning"
 const saved = (itn: DashboardItinerary) => itn.carbon_metrics?.saved || 0
 
@@ -161,7 +162,7 @@ export function upcomingActivities(days: UpcomingDay[], activities: UpcomingActi
     .map((activity) => ({ activity, day: dayById.get(activity.day_id) }))
     .sort(
       (a, b) =>
-        (a.day?.date ?? "~").localeCompare(b.day?.date ?? "~") ||
+        (a.day?.date ?? AFTER_ALL_DAYS).localeCompare(b.day?.date ?? AFTER_ALL_DAYS) ||
         a.activity.start_time.localeCompare(b.activity.start_time) ||
         a.activity.title.localeCompare(b.activity.title) ||
         a.activity.id.localeCompare(b.activity.id),
