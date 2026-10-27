@@ -81,6 +81,7 @@ describe("mapActivitiesOf", () => {
         itinerary_activities: [
           activity({ id: "none", location_lat: null, location_lng: null }),
           activity({ id: "half", location_lat: -8.4, location_lng: null }),
+          activity({ id: "other-half", location_lat: null, location_lng: 115.2 }),
           activity({ id: "text", activity_index: 1, location_lat: "-8.5" as unknown as number, location_lng: "115.25" as unknown as number }),
         ],
       }),
@@ -129,6 +130,9 @@ describe("downloadFileName", () => {
     ["Ubud slow trip", "ubud-slow-trip.txt"],
     ["  Bali: 3 days!  ", "bali-3-days.txt"],
     ["Kyoto_temples-2026", "kyoto_temples-2026.txt"],
+    ["--Trip--", "trip.txt"],
+    ["-a-b-", "a-b.txt"],
+    ["!Trip!", "trip.txt"],
   ])("turns %j into %s", (name, expected) => {
     expect(downloadFileName(name)).toBe(expected)
   })

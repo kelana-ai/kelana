@@ -23,7 +23,10 @@ describe("replaceAvatar", () => {
     await replaceAvatar(client, "user-1", file, "user-1/old.png", save)
 
     expect(steps(calls)).toEqual(["upload avatars", "remove avatars"])
-    expect(calls[0].payload).toMatchObject({ path: "user-1/11111111-1111-4111-8111-111111111111.png" })
+    expect(calls[0].payload).toMatchObject({
+      path: "user-1/11111111-1111-4111-8111-111111111111.png",
+      options: { contentType: "image/png" },
+    })
     expect(save).toHaveBeenCalledWith("user-1/11111111-1111-4111-8111-111111111111.png")
     expect(calls[1].payload).toEqual(["user-1/old.png"])
   })

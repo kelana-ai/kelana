@@ -48,3 +48,15 @@ describe("toggleItem", () => {
     expect(list).toEqual(["a"])
   })
 })
+
+describe("profile messages", () => {
+  it("say what is wrong in words the person can act on", () => {
+    expect(USERNAME_MESSAGE).toBe("Username must be 3-30 characters: letters, numbers, dots, dashes or underscores.")
+    expect(WEBSITE_MESSAGE).toBe("Website must start with http:// or https://")
+  })
+
+  it("only accepts a website that starts with the scheme", () => {
+    expect(validateProfile({ username: "", website: "see https://example.com" })).toBe(WEBSITE_MESSAGE)
+    expect(validateProfile({ username: "", website: "xhttp://example.com" })).toBe(WEBSITE_MESSAGE)
+  })
+})

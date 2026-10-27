@@ -19,7 +19,23 @@ describe("pingDatabase", () => {
     expect(result.ok && result.latencyMs).toBeGreaterThanOrEqual(0)
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toBe("https://project.supabase.co/rest/v1/rpc/ping")
-    expect(init).toMatchObject({ method: "POST", body: "{}", cache: "no-store", headers: { apikey: "publishable-key" } })
+    expect(init).toMatchObject({
+      method: "POST",
+      body: "{}",
+      cache: "no-store",
+      headers: { apikey: "publishable-key", "content-type": "application/json" },
+    })
+  })
+
+  it("measures the time between the request and the answer", async () => {
+    vi.useFakeTimers()
+    vi.advanceTimersByTime(1000)
+    const fetchImpl = vi.fn(async () => {
+      vi.advanceTimersByTime(42)
+      return new Response("1")
+    })
+
+    expect(await pingDatabase({ ...options, fetchImpl })).toEqual({ ok: true, latencyMs: 42 })
   })
 
   it.each([

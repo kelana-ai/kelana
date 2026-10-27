@@ -160,7 +160,12 @@ describe("removeItinerary", () => {
     const { client, calls } = database({ "delete itineraries": { data: [{ id: "itn-1" }] } })
 
     expect(await removeItinerary(client, "itn-1")).toBe(true)
-    expect(calls[0]).toMatchObject({ table: "itineraries", action: "delete", filters: [{ op: "eq", column: "id", value: "itn-1" }] })
+    expect(calls[0]).toMatchObject({
+      table: "itineraries",
+      action: "delete",
+      filters: [{ op: "eq", column: "id", value: "itn-1" }],
+      returning: "id",
+    })
   })
 
   it.each([[[]], [null]])("reports that nothing was removed when the database returns %j", async (data) => {
@@ -177,6 +182,7 @@ describe("countItinerariesSince", () => {
     const { client, calls } = database({ "select itineraries": { count: 7 } })
 
     expect(await countItinerariesSince(client, "2026-10-01T00:00:00.000Z")).toBe(7)
+    expect(calls[0].payload).toBe("id")
     expect(calls[0].options).toEqual({ count: "exact", head: true })
     expect(calls[0].filters).toEqual([{ op: "gte", column: "created_at", value: "2026-10-01T00:00:00.000Z" }])
   })

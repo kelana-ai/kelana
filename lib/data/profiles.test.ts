@@ -24,6 +24,16 @@ describe("saveProfile", () => {
     })
   })
 
+  it("trims the username and treats one made of spaces as empty", async () => {
+    const trimmed = setup()
+    await saveProfile(trimmed.client, "user-1", { fullName: "", username: "  ayu  ", website: "" }, NOW)
+    expect(trimmed.calls[0].payload).toMatchObject({ username: "ayu" })
+
+    const blank = setup()
+    await saveProfile(blank.client, "user-1", { fullName: "", username: "   ", website: "" }, NOW)
+    expect(blank.calls[0].payload).toMatchObject({ username: null })
+  })
+
   it("reports a username that is already taken", async () => {
     const { client } = setup({ "update profiles": { error: { message: "duplicate", code: "23505" } as { message: string } } })
     expect(await saveProfile(client, "user-1", { fullName: "", username: "ayu", website: "" })).toEqual({
@@ -66,6 +76,7 @@ describe("savePreferences", () => {
       dietary_needs: ["vegan"],
       updated_at: "2026-10-21T10:00:00.000Z",
     })
+    expect(calls[0].filters).toEqual([{ op: "eq", column: "id", value: "user-1" }])
   })
 
   it("starts from empty preferences", async () => {
@@ -142,6 +153,12 @@ describe("loadProfile", () => {
   it("stores null for metadata that is missing or empty", async () => {
     const { client, calls } = setup({ "insert profiles": { data: stored } })
     await loadProfile(client, sessionUser({ full_name: "" }))
+    expect(calls[1].payload).toEqual({ id: "user-1", full_name: null, avatar_url: null })
+  })
+
+  it("copes with a session user that carries no metadata", async () => {
+    const { client, calls } = setup({ "insert profiles": { data: stored } })
+    await loadProfile(client, { id: "user-1" } as unknown as User)
     expect(calls[1].payload).toEqual({ id: "user-1", full_name: null, avatar_url: null })
   })
 

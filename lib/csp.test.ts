@@ -120,3 +120,58 @@ describe("violationsOf", () => {
     expect(violationsOf(body)).toHaveLength(10)
   })
 })
+
+describe("buildCsp remaining directives", () => {
+  const policy = buildCsp({ supabaseUrl: "https://project.supabase.co" })
+  const part = (name: string) => policy.split("; ").find((item) => item.startsWith(`${name} `))
+
+  it("limits workers and the manifest to the app", () => {
+    expect(part("worker-src")).toBe("worker-src 'self' blob:")
+    expect(part("manifest-src")).toBe("manifest-src 'self'")
+  })
+
+  it("adds no socket for a project address that cannot be read", () => {
+    expect(buildCsp({ supabaseUrl: "not a url" }).split("; ").find((item) => item.startsWith("connect-src "))).toBe(
+      "connect-src 'self' https://nominatim.openstreetmap.org",
+    )
+  })
+})
+
+describe("violationsOf details", () => {
+  const report = (patch: Record<string, unknown>) => violationsOf({ "csp-report": { "document-uri": "https://a.test/page", "effective-directive": "img-src", ...patch } })[0]
+
+  it("keeps a keyword as it is and shortens anything longer than 20 characters", () => {
+    expect(report({ "blocked-uri": "inline" }).blocked).toBe("inline")
+    expect(report({ "blocked-uri": "x".repeat(20) }).blocked).toBe("x".repeat(20))
+    expect(report({ "blocked-uri": "x".repeat(21) }).blocked).toBe("other")
+  })
+
+  it("only reads an address when it starts with http or https", () => {
+    expect(report({ "blocked-uri": "http://insecure.test/a.png" }).blocked).toBe("http://insecure.test")
+    expect(report({ "blocked-uri": "https://secure.test/a.png" }).blocked).toBe("https://secure.test")
+    expect(report({ "blocked-uri": "see https://evil.test/a" }).blocked).toBe("other")
+    expect(report({ "blocked-uri": "ftp://files.test/a" }).blocked).toBe("ftp://files.test/a")
+  })
+
+  it("keeps a short text that only contains an address in the middle", () => {
+    expect(report({ "blocked-uri": "see https://a.co" }).blocked).toBe("see https://a.co")
+  })
+
+  it("shortens an address it cannot parse", () => {
+    expect(report({ "blocked-uri": "https://" }).blocked).toBe("other")
+  })
+
+  it("reports an unknown directive when the report names none", () => {
+    expect(violationsOf({ "csp-report": { "blocked-uri": "inline" } })[0].directive).toBe("unknown")
+  })
+
+  it("falls back to the violated directive of the older format", () => {
+    expect(violationsOf({ "csp-report": { "violated-directive": "script-src 'self'", "blocked-uri": "inline" } })[0].directive).toBe("script-src 'self'")
+  })
+
+  it("ignores a report whose body is not an object", () => {
+    expect(violationsOf({ "csp-report": "oops" })).toEqual([])
+    expect(violationsOf({ type: "csp-violation", body: "oops" })).toEqual([])
+    expect(violationsOf([42, "text", true])).toEqual([])
+  })
+})

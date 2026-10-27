@@ -507,3 +507,42 @@ describe("effectiveStatus edges", () => {
     expect(effectiveStatus("confirmed", "2026-06-30")).toBe("completed")
   })
 })
+
+describe("isDateKey years", () => {
+  it.each(["0050-06-15", "0099-12-31", "0001-01-01"])("rejects %s because the year has no four digit form in a date", (key) => {
+    expect(isDateKey(key)).toBe(false)
+  })
+
+  it("accepts the first year that works as a four digit year", () => {
+    expect(isDateKey("0100-01-01")).toBe(true)
+  })
+})
+
+describe("itineraryToText layout", () => {
+  const trip = {
+    name: "Ubud trip",
+    destination_name: "Ubud, Bali",
+    date_from: "2026-10-25",
+    date_to: "2026-10-25",
+    days: [
+      {
+        date: "2026-10-25",
+        activities: [
+          { start_time: "09:00:00", end_time: null, title: "Lunch", description: "", address: null, cost: 0 },
+          { start_time: "10:00:00", end_time: "11:00:00", title: "Walk", description: "", address: null, cost: 5 },
+        ],
+      },
+    ],
+  }
+
+  it("leaves a blank line between the header and the first day", () => {
+    expect(itineraryToText(trip).split("\n").slice(0, 4)).toEqual(["Ubud trip", "Ubud, Bali | Oct 25, 2026 - Oct 25, 2026", "", "Day 1 - Oct 25, 2026"])
+  })
+
+  it("writes an activity without a cost as the time and the title only", () => {
+    const lines = itineraryToText(trip).split("\n")
+
+    expect(lines).toContain("  09:00  Lunch")
+    expect(lines).toContain("  10:00-11:00  Walk (~$5)")
+  })
+})
