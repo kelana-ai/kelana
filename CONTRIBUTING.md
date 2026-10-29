@@ -30,6 +30,7 @@ A change is done when:
 - `pnpm mutate` changes `lib/` in small ways, such as a flipped comparison or a removed branch, and checks that a test fails each time. It takes about an hour, so it runs weekly in CI and on demand. `docs/mutation-testing.md` explains how to read the report.
 - The acceptance scenarios for sign-up, creating, refining and downloading a trip, and deleting the account are Given/When/Then files in `e2e/features/`. Each scenario has the name of an end-to-end test, and `pnpm test` fails when one does not.
 - `pnpm e2e` runs the browser tests in `e2e/` against a local build with a mocked model. Run `pnpm exec playwright install chromium` once first. The tests sign up a throwaway user and delete it at the end, so point `.env` at the dev Supabase project.
+- `k6 run load/k6.js` sends load to a running app with a mocked model. `docs/load-test.md` has the commands and the last results.
 - `pnpm test:rls` signs up two throwaway users on the dev project and checks that one cannot read, change or delete the other's itineraries, days, activities, profile or avatar files, and that anonymous requests are refused. It removes both users when it ends and refuses to run against production. Run it before and after applying a migration that touches policies or functions.
 - Set `E2E_BASE_URL` to run the same tests against a deployed site, with that site's `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. They then use the real model, which takes a few minutes and costs a few cents.
 
