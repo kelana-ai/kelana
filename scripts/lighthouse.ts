@@ -48,10 +48,13 @@ function main() {
   const base = process.env.LIGHTHOUSE_URL ?? "http://localhost:3000"
   mkdirSync("reports/lighthouse", { recursive: true })
 
-  const rows = ["/", "/about", "/login", "/signup"].map((path) => ({
-    path,
-    scores: audit(`${base}${path}`, `reports/lighthouse/${path === "/" ? "home" : path.slice(1)}.json`),
-  }))
+  const rows = ["/", "/about", "/login", "/signup"].map((path) => {
+    const url = `${base}${path}`
+    const file = `reports/lighthouse/${path === "/" ? "home" : path.slice(1)}.json`
+    // the first run warms the image optimizer and the page caches, so the scores do not depend on which page comes first
+    audit(url, file)
+    return { path, scores: audit(url, file) }
+  })
   const summary = table(rows)
   console.log(summary)
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Lighthouse\n\n${summary}\n`)
