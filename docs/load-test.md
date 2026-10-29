@@ -8,6 +8,7 @@
 pnpm build
 node e2e/support/mock-openai.ts &
 OPENAI_BASE_URL=http://127.0.0.1:4010/v1 OPENAI_API_KEY=load-test PORT=3111 pnpm start &
+mkdir -p reports/load
 SUPABASE_URL=... SUPABASE_KEY=... BASE_URL=http://localhost:3111 k6 run load/k6.js
 ```
 
