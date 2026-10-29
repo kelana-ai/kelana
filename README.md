@@ -161,6 +161,7 @@ Vercel CLI, so production only gets commits that passed CI. The workflows run
 on `ubuntu-24.04` and live in `.github/workflows/`:
 
 - `ci.yml`: lint, type-check, tests and a build on every push to `main` and every PR
+- `lighthouse.yml`: audits the public pages with Lighthouse on every PR and fails when accessibility, best practices or SEO drop below 90
 - `deploy-preview.yml`: a Vercel preview for each PR (skipped for forks), with the URL posted as a comment
 - `deploy-production.yml`: deploys the commit that passed CI on `main`
 - `supabase-keepalive.yml`: calls `ping()` on both Supabase projects twice a week, because the free plan pauses idle projects
