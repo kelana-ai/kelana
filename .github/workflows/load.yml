@@ -43,7 +43,9 @@ jobs:
       - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
         with:
           k6-version: 2.1.0
-      - run: k6 run load/k6.js
+      - run: |
+          mkdir -p reports/load
+          k6 run load/k6.js
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_DEV_URL }}
           SUPABASE_KEY: ${{ vars.SUPABASE_DEV_KEY }}
