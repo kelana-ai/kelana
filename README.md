@@ -167,6 +167,7 @@ on `ubuntu-24.04` and live in `.github/workflows/`:
 - `e2e.yml` and `e2e-production.yml`: the browser tests, and a weekly run against the live site with the real model
 - `uptime.yml`: requests `/api/health` every five minutes and opens an incident issue when it fails
 - `mutation.yml`: a weekly mutation test of `lib/`, with the report attached to the run
+- `load.yml`: a k6 load test of a local build with a mocked model, started by hand
 
 Production uses the `kelana` Supabase project and previews use `kelana-dev`.
 Environment variables are set per environment in the Vercel project, and
