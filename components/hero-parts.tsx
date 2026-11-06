@@ -1,25 +1,9 @@
-import { motion } from "framer-motion"
 import { ArrowRight, Globe, Leaf, Play, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-}
 
 const features = [
   {
@@ -44,6 +28,7 @@ export function HeroBackground() {
         alt="Mountain landscape"
         fill
         priority
+        fetchPriority="high"
         className="object-cover object-center"
         sizes="100vw"
       />
@@ -55,33 +40,25 @@ export function HeroBackground() {
 
 export function HeroCopy() {
   return (
-    <motion.div
-      className="flex flex-col items-start text-left"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <motion.div variants={itemVariants} className="mb-4">
+    <div className="flex flex-col items-start text-left">
+      <div className="mb-4">
         <Badge className="rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-green-400 backdrop-blur-sm">
           AI trip planner
         </Badge>
-      </motion.div>
+      </div>
 
-      <motion.h1
-        variants={itemVariants}
-        className="mb-6 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl"
-      >
+      <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
         Plan a <br className="hidden sm:inline" />
         <span className="text-green-400">low-impact trip</span> <br className="hidden sm:inline" />
         with Kelana
-      </motion.h1>
+      </h1>
 
-      <motion.p variants={itemVariants} className="mb-8 max-w-md text-lg text-white/90 md:text-xl">
+      <p className="mb-8 max-w-md text-lg text-white/90 md:text-xl">
         Say where you're going and how you like to travel. Kelana writes a day-by-day plan that favours trains,
         walkable routes and locally owned places.
-      </motion.p>
+      </p>
 
-      <motion.div variants={itemVariants} className="mb-10 flex flex-col gap-4 sm:flex-row">
+      <div className="mb-10 flex flex-col gap-4 sm:flex-row">
         <Button size="lg" className="rounded-full px-8 text-base shadow-lg" asChild>
           <Link href="/signup">
             Start Planning <ArrowRight className="ml-2 h-4 w-4" />
@@ -97,9 +74,9 @@ export function HeroCopy() {
             <Play className="mr-2 h-4 w-4" /> See How It Works
           </Link>
         </Button>
-      </motion.div>
+      </div>
 
-      <motion.div variants={itemVariants} className="flex flex-col gap-3 sm:flex-row sm:gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
         {features.map((feature, index) => (
           <div key={index} className="flex items-center gap-2">
             <div className="flex p-2 items-center justify-center rounded-full bg-primary/20 backdrop-blur-sm">
@@ -108,20 +85,14 @@ export function HeroCopy() {
             <span className="text-sm font-medium text-white md:text-base">{feature.text}</span>
           </div>
         ))}
-      </motion.div>
-    </motion.div>
-
+      </div>
+    </div>
   )
 }
 
 export function HeroVisual() {
   return (
-    <motion.div
-      className="relative hidden md:block"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.7, delay: 0.3 }}
-    >
+    <div className="relative hidden md:block">
       <div className="relative h-[500px] w-full">
         <div className="absolute left-0 top-0 h-[450px] w-[450px] rounded-full bg-primary/30 blur-3xl" />
         <div className="absolute right-0 bottom-0 h-[350px] w-[350px] rounded-full bg-primary/20 blur-3xl" />
@@ -161,7 +132,7 @@ export function HeroVisual() {
           <Sparkles className="h-7 w-7 text-green-400" />
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 

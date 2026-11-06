@@ -1,7 +1,4 @@
-"use client"
-
 import { ArrowRight, Heart, Leaf, Sparkles, Users } from "lucide-react"
-import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -134,7 +131,7 @@ export default function AboutPage() {
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background py-20 md:py-28">
         <div className="container relative z-10">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div>
               <Badge className="mb-4">About Kelana</Badge>
               <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl">
                 Travel planning with a <span className="text-primary">lighter footprint</span>
@@ -153,14 +150,9 @@ export default function AboutPage() {
                   <a href="#our-values">Our values</a>
                 </Button>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative mx-auto max-w-md"
-            >
+            <div className="relative mx-auto max-w-md">
               <div className="relative aspect-square overflow-hidden rounded-2xl">
                 <Image
                   src="/about-hero.jpg"
@@ -169,10 +161,12 @@ export default function AboutPage() {
                   height={800}
                   className="h-full w-full object-cover"
                   sizes="(min-width: 768px) 28rem, 100vw"
+                  loading="eager"
+                  fetchPriority="high"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
