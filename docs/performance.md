@@ -28,15 +28,16 @@ Lighthouse 13.5.0 with its default mobile settings (a simulated slow 4G connecti
 
 | Page | Performance | Accessibility | Best practices | SEO |
 | --- | --- | --- | --- | --- |
-| `/` | 89 | 96 | 100 | 100 |
-| `/about` | 79 | 96 | 100 | 100 |
-| `/login` | 86 | 96 | 100 | 100 |
-| `/signup` | 84 | 96 | 100 | 100 |
+| `/` | 89 | 100 | 100 | 100 |
+| `/about` | 93 | 100 | 100 | 100 |
+| `/login` | 92 | 100 | 100 | 100 |
+| `/signup` | 94 | 100 | 100 | 100 |
 
 What the reports show:
 
-- The first paint is fast (0.9 s) but the largest paint takes 3.2 to 4.6 s. The heading on `/login` and `/signup` sits in a block that starts invisible and fades in once the page has loaded its JavaScript, so it is painted about 700 ms after the HTML arrives. The home page and `/about` wait for their hero image in the same way.
-- Colour contrast is the only accessibility finding. White text on the brand green (`#18a44b`) has a ratio of 3.1 to 1, and green text on white 3.3 to 1, where WCAG AA asks for 4.5 to 1. It affects the main buttons and links on every page, so fixing it means a darker shade of the brand colour.
-- `/about` has a layout shift of 0.11 in the values section, just over the limit of 0.1.
-- `/signup` carries about 107 KiB of JavaScript that the page does not use.
+- The brand green is `#15803d`. White text on it has a ratio of 4.8 to 1 and it reads at 5.0 to 1 as text on white, where WCAG AA asks for 4.5 to 1. The earlier `#18a44b` gave 3.1 and 3.3 to 1 and was the only accessibility finding, which held the score at 96. Text on the dark photo of the home page uses a lighter green so it stays readable.
+- The top of the public pages is painted with the first render. The headings on `/login` and `/signup` used to sit in a block that started invisible and faded in after hydration, about 700 ms after the HTML arrived, and the delay is now under 100 ms. The largest paint of the simulated run went from 3.8 s to 2.8 s on `/login`, from 3.8 s to 2.9 s on `/signup` and from 4.3 s to 3.1 s on `/about`, whose hero image is also loaded eagerly with high priority.
+- The largest paint of the home page is still about 3.8 s. It is the hero photo (49 KB), so the simulated connection and CPU set the time and no hidden block does. Its performance score moves between 87 and 96 from run to run.
+- `/about` had a layout shift of 0.11 because its loading skeleton was painted first and then replaced by the page. The static pages `/about`, `/login` and `/signup` no longer have a `loading.tsx`, and the shift on `/about` is 0.
+- `/signup` still shifts by 0.04 when its form replaces the skeleton once the session is known, and it carries about 120 KiB of JavaScript that the page does not use.
 
