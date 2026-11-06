@@ -62,7 +62,7 @@ export function HeroCopy() {
       variants={containerVariants}
     >
       <motion.div variants={itemVariants} className="mb-4">
-        <Badge className="rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm">
+        <Badge className="rounded-full bg-primary/20 px-4 py-1.5 text-sm font-medium text-green-400 backdrop-blur-sm">
           AI trip planner
         </Badge>
       </motion.div>
@@ -72,7 +72,7 @@ export function HeroCopy() {
         className="mb-6 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl"
       >
         Plan a <br className="hidden sm:inline" />
-        <span className="text-primary">low-impact trip</span> <br className="hidden sm:inline" />
+        <span className="text-green-400">low-impact trip</span> <br className="hidden sm:inline" />
         with Kelana
       </motion.h1>
 
@@ -150,15 +150,15 @@ export function HeroVisual() {
         </div>
 
         <div className="absolute -left-4 top-1/4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
-          <Leaf className="h-8 w-8 text-primary" />
+          <Leaf className="h-8 w-8 text-green-400" />
         </div>
 
         <div className="absolute -right-2 top-1/3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 backdrop-blur-md">
-          <Globe className="h-6 w-6 text-primary" />
+          <Globe className="h-6 w-6 text-green-400" />
         </div>
 
         <div className="absolute bottom-1/4 left-1/2 flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
-          <Sparkles className="h-7 w-7 text-primary" />
+          <Sparkles className="h-7 w-7 text-green-400" />
         </div>
       </div>
     </motion.div>
