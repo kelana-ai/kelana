@@ -1,6 +1,3 @@
-"use client"
-
-import { motion } from "framer-motion"
 import Image from "next/image"
 import type { ReactNode } from "react"
 
@@ -14,26 +11,15 @@ export function AuthLayout({ children, title, description }: AuthLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30 p-4 md:p-8">
       <div className="w-full max-w-md">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
-          className="mb-6 flex flex-col items-center"
-        >
+        <div className="mb-6 flex flex-col items-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full mb-4">
             <Image src="/logo-round.png" alt="Logo" width={48} height={48} />
           </div>
           <h1 className="text-center text-2xl font-bold tracking-tight">{title}</h1>
           <p className="mt-2 text-center text-sm text-muted-foreground">{description}</p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: "easeInOut" }}
-        >
-          {children}
-        </motion.div>
+        {children}
 
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Kelana. All rights reserved.</p>
