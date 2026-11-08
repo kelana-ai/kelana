@@ -4,7 +4,7 @@ Coverage shows which lines the tests run, not whether they would notice a mistak
 
 ## Running it
 
-`pnpm mutate` mutates every file in `lib/` except the motion presets, the icon map, the static facts and the class name helper, which hold no logic (the list is in `stryker.config.json`). A run takes about 50 minutes. Open `reports/mutation/index.html` to see each surviving mutant in the code. The run fails when the score drops below 90%, and CI runs it every Sunday in `mutation.yml` and keeps the report for two weeks.
+`pnpm mutate` mutates every file in `lib/` except the motion presets, the icon map, the static facts and the class name helper, which hold no logic (the list is in `stryker.config.json`). A run takes about 50 minutes on a laptop and 100 to 130 minutes on a GitHub runner, so the workflow allows four hours. Open `reports/mutation/index.html` to see each surviving mutant in the code. The run fails when the score drops below 90%, and CI runs it every Sunday in `mutation.yml` and keeps the report for two weeks.
 
 Stryker's Vitest runner does not work with Vitest 5: it selects tests by name with an older separator, so no test runs and every mutant looks like it survived. The config runs `vitest run` through the command runner instead and turns coverage analysis off, so each mutant runs the whole suite. The TypeScript checker drops the mutants that do not compile.
 
